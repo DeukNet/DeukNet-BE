@@ -1,0 +1,6 @@
+rootProject.name = 'DeukNet-BE'
+
+include 'deuknet-application'
+include 'deuknet-domain'
+include 'deuknet-infrastructure'
+include 'deuknet-presentation'
