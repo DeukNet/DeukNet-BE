@@ -1,12 +1,12 @@
 plugins {
-    id 'java'
-    id 'org.springframework.boot' version '3.5.6'
+    id 'java-library'  // 라이브러리 모듈이므로 java-library 사용
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.springframework.boot' version '3.5.5' apply false
 }
 
 group = 'org.example'
 version = '0.0.1-SNAPSHOT'
-description = 'deuknet-application'
+description = 'community-application'
 
 java {
     toolchain {
@@ -18,10 +18,30 @@ repositories {
     mavenCentral()
 }
 
+// Spring Boot BOM 사용
+dependencyManagement {
+    imports {
+        mavenBom 'org.springframework.boot:spring-boot-dependencies:3.5.5'
+    }
+}
+
 dependencies {
+    // 🔥 필수: 도메인 모듈 의존성
+    implementation project(':deuknet-domain')
+
+    // 🔥 필수: Spring Boot Starter
     implementation 'org.springframework.boot:spring-boot-starter'
+
+    // 🔥 필수: Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // 테스트 의존성
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    implementation 'org.springframework.data:spring-data-commons:3.1.0'
+    implementation 'org.springframework:spring-tx:6.1.0'
 }
 
 tasks.named('test') {

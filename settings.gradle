@@ -1,4 +1,4 @@
-rootProject.name = 'DeukNet-BE'
+rootProject.name = 'DeukNet'
 
 include 'deuknet-application'
 include 'deuknet-domain'
