@@ -20,3 +20,7 @@ spec:
           env:
             - name: ELASTICSEARCH_HOSTS
               value: "http://elasticsearch:9200"
+            - name: ELASTICSEARCH_USERNAME
+              value: "kibana_system"
+            - name: ELASTICSEARCH_PASSWORD
+              value: "h8j6OcCFgtN4BJDNPOXQ"
