@@ -1,20 +1,20 @@
 package org.example.deuknetdomain.model.command.comment;
 
+import org.example.deuknetdomain.common.vo.Content;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
 public class Comment {
-
     private final UUID id;
     private final UUID postId;
     private final UUID authorId;
-    private String content;
+    private Content content;
     private final UUID parentCommentId;
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    private Comment(UUID id, UUID postId, UUID authorId, String content,
+    private Comment(UUID id, UUID postId, UUID authorId, Content content,
                    UUID parentCommentId, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.postId = postId;
@@ -25,8 +25,7 @@ public class Comment {
         this.updatedAt = updatedAt;
     }
 
-    public static Comment create(UUID postId, UUID authorId, String content, UUID parentCommentId) {
-        validateContent(content);
+    public static Comment create(UUID postId, UUID authorId, Content content, UUID parentCommentId) {
         return new Comment(
                 UUID.randomUUID(),
                 postId,
@@ -38,19 +37,12 @@ public class Comment {
         );
     }
 
-    public static Comment restore(UUID id, UUID postId, UUID authorId, String content,
+    public static Comment restore(UUID id, UUID postId, UUID authorId, Content content,
                                  UUID parentCommentId, LocalDateTime createdAt, LocalDateTime updatedAt) {
         return new Comment(id, postId, authorId, content, parentCommentId, createdAt, updatedAt);
     }
 
-    private static void validateContent(String content) {
-        if (content == null || content.isBlank()) {
-            throw new IllegalArgumentException("Comment content cannot be empty");
-        }
-    }
-
-    public void updateContent(String content) {
-        validateContent(content);
+    public void updateContent(Content content) {
         this.content = content;
         this.updatedAt = LocalDateTime.now();
     }
@@ -71,7 +63,7 @@ public class Comment {
         return authorId;
     }
 
-    public String getContent() {
+    public Content getContent() {
         return content;
     }
 

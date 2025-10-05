@@ -1,20 +1,21 @@
 package org.example.deuknetdomain.model.command.post.post;
 
+import org.example.deuknetdomain.common.vo.Content;
+import org.example.deuknetdomain.common.vo.Title;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class Post {
-
     private final UUID id;
-    private String title;
-    private String content;
+    private Title title;
+    private Content content;
     private final UUID authorId;
     private PostStatus status;
     private Long viewCount;
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    private Post(UUID id, String title, String content, UUID authorId,
+    private Post(UUID id, Title title, Content content, UUID authorId,
                  PostStatus status, Long viewCount, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.title = title;
@@ -26,9 +27,7 @@ public class Post {
         this.updatedAt = updatedAt;
     }
 
-    public static Post create(String title, String content, UUID authorId) {
-        validateTitle(title);
-        validateContent(content);
+    public static Post create(Title title, Content content, UUID authorId) {
         return new Post(
                 UUID.randomUUID(),
                 title,
@@ -41,26 +40,12 @@ public class Post {
         );
     }
 
-    public static Post restore(UUID id, String title, String content, UUID authorId,
+    public static Post restore(UUID id, Title title, Content content, UUID authorId,
                                PostStatus status, Long viewCount, LocalDateTime createdAt, LocalDateTime updatedAt) {
         return new Post(id, title, content, authorId, status, viewCount, createdAt, updatedAt);
     }
 
-    private static void validateTitle(String title) {
-        if (title == null || title.isBlank()) {
-            throw new IllegalArgumentException("Post title cannot be empty");
-        }
-    }
-
-    private static void validateContent(String content) {
-        if (content == null || content.isBlank()) {
-            throw new IllegalArgumentException("Post content cannot be empty");
-        }
-    }
-
-    public void updateContent(String title, String content) {
-        validateTitle(title);
-        validateContent(content);
+    public void updateContent(Title title, Content content) {
         this.title = title;
         this.content = content;
         this.updatedAt = LocalDateTime.now();
@@ -92,11 +77,11 @@ public class Post {
         return id;
     }
 
-    public String getTitle() {
+    public Title getTitle() {
         return title;
     }
 
-    public String getContent() {
+    public Content getContent() {
         return content;
     }
 
