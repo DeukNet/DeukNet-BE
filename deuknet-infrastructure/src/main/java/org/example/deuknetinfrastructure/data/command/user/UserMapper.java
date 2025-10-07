@@ -1,11 +1,12 @@
-package org.example.deuknetinfrastructure.persistence.mapper;
+package org.example.deuknetinfrastructure.data.command.user;
 
 import org.example.deuknetdomain.model.command.user.User;
-import org.example.deuknetinfrastructure.persistence.entity.UserEntity;
+import org.springframework.stereotype.Component;
 
+@Component
 public class UserMapper {
     
-    public static User toDomain(UserEntity entity) {
+    public User toDomain(UserEntity entity) {
         if (entity == null) return null;
         
         return User.restore(
@@ -18,7 +19,7 @@ public class UserMapper {
         );
     }
     
-    public static UserEntity toEntity(User domain) {
+    public UserEntity toEntity(User domain) {
         if (domain == null) return null;
         
         return new UserEntity(

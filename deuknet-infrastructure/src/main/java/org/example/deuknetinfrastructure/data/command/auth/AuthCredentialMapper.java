@@ -1,13 +1,14 @@
-package org.example.deuknetinfrastructure.persistence.mapper;
+package org.example.deuknetinfrastructure.data.command.auth;
 
 import org.example.deuknetdomain.common.vo.Email;
 import org.example.deuknetdomain.model.command.auth.AuthCredential;
 import org.example.deuknetdomain.model.command.auth.AuthProvider;
-import org.example.deuknetinfrastructure.persistence.entity.AuthCredentialEntity;
+import org.springframework.stereotype.Component;
 
+@Component
 public class AuthCredentialMapper {
     
-    public static AuthCredential toDomain(AuthCredentialEntity entity) {
+    public AuthCredential toDomain(AuthCredentialEntity entity) {
         if (entity == null) return null;
         
         return AuthCredential.restore(
@@ -18,7 +19,7 @@ public class AuthCredentialMapper {
         );
     }
     
-    public static AuthCredentialEntity toEntity(AuthCredential domain) {
+    public AuthCredentialEntity toEntity(AuthCredential domain) {
         if (domain == null) return null;
         
         return new AuthCredentialEntity(

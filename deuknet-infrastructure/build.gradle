@@ -65,6 +65,11 @@ dependencies {
     // 🔥 필수: Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
+    // 🔥 JWT 의존성
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
     // 기본 Spring Boot 의존성들
     implementation 'org.springframework.boot:spring-boot-starter'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

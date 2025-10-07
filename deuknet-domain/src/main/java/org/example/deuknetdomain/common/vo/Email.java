@@ -20,6 +20,10 @@ public final class Email {
         return new Email(value.toLowerCase());
     }
 
+    public static Email from(String value) {
+        return of(value);
+    }
+
     private static void validate(String value) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("Email cannot be empty");

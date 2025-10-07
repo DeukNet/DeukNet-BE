@@ -1,4 +1,4 @@
-package org.example.deuknetinfrastructure.persistence.entity;
+package org.example.deuknetinfrastructure.data.command.user;
 
 import jakarta.persistence.*;
 import java.util.UUID;
