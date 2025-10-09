@@ -15,6 +15,10 @@ public final class Title {
         return new Title(value.trim());
     }
 
+    public static Title from(String value) {
+        return of(value);
+    }
+
     private static void validate(String value) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("Title cannot be empty");

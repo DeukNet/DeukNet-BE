@@ -70,6 +70,9 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
+    // 🔥 Spring Security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
     // 기본 Spring Boot 의존성들
     implementation 'org.springframework.boot:spring-boot-starter'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

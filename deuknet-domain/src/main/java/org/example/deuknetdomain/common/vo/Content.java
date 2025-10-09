@@ -15,6 +15,10 @@ public final class Content {
         return new Content(value.trim());
     }
 
+    public static Content from(String value) {
+        return of(value);
+    }
+
     private static void validate(String value) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("Content cannot be empty");
