@@ -1,17 +1,18 @@
 package org.example.deuknetpresentation.controller.category.dto;
 
-import java.util.UUID;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(description = "카테고리 수정 요청")
 public class UpdateCategoryRequest {
+    
+    @Schema(description = "카테고리 이름", example = "기술 & IT", required = true)
     private String name;
-    private UUID parentCategoryId;
 
     public UpdateCategoryRequest() {
     }
 
-    public UpdateCategoryRequest(String name, UUID parentCategoryId) {
+    public UpdateCategoryRequest(String name) {
         this.name = name;
-        this.parentCategoryId = parentCategoryId;
     }
 
     public String getName() {
@@ -20,13 +21,5 @@ public class UpdateCategoryRequest {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public UUID getParentCategoryId() {
-        return parentCategoryId;
-    }
-
-    public void setParentCategoryId(UUID parentCategoryId) {
-        this.parentCategoryId = parentCategoryId;
     }
 }

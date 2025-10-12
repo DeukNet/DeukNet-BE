@@ -1,8 +1,6 @@
 package org.example.deuknetinfrastructure.data.command.reaction;
 
 import org.example.deuknetdomain.model.command.reaction.Reaction;
-import org.example.deuknetdomain.model.command.reaction.ReactionType;
-import org.example.deuknetdomain.model.command.reaction.TargetType;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -13,8 +11,8 @@ public class ReactionMapper {
         
         return Reaction.restore(
                 entity.getId(),
-                ReactionType.valueOf(entity.getReactionType()),
-                TargetType.valueOf(entity.getTargetType()),
+                entity.getReactionType(),
+                entity.getTargetType(),
                 entity.getTargetId(),
                 entity.getUserId(),
                 entity.getCreatedAt()
@@ -26,8 +24,8 @@ public class ReactionMapper {
         
         return new ReactionEntity(
                 domain.getId(),
-                domain.getReactionType().name(),
-                domain.getTargetType().name(),
+                domain.getReactionType(),
+                domain.getTargetType(),
                 domain.getTargetId(),
                 domain.getUserId(),
                 domain.getCreatedAt()

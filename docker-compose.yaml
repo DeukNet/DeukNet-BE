@@ -3,7 +3,7 @@ version: "3.9"
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: dev-postgres
+    container_name: local-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: app_user

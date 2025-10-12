@@ -1,15 +1,22 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/app_db
-    username: postgres
-    password: 1234
+    url: jdbc:postgresql://localhost:5433/app_db
+    username: app_user
+    password: app_pass
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
+    open-in-view: false
     properties:
       hibernate.format_sql: true
+      hibernate.hbm2ddl.auto: update
+      
+# 로깅 설정
+logging:
+  level:
+    org.hibernate.engine.jdbc.spi.SqlExceptionHelper: ERROR
 
 
 # JWT Configuration
@@ -28,3 +35,18 @@ oauth:
     client-id: ${GITHUB_CLIENT_ID:your-github-client-id}
     client-secret: ${GITHUB_CLIENT_SECRET:your-github-client-secret}
     redirect-uri: ${GITHUB_REDIRECT_URI:http://localhost:8080/api/auth/oauth/callback/github}
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: alpha
+    tags-sorter: alpha
+    display-request-duration: true
+    doc-expansion: none
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json

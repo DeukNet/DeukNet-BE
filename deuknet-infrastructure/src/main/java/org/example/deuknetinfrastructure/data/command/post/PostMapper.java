@@ -17,7 +17,7 @@ public class PostMapper {
                 Title.from(entity.getTitle()),
                 Content.from(entity.getContent()),
                 entity.getAuthorId(),
-                PostStatus.valueOf(entity.getStatus()),
+                entity.getStatus(),
                 entity.getViewCount(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
@@ -32,7 +32,7 @@ public class PostMapper {
                 domain.getTitle().getValue(),
                 domain.getContent().getValue(),
                 domain.getAuthorId(),
-                domain.getStatus().name(),
+                domain.getStatus(),
                 domain.getViewCount(),
                 domain.getCreatedAt(),
                 domain.getUpdatedAt()

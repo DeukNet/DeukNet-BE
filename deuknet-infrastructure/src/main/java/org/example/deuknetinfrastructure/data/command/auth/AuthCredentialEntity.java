@@ -1,6 +1,8 @@
 package org.example.deuknetinfrastructure.data.command.auth;
 
 import jakarta.persistence.*;
+import org.example.deuknetdomain.model.command.auth.AuthProvider;
+
 import java.util.UUID;
 
 @Entity
@@ -16,7 +18,7 @@ public class AuthCredentialEntity {
     
     @Enumerated(EnumType.STRING)
     @Column(name = "auth_provider", nullable = false, length = 20)
-    private String authProvider;
+    private AuthProvider authProvider;
     
     @Column(nullable = false, unique = true, length = 100)
     private String email;
@@ -24,7 +26,7 @@ public class AuthCredentialEntity {
     public AuthCredentialEntity() {
     }
 
-    public AuthCredentialEntity(UUID id, UUID userId, String authProvider, String email) {
+    public AuthCredentialEntity(UUID id, UUID userId, AuthProvider authProvider, String email) {
         this.id = id;
         this.userId = userId;
         this.authProvider = authProvider;
@@ -47,11 +49,11 @@ public class AuthCredentialEntity {
         this.userId = userId;
     }
 
-    public String getAuthProvider() {
+    public AuthProvider getAuthProvider() {
         return authProvider;
     }
 
-    public void setAuthProvider(String authProvider) {
+    public void setAuthProvider(AuthProvider authProvider) {
         this.authProvider = authProvider;
     }
 

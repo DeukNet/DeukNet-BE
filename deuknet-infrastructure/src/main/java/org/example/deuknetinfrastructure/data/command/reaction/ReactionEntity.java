@@ -1,6 +1,9 @@
 package org.example.deuknetinfrastructure.data.command.reaction;
 
 import jakarta.persistence.*;
+import org.example.deuknetdomain.model.command.reaction.ReactionType;
+import org.example.deuknetdomain.model.command.reaction.TargetType;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -14,11 +17,11 @@ public class ReactionEntity {
     
     @Enumerated(EnumType.STRING)
     @Column(name = "reaction_type", nullable = false, length = 20)
-    private String reactionType;
+    private ReactionType reactionType;
     
     @Enumerated(EnumType.STRING)
     @Column(name = "target_type", nullable = false, length = 20)
-    private String targetType;
+    private TargetType targetType;
     
     @Column(name = "target_id", nullable = false, columnDefinition = "UUID")
     private UUID targetId;
@@ -32,7 +35,7 @@ public class ReactionEntity {
     public ReactionEntity() {
     }
 
-    public ReactionEntity(UUID id, String reactionType, String targetType, 
+    public ReactionEntity(UUID id, ReactionType reactionType, TargetType targetType, 
                          UUID targetId, UUID userId, LocalDateTime createdAt) {
         this.id = id;
         this.reactionType = reactionType;
@@ -50,19 +53,19 @@ public class ReactionEntity {
         this.id = id;
     }
 
-    public String getReactionType() {
+    public ReactionType getReactionType() {
         return reactionType;
     }
 
-    public void setReactionType(String reactionType) {
+    public void setReactionType(ReactionType reactionType) {
         this.reactionType = reactionType;
     }
 
-    public String getTargetType() {
+    public TargetType getTargetType() {
         return targetType;
     }
 
-    public void setTargetType(String targetType) {
+    public void setTargetType(TargetType targetType) {
         this.targetType = targetType;
     }
 

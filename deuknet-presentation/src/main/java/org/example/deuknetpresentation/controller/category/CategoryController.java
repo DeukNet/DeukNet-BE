@@ -1,5 +1,12 @@
 package org.example.deuknetpresentation.controller.category;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.deuknetapplication.usecase.category.CreateCategoryUseCase;
 import org.example.deuknetapplication.usecase.category.DeleteCategoryUseCase;
 import org.example.deuknetapplication.usecase.category.UpdateCategoryUseCase;
@@ -11,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+@Tag(name = "Category", description = "카테고리 관리 API")
 @RestController
 @RequestMapping("/api/categories")
 public class CategoryController {
@@ -29,8 +37,27 @@ public class CategoryController {
         this.deleteCategoryUseCase = deleteCategoryUseCase;
     }
 
+    @Operation(
+            summary = "카테고리 생성",
+            description = "새로운 카테고리를 생성합니다. 부모 카테고리 ID를 지정하여 하위 카테고리를 만들 수 있습니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "카테고리 생성 성공",
+                    content = @Content(schema = @Schema(implementation = UUID.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 (중복된 카테고리명 등)"),
+            @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
     @PostMapping
-    public ResponseEntity<UUID> createCategory(@RequestBody CreateCategoryRequest request) {
+    public ResponseEntity<UUID> createCategory(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "카테고리 생성 정보",
+                    required = true
+            )
+            @RequestBody CreateCategoryRequest request
+    ) {
         CreateCategoryUseCase.CreateCategoryCommand command = new CreateCategoryUseCase.CreateCategoryCommand(
                 CategoryName.of(request.getName()),
                 request.getParentCategoryId()
@@ -40,9 +67,24 @@ public class CategoryController {
         return ResponseEntity.ok(categoryId);
     }
 
+    @Operation(
+            summary = "카테고리 수정",
+            description = "기존 카테고리의 이름을 수정합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "카테고리 수정 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 (중복된 카테고리명 등)"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음")
+    })
     @PutMapping("/{categoryId}")
     public ResponseEntity<Void> updateCategory(
+            @Parameter(description = "카테고리 ID", required = true)
             @PathVariable UUID categoryId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "카테고리 수정 정보",
+                    required = true
+            )
             @RequestBody UpdateCategoryRequest request
     ) {
         UpdateCategoryUseCase.UpdateCategoryCommand command = new UpdateCategoryUseCase.UpdateCategoryCommand(
@@ -54,8 +96,21 @@ public class CategoryController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(
+            summary = "카테고리 삭제",
+            description = "카테고리를 삭제합니다. 하위 카테고리가 있는 경우 삭제할 수 없습니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "카테고리 삭제 성공"),
+            @ApiResponse(responseCode = "400", description = "하위 카테고리가 존재하여 삭제 불가"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음")
+    })
     @DeleteMapping("/{categoryId}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable UUID categoryId) {
+    public ResponseEntity<Void> deleteCategory(
+            @Parameter(description = "카테고리 ID", required = true)
+            @PathVariable UUID categoryId
+    ) {
         deleteCategoryUseCase.deleteCategory(categoryId);
         return ResponseEntity.ok().build();
     }

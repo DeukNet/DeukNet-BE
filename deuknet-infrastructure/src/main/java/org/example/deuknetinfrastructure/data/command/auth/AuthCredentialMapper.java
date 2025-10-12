@@ -2,7 +2,6 @@ package org.example.deuknetinfrastructure.data.command.auth;
 
 import org.example.deuknetdomain.common.vo.Email;
 import org.example.deuknetdomain.model.command.auth.AuthCredential;
-import org.example.deuknetdomain.model.command.auth.AuthProvider;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,7 +13,7 @@ public class AuthCredentialMapper {
         return AuthCredential.restore(
                 entity.getId(),
                 entity.getUserId(),
-                AuthProvider.valueOf(entity.getAuthProvider()),
+                entity.getAuthProvider(),
                 Email.of(entity.getEmail())
         );
     }
@@ -25,7 +24,7 @@ public class AuthCredentialMapper {
         return new AuthCredentialEntity(
                 domain.getId(),
                 domain.getUserId(),
-                domain.getAuthProvider().name(),
+                domain.getAuthProvider(),
                 domain.getEmail().getValue()
         );
     }

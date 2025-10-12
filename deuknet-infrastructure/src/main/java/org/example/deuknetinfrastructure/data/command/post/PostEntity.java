@@ -1,6 +1,8 @@
 package org.example.deuknetinfrastructure.data.command.post;
 
 import jakarta.persistence.*;
+import org.example.deuknetdomain.model.command.post.post.PostStatus;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -23,7 +25,7 @@ public class PostEntity {
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private String status;
+    private PostStatus status;
     
     @Column(name = "view_count", nullable = false)
     private Long viewCount;
@@ -38,7 +40,7 @@ public class PostEntity {
     }
 
     public PostEntity(UUID id, String title, String content, UUID authorId, 
-                      String status, Long viewCount, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                      PostStatus status, Long viewCount, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.title = title;
         this.content = content;
@@ -81,11 +83,11 @@ public class PostEntity {
         this.authorId = authorId;
     }
 
-    public String getStatus() {
+    public PostStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(PostStatus status) {
         this.status = status;
     }
 
