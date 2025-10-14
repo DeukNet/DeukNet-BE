@@ -18,15 +18,12 @@ public class RefreshTokenService implements RefreshTokenUseCase {
 
     @Override
     public TokenPair refresh(String refreshToken) {
-        // 1. Refresh Token 검증
         if (!jwtPort.isRefreshToken(refreshToken)) {
             throw new IllegalArgumentException("Invalid refresh token");
         }
         
-        // 2. UserId 추출
         UUID userId = jwtPort.validateToken(refreshToken);
         
-        // 3. 새로운 토큰 쌍 생성
         String newAccessToken = jwtPort.generateAccessToken(userId);
         String newRefreshToken = jwtPort.generateRefreshToken(userId);
         

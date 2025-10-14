@@ -2,6 +2,9 @@ package org.example.deuknetapplication.service.category;
 
 import org.example.deuknetapplication.port.in.category.UpdateCategoryUseCase;
 import org.example.deuknetapplication.port.out.repository.CategoryRepository;
+import org.example.deuknetdomain.common.exception.BusinessException;
+import org.example.deuknetdomain.common.exception.CommonErrorCode;
+import org.example.deuknetdomain.common.exception.EntityNotFoundException;
 import org.example.deuknetdomain.model.command.category.Category;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,22 +22,18 @@ public class UpdateCategoryService implements UpdateCategoryUseCase {
     @Override
     public void updateCategory(UpdateCategoryCommand command) {
         Category category = categoryRepository.findById(command.categoryId())
-                .orElseThrow(() -> new IllegalArgumentException("Category not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Category"));
         
-        // 이름 중복 체크 (자기 자신 제외)
         categoryRepository.findByName(command.name().getValue())
                 .ifPresent(c -> {
                     if (!c.getId().equals(command.categoryId())) {
-                        throw new IllegalArgumentException("Category with name already exists");
+                        throw new BusinessException(CommonErrorCode.DUPLICATE_RESOURCE);
                     }
                 });
         
-        // parentCategoryId가 변경되는 경우 새로 생성
-        if (!category.getParentCategoryId().equals(java.util.Optional.ofNullable(command.parentCategoryId()))) {
-            throw new IllegalArgumentException("Cannot change parent category. Please delete and recreate.");
-        }
-        
+        // 이름만 변경 가능 (parentCategory는 불변)
         category.changeName(command.name());
+        
         categoryRepository.save(category);
     }
 }

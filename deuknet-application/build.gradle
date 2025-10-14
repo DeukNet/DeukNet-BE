@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'  // 라이브러리 모듈이므로 java-library 사용
     id 'io.spring.dependency-management' version '1.1.7'
-    id 'org.springframework.boot' version '3.5.5' apply false
+    id 'org.springframework.boot' version '3.3.5' apply false
 }
 
 group = 'org.example'
@@ -21,7 +21,7 @@ repositories {
 // Spring Boot BOM 사용
 dependencyManagement {
     imports {
-        mavenBom 'org.springframework.boot:spring-boot-dependencies:3.5.5'
+        mavenBom 'org.springframework.boot:spring-boot-dependencies:3.3.5'
     }
 }
 

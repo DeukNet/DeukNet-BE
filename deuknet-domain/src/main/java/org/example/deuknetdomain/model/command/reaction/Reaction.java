@@ -2,7 +2,9 @@ package org.example.deuknetdomain.model.command.reaction;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import lombok.Getter;
 
+@Getter
 public class Reaction {
 
     private final UUID id;
@@ -46,27 +48,4 @@ public class Reaction {
         return targetType == TargetType.POST;
     }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public ReactionType getReactionType() {
-        return reactionType;
-    }
-
-    public TargetType getTargetType() {
-        return targetType;
-    }
-
-    public UUID getTargetId() {
-        return targetId;
-    }
-
-    public UUID getUserId() {
-        return userId;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
 }

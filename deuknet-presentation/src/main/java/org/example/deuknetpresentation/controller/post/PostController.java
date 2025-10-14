@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.example.deuknetapplication.usecase.post.*;
+import org.example.deuknetapplication.port.in.post.*;
 import org.example.deuknetdomain.common.vo.Title;
 import org.example.deuknetpresentation.controller.post.dto.*;
 import org.springframework.http.ResponseEntity;

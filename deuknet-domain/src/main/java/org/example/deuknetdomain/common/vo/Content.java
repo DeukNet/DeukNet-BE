@@ -1,7 +1,11 @@
 package org.example.deuknetdomain.common.vo;
 
-import java.util.Objects;
+import org.example.deuknetdomain.common.exception.InvalidValueException;
 
+import java.util.Objects;
+import lombok.Getter;
+
+@Getter
 public final class Content {
     private static final int MAX_LENGTH = 10000;
     private final String value;
@@ -21,15 +25,11 @@ public final class Content {
 
     private static void validate(String value) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("Content cannot be empty");
+            throw new InvalidValueException("Content cannot be empty");
         }
         if (value.length() > MAX_LENGTH) {
-            throw new IllegalArgumentException("Content cannot exceed " + MAX_LENGTH + " characters");
+            throw new InvalidValueException("Content cannot exceed " + MAX_LENGTH + " characters");
         }
-    }
-
-    public String getValue() {
-        return value;
     }
 
     @Override

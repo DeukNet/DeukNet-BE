@@ -20,7 +20,7 @@ repositories {
 // Spring Boot BOM 사용
 dependencyManagement {
     imports {
-        mavenBom 'org.springframework.boot:spring-boot-dependencies:3.5.5'
+        mavenBom 'org.springframework.boot:spring-boot-dependencies:3.3.5'
     }
 }
 

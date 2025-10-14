@@ -2,6 +2,9 @@ package org.example.deuknetapplication.service.category;
 
 import org.example.deuknetapplication.port.in.category.DeleteCategoryUseCase;
 import org.example.deuknetapplication.port.out.repository.CategoryRepository;
+import org.example.deuknetdomain.common.exception.BusinessException;
+import org.example.deuknetdomain.common.exception.CommonErrorCode;
+import org.example.deuknetdomain.common.exception.EntityNotFoundException;
 import org.example.deuknetdomain.model.command.category.Category;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,12 +25,11 @@ public class DeleteCategoryService implements DeleteCategoryUseCase {
     @Override
     public void deleteCategory(UUID categoryId) {
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new IllegalArgumentException("Category not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Category"));
         
-        // 하위 카테고리가 있는지 확인
         List<Category> children = categoryRepository.findByParentCategoryId(categoryId);
         if (!children.isEmpty()) {
-            throw new IllegalStateException("Cannot delete category with sub-categories");
+            throw new BusinessException(CommonErrorCode.INVALID_INPUT_VALUE);
         }
         
         categoryRepository.delete(category);

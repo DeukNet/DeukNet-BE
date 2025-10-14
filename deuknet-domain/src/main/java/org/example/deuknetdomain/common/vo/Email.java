@@ -1,5 +1,7 @@
 package org.example.deuknetdomain.common.vo;
 
+import org.example.deuknetdomain.common.exception.InvalidValueException;
+
 import java.util.Objects;
 import java.util.regex.Pattern;
 import lombok.Getter;
@@ -26,10 +28,10 @@ public final class Email {
 
     private static void validate(String value) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("Email cannot be empty");
+            throw new InvalidValueException("Email cannot be empty");
         }
         if (!VALID_PATTERN.matcher(value).matches()) {
-            throw new IllegalArgumentException("Invalid email format");
+            throw new InvalidValueException("Invalid email format");
         }
     }
 

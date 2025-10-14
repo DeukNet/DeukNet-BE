@@ -1,10 +1,12 @@
 package org.example.deuknetdomain.model.command.comment;
 
+import lombok.Getter;
 import org.example.deuknetdomain.common.vo.Content;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
+@Getter
 public class Comment {
     private final UUID id;
     private final UUID postId;
@@ -51,31 +53,7 @@ public class Comment {
         return parentCommentId != null;
     }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public UUID getPostId() {
-        return postId;
-    }
-
-    public UUID getAuthorId() {
-        return authorId;
-    }
-
-    public Content getContent() {
-        return content;
-    }
-
     public Optional<UUID> getParentCommentId() {
         return Optional.ofNullable(parentCommentId);
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
     }
 }

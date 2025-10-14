@@ -1,10 +1,12 @@
 package org.example.deuknetdomain.model.command.post.post;
 
+import lombok.Getter;
 import org.example.deuknetdomain.common.vo.Content;
 import org.example.deuknetdomain.common.vo.Title;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Getter
 public class Post {
     private final UUID id;
     private Title title;
@@ -73,35 +75,4 @@ public class Post {
         this.viewCount++;
     }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public Title getTitle() {
-        return title;
-    }
-
-    public Content getContent() {
-        return content;
-    }
-
-    public UUID getAuthorId() {
-        return authorId;
-    }
-
-    public PostStatus getStatus() {
-        return status;
-    }
-
-    public Long getViewCount() {
-        return viewCount;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
 }

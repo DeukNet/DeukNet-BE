@@ -1,7 +1,9 @@
 package org.example.deuknetdomain.model.command.post.postcategory;
 
 import java.util.UUID;
+import lombok.Getter;
 
+@Getter
 public class PostCategoryAssignment {
 
     private final UUID id;
@@ -20,17 +22,5 @@ public class PostCategoryAssignment {
 
     public static PostCategoryAssignment restore(UUID id, UUID postId, UUID categoryId) {
         return new PostCategoryAssignment(id, postId, categoryId);
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public UUID getPostId() {
-        return postId;
-    }
-
-    public UUID getCategoryId() {
-        return categoryId;
     }
 }

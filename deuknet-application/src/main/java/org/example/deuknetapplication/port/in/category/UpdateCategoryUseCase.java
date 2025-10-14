@@ -9,7 +9,6 @@ public interface UpdateCategoryUseCase {
     
     record UpdateCategoryCommand(
             UUID categoryId,
-            CategoryName name,
-            UUID parentCategoryId
+            CategoryName name
     ) {}
 }

@@ -1,9 +1,11 @@
 package org.example.deuknetdomain.model.command.category;
 
+import lombok.Getter;
 import org.example.deuknetdomain.common.vo.CategoryName;
 import java.util.Optional;
 import java.util.UUID;
 
+@Getter
 public class Category {
     private final UUID id;
     private CategoryName name;
@@ -29,14 +31,6 @@ public class Category {
 
     public boolean isRootCategory() {
         return parentCategoryId == null;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public CategoryName getName() {
-        return name;
     }
 
     public Optional<UUID> getParentCategoryId() {
