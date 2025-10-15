@@ -1,0 +1,84 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: elasticsearch-setup
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: setup
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+        command:
+        - /bin/bash
+        - -c
+        - |
+          #!/bin/bash
+          set -e
+          
+          echo "=== Elasticsearch Setup Job ==="
+          
+          # Wait for Elasticsearch to be ready
+          echo "Waiting for Elasticsearch..."
+          until curl -s http://elasticsearch:9200 -u elastic:deuknet2024 > /dev/null 2>&1; do
+            echo "Elasticsearch not ready yet, waiting..."
+            sleep 5
+          done
+          
+          echo "Elasticsearch is ready!"
+          
+          # Create kibana_system user
+          echo "Creating kibana_system user..."
+          curl -X POST "http://elasticsearch:9200/_security/user/kibana_system/_password" \
+            -u elastic:deuknet2024 \
+            -H "Content-Type: application/json" \
+            -d '{"password":"deuknet2024"}' || true
+          
+          # Create logstash_system user
+          echo "Creating logstash_system user..."
+          curl -X POST "http://elasticsearch:9200/_security/user/logstash_system/_password" \
+            -u elastic:deuknet2024 \
+            -H "Content-Type: application/json" \
+            -d '{"password":"deuknet2024"}' || true
+          
+          # Create beats_system user
+          echo "Creating beats_system user..."
+          curl -X POST "http://elasticsearch:9200/_security/user/beats_system/_password" \
+            -u elastic:deuknet2024 \
+            -H "Content-Type: application/json" \
+            -d '{"password":"deuknet2024"}' || true
+          
+          # Create custom logstash_writer user with full permissions
+          echo "Creating logstash_writer user..."
+          curl -X POST "http://elasticsearch:9200/_security/user/logstash_writer" \
+            -u elastic:deuknet2024 \
+            -H "Content-Type: application/json" \
+            -d '{
+              "password": "deuknet2024",
+              "roles": ["logstash_writer"],
+              "full_name": "Logstash Writer",
+              "email": "logstash@deuknet.com"
+            }' || true
+          
+          # Create logstash_writer role with necessary permissions
+          echo "Creating logstash_writer role..."
+          curl -X POST "http://elasticsearch:9200/_security/role/logstash_writer" \
+            -u elastic:deuknet2024 \
+            -H "Content-Type: application/json" \
+            -d '{
+              "cluster": ["monitor", "manage_index_templates", "manage_ilm"],
+              "indices": [
+                {
+                  "names": ["logs-*"],
+                  "privileges": ["write", "create", "create_index", "manage", "manage_ilm"]
+                }
+              ]
+            }' || true
+          
+          echo "=== Setup completed successfully ==="
+        env:
+        - name: ELASTIC_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: elasticsearch-credentials
+              key: elastic-password

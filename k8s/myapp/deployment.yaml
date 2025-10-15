@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  labels:
+    app: myapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: myapp
+        image: myapp:local
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: prod
+        # Health check 엔드포인트를 인증 없이 접근 가능하도록 설정
+        - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+          value: health,info
+        - name: MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED
+          value: "true"
+        # Spring Security에서 actuator 허용
+        - name: SPRING_SECURITY_USER_NAME
+          value: admin
+        - name: SPRING_SECURITY_USER_PASSWORD
+          value: admin
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "100m"
+          limits:
+            memory: "1024Mi"
+            cpu: "2"

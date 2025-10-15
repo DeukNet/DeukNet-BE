@@ -14,6 +14,7 @@ spec:
     metadata:
       labels:
         app: myapp
+        collect-logs: "true"  # Filebeat가 이 Pod의 로그를 수집하도록 지정
     spec:
       containers:
         - name: myapp

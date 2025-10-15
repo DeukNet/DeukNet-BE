@@ -27,9 +27,22 @@ spec:
                 secretKeyRef:
                   name: elasticsearch-credentials
                   key: logstash-writer-password
-            # Disable monitoring to avoid 401 errors
+            # Option 1: Disable monitoring (recommended for dev)
             - name: xpack.monitoring.enabled
               value: "false"
+            
+            # Option 2: Enable monitoring with credentials (uncomment below)
+            # - name: xpack.monitoring.enabled
+            #   value: "true"
+            # - name: xpack.monitoring.elasticsearch.hosts
+            #   value: "http://elasticsearch:9200"
+            # - name: xpack.monitoring.elasticsearch.username
+            #   value: "logstash_system"
+            # - name: xpack.monitoring.elasticsearch.password
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: elasticsearch-credentials
+            #       key: logstash-password
           volumeMounts:
             - name: pipeline
               mountPath: /usr/share/logstash/pipeline

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elasticsearch-config
+data:
+  elasticsearch.yml: |
+    cluster.name: deuknet-cluster
+    network.host: 0.0.0.0
+    discovery.type: single-node
+    
+    # Security settings - basic auth only, no SSL
+    xpack.security.enabled: true
+    xpack.security.enrollment.enabled: false
+    
+    # Disable SSL
+    xpack.security.http.ssl.enabled: false
+    xpack.security.transport.ssl.enabled: false

@@ -1,0 +1,29 @@
+filebeat.autodiscover:
+  providers:
+    - type: kubernetes
+      node: ${NODE_NAME}
+      hints.enabled: true
+      
+      # 특정 라벨이 있는 Pod만 수집
+      templates:
+        # collect-logs: "true" 라벨이 있는 Pod만 수집
+        - condition:
+            equals:
+              kubernetes.labels.collect-logs: "true"
+          config:
+            - type: container
+              paths:
+                - /var/log/containers/*-${data.kubernetes.container.id}.log
+              processors:
+                - add_kubernetes_metadata:
+                    host: ${NODE_NAME}
+                    matchers:
+                    - logs_path:
+                        logs_path: "/var/log/containers/"
+
+processors:
+  - add_cloud_metadata: ~
+  - add_host_metadata: ~
+
+output.logstash:
+  hosts: ["logstash:5044"]
