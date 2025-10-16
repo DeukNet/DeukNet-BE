@@ -14,11 +14,11 @@ public class Title {
     }
 
     public static Title of(String value) {
-        return of(value);
+        return new Title(value);
     }
 
     public static Title from(String value) {
-        return of(value);
+        return new Title(value);
     }
 
     private static void validate(String value) {

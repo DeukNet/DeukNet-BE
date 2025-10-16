@@ -33,7 +33,7 @@ public class AuthCredentialRepositoryAdapter implements AuthCredentialRepository
     @Override
     public Optional<AuthCredential> findByEmailAndProvider(Email email, AuthProvider provider) {
         return jpaAuthCredentialRepository
-                .findByEmailAndAuthProvider(email.getValue(), provider.name())
+                .findByEmailAndAuthProvider(email.getValue(), provider)
                 .map(mapper::toDomain);
     }
 

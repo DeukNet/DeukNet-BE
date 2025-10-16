@@ -28,8 +28,23 @@ dependencies {
     // Swagger/OpenAPI - Spring Boot 3.x 호환 버전
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
 
+    // Test Dependencies
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    
+    // Spring Security Test
+    testImplementation 'org.springframework.security:spring-security-test'
+    
+    // TestContainers
+    testImplementation 'org.testcontainers:testcontainers:1.19.3'
+    testImplementation 'org.testcontainers:postgresql:1.19.3'
+    testImplementation 'org.testcontainers:junit-jupiter:1.19.3'
+    
+    // Infrastructure 의존성 (테스트에서 DB 사용)
+    testImplementation project(':deuknet-infrastructure')
+    
+    // Spring Transaction (for @Transactional)
+    testImplementation 'org.springframework:spring-tx'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

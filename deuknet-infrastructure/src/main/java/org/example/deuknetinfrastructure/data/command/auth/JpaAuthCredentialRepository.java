@@ -1,10 +1,11 @@
 package org.example.deuknetinfrastructure.data.command.auth;
 
+import org.example.deuknetdomain.model.command.auth.AuthProvider;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 import java.util.UUID;
 
 public interface JpaAuthCredentialRepository extends JpaRepository<AuthCredentialEntity, UUID> {
-    Optional<AuthCredentialEntity> findByEmailAndAuthProvider(String email, String authProvider);
+    Optional<AuthCredentialEntity> findByEmailAndAuthProvider(String email, AuthProvider authProvider);
 }

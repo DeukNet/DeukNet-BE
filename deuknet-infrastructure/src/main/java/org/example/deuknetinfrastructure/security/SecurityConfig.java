@@ -27,7 +27,7 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
-                .requestMatchers("/api/auth/**", "/api/health").permitAll()
+                .requestMatchers("/api/auth/**", "/api/health", "/").permitAll()
                 // Swagger UI
                 .requestMatchers(
                     "/swagger-ui/**",
