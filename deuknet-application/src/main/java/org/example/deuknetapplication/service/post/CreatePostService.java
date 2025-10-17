@@ -1,6 +1,6 @@
 package org.example.deuknetapplication.service.post;
 
-import org.example.deuknetapplication.port.in.post.CreatePostCommand;
+import org.example.deuknetapplication.port.in.post.CreatePostApplicationRequest;
 import org.example.deuknetapplication.port.in.post.CreatePostUseCase;
 import org.example.deuknetapplication.port.out.repository.PostCategoryAssignmentRepository;
 import org.example.deuknetapplication.port.out.repository.PostRepository;
@@ -31,19 +31,19 @@ public class CreatePostService implements CreatePostUseCase {
     }
 
     @Override
-    public UUID createPost(CreatePostCommand command) {
+    public UUID createPost(CreatePostApplicationRequest request) {
         UUID currentUserId = currentUserPort.getCurrentUserId();
 
         Post post = Post.create(
-                org.example.deuknetdomain.common.vo.Title.from(command.getTitle()),
-                org.example.deuknetdomain.common.vo.Content.from(command.getContent()),
+                org.example.deuknetdomain.common.vo.Title.from(request.getTitle()),
+                org.example.deuknetdomain.common.vo.Content.from(request.getContent()),
                 currentUserId
         );
 
         post = postRepository.save(post);
 
-        if (command.getCategoryIds() != null && !command.getCategoryIds().isEmpty()) {
-            for (UUID categoryId : command.getCategoryIds()) {
+        if (request.getCategoryIds() != null && !request.getCategoryIds().isEmpty()) {
+            for (UUID categoryId : request.getCategoryIds()) {
                 PostCategoryAssignment assignment = PostCategoryAssignment.create(
                         post.getId(),
                         categoryId

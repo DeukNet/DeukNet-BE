@@ -1,12 +1,12 @@
-package org.example.deuknetpresentation.controller.post.dto;
+package org.example.deuknetpresentation.controller.comment.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.example.deuknetapplication.port.in.comment.UpdateCommentCommand;
+import org.example.deuknetapplication.port.in.comment.UpdateCommentApplicationRequest;
 
 import java.util.UUID;
 
 @Schema(description = "댓글 수정 요청")
-public class UpdateCommentRequest extends UpdateCommentCommand {
+public class UpdateCommentRequest extends UpdateCommentApplicationRequest {
 
     public UpdateCommentRequest() {
         super();

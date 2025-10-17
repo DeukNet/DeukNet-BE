@@ -2,15 +2,15 @@ package org.example.deuknetapplication.port.in.comment;
 
 import java.util.UUID;
 
-public class CreateCommentCommand {
+public class CreateCommentAppliationRequest {
     private UUID postId;
     private String content;
     private UUID parentCommentId;
 
-    protected CreateCommentCommand() {
+    protected CreateCommentAppliationRequest() {
     }
 
-    public CreateCommentCommand(UUID postId, String content, UUID parentCommentId) {
+    public CreateCommentAppliationRequest(UUID postId, String content, UUID parentCommentId) {
         this.postId = postId;
         this.content = content;
         this.parentCommentId = parentCommentId;

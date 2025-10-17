@@ -6,12 +6,12 @@ import org.example.deuknetdomain.model.command.auth.TokenPair;
 import org.example.deuknetpresentation.controller.auth.dto.OAuthLoginRequest;
 import org.example.deuknetpresentation.controller.auth.dto.RefreshTokenRequest;
 import org.example.deuknetpresentation.controller.auth.dto.TokenResponse;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
-public class AuthController {
+public class AuthController implements AuthApi {
 
     private final OAuthLoginUseCase oAuthLoginUseCase;
     private final RefreshTokenUseCase refreshTokenUseCase;
@@ -24,27 +24,19 @@ public class AuthController {
         this.refreshTokenUseCase = refreshTokenUseCase;
     }
 
+    @Override
     @PostMapping("/oauth/login")
-    public ResponseEntity<TokenResponse> oauthLogin(@RequestBody OAuthLoginRequest request) {
+    @ResponseStatus(HttpStatus.OK)
+    public TokenResponse oauthLogin(@RequestBody OAuthLoginRequest request) {
         TokenPair tokenPair = oAuthLoginUseCase.login(request.getCode(), request.getProvider());
-        
-        TokenResponse response = new TokenResponse(
-                tokenPair.getAccessToken(),
-                tokenPair.getRefreshToken()
-        );
-        
-        return ResponseEntity.ok(response);
+        return TokenResponse.from(tokenPair.getAccessToken(), tokenPair.getRefreshToken());
     }
 
+    @Override
     @PostMapping("/refresh")
-    public ResponseEntity<TokenResponse> refresh(@RequestBody RefreshTokenRequest request) {
+    @ResponseStatus(HttpStatus.OK)
+    public TokenResponse refresh(@RequestBody RefreshTokenRequest request) {
         TokenPair tokenPair = refreshTokenUseCase.refresh(request.getRefreshToken());
-        
-        TokenResponse response = new TokenResponse(
-                tokenPair.getAccessToken(),
-                tokenPair.getRefreshToken()
-        );
-        
-        return ResponseEntity.ok(response);
+        return TokenResponse.from(tokenPair.getAccessToken(), tokenPair.getRefreshToken());
     }
 }

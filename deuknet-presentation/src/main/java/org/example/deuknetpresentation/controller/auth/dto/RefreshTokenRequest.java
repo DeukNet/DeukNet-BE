@@ -1,6 +1,7 @@
 package org.example.deuknetpresentation.controller.auth.dto;
 
 public class RefreshTokenRequest {
+
     private String refreshToken;
 
     public RefreshTokenRequest() {

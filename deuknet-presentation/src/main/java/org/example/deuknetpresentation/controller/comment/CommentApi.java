@@ -1,4 +1,4 @@
-package org.example.deuknetpresentation.controller.post;
+package org.example.deuknetpresentation.controller.comment;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -7,8 +7,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.example.deuknetpresentation.controller.post.dto.CreateCommentRequest;
-import org.example.deuknetpresentation.controller.post.dto.UpdateCommentRequest;
+import org.example.deuknetpresentation.controller.comment.dto.CreateCommentRequest;
+import org.example.deuknetpresentation.controller.comment.dto.UpdateCommentRequest;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;

@@ -1,7 +1,7 @@
-package org.example.deuknetpresentation.controller.post;
+package org.example.deuknetpresentation.controller.comment;
 
 import org.example.deuknetapplication.port.in.comment.*;
-import org.example.deuknetpresentation.controller.post.dto.*;
+import org.example.deuknetpresentation.controller.comment.dto.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 

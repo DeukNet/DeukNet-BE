@@ -1,5 +1,7 @@
 package org.example.integration.post;
 
+import org.example.deuknetpresentation.controller.comment.dto.CreateCommentRequest;
+import org.example.deuknetpresentation.controller.comment.dto.UpdateCommentRequest;
 import org.example.deuknetpresentation.controller.post.dto.*;
 import org.example.seedwork.AbstractTest;
 import org.junit.jupiter.api.Test;

@@ -2,14 +2,14 @@ package org.example.deuknetapplication.port.in.category;
 
 import java.util.UUID;
 
-public class UpdateCategoryCommand {
+public class UpdateCategoryApplicationRequest {
     private UUID categoryId;
     private String name;
 
-    protected UpdateCategoryCommand() {
+    protected UpdateCategoryApplicationRequest() {
     }
 
-    public UpdateCategoryCommand(UUID categoryId, String name) {
+    public UpdateCategoryApplicationRequest(UUID categoryId, String name) {
         this.categoryId = categoryId;
         this.name = name;
     }

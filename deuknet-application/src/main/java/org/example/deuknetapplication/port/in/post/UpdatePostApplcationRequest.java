@@ -3,18 +3,28 @@ package org.example.deuknetapplication.port.in.post;
 import java.util.List;
 import java.util.UUID;
 
-public class CreatePostCommand {
+public class UpdatePostApplcationRequest {
+    private UUID postId;
     private String title;
     private String content;
     private List<UUID> categoryIds;
 
-    protected CreatePostCommand() {
+    protected UpdatePostApplcationRequest() {
     }
 
-    public CreatePostCommand(String title, String content, List<UUID> categoryIds) {
+    public UpdatePostApplcationRequest(UUID postId, String title, String content, List<UUID> categoryIds) {
+        this.postId = postId;
         this.title = title;
         this.content = content;
         this.categoryIds = categoryIds;
+    }
+
+    public UUID getPostId() {
+        return postId;
+    }
+
+    public void setPostId(UUID postId) {
+        this.postId = postId;
     }
 
     public String getTitle() {

@@ -1,6 +1,6 @@
 package org.example.deuknetapplication.service.category;
 
-import org.example.deuknetapplication.port.in.category.CreateCategoryCommand;
+import org.example.deuknetapplication.port.in.category.CreateCategoryApplicationRequest;
 import org.example.deuknetapplication.port.in.category.CreateCategoryUseCase;
 import org.example.deuknetapplication.port.out.repository.CategoryRepository;
 import org.example.deuknetdomain.common.exception.BusinessException;
@@ -22,15 +22,15 @@ public class CreateCategoryService implements CreateCategoryUseCase {
     }
 
     @Override
-    public UUID createCategory(CreateCategoryCommand command) {
-        categoryRepository.findByName(command.getName())
+    public UUID createCategory(CreateCategoryApplicationRequest request) {
+        categoryRepository.findByName(request.getName())
                 .ifPresent(c -> {
                     throw new BusinessException(CommonErrorCode.DUPLICATE_RESOURCE);
                 });
 
         Category category = Category.create(
-                org.example.deuknetdomain.common.vo.CategoryName.of(command.getName()),
-                command.getParentCategoryId()
+                org.example.deuknetdomain.common.vo.CategoryName.of(request.getName()),
+                request.getParentCategoryId()
         );
 
         category = categoryRepository.save(category);

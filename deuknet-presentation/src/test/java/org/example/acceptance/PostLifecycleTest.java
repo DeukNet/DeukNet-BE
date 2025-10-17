@@ -1,6 +1,8 @@
 package org.example.acceptance;
 
+import org.example.deuknetpresentation.controller.comment.dto.CreateCommentRequest;
 import org.example.deuknetpresentation.controller.post.dto.*;
+import org.example.deuknetpresentation.controller.reaction.dto.AddReactionRequest;
 import org.example.seedwork.AbstractTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;

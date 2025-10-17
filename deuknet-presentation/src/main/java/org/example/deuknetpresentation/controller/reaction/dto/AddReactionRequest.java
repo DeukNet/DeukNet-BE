@@ -1,4 +1,4 @@
-package org.example.deuknetpresentation.controller.post.dto;
+package org.example.deuknetpresentation.controller.reaction.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

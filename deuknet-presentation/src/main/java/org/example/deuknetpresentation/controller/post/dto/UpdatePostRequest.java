@@ -1,13 +1,13 @@
 package org.example.deuknetpresentation.controller.post.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.example.deuknetapplication.port.in.post.UpdatePostCommand;
+import org.example.deuknetapplication.port.in.post.UpdatePostApplcationRequest;
 
 import java.util.List;
 import java.util.UUID;
 
 @Schema(description = "게시글 수정 요청")
-public class UpdatePostRequest extends UpdatePostCommand {
+public class UpdatePostRequest extends UpdatePostApplcationRequest {
 
     public UpdatePostRequest() {
         super();

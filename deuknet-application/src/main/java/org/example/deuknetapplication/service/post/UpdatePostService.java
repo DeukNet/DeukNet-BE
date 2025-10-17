@@ -1,6 +1,6 @@
 package org.example.deuknetapplication.service.post;
 
-import org.example.deuknetapplication.port.in.post.UpdatePostCommand;
+import org.example.deuknetapplication.port.in.post.UpdatePostApplcationRequest;
 import org.example.deuknetapplication.port.in.post.UpdatePostUseCase;
 import org.example.deuknetapplication.port.out.repository.PostCategoryAssignmentRepository;
 import org.example.deuknetapplication.port.out.repository.PostRepository;
@@ -33,10 +33,10 @@ public class UpdatePostService implements UpdatePostUseCase {
     }
 
     @Override
-    public void updatePost(UpdatePostCommand command) {
+    public void updatePost(UpdatePostApplcationRequest request) {
         UUID currentUserId = currentUserPort.getCurrentUserId();
 
-        Post post = postRepository.findById(command.getPostId())
+        Post post = postRepository.findById(request.getPostId())
                 .orElseThrow(() -> new EntityNotFoundException("Post"));
 
         if (!post.getAuthorId().equals(currentUserId)) {
@@ -44,17 +44,17 @@ public class UpdatePostService implements UpdatePostUseCase {
         }
 
         post.updateContent(
-                org.example.deuknetdomain.common.vo.Title.from(command.getTitle()),
-                org.example.deuknetdomain.common.vo.Content.from(command.getContent())
+                org.example.deuknetdomain.common.vo.Title.from(request.getTitle()),
+                org.example.deuknetdomain.common.vo.Content.from(request.getContent())
         );
         postRepository.save(post);
 
-        postCategoryAssignmentRepository.deleteByPostId(command.getPostId());
+        postCategoryAssignmentRepository.deleteByPostId(request.getPostId());
 
-        if (command.getCategoryIds() != null && !command.getCategoryIds().isEmpty()) {
-            for (UUID categoryId : command.getCategoryIds()) {
+        if (request.getCategoryIds() != null && !request.getCategoryIds().isEmpty()) {
+            for (UUID categoryId : request.getCategoryIds()) {
                 PostCategoryAssignment assignment = PostCategoryAssignment.create(
-                        command.getPostId(),
+                        request.getPostId(),
                         categoryId
                 );
                 postCategoryAssignmentRepository.save(assignment);

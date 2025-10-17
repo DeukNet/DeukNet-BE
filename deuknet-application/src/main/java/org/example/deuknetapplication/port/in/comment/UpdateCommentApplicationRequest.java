@@ -2,14 +2,14 @@ package org.example.deuknetapplication.port.in.comment;
 
 import java.util.UUID;
 
-public class UpdateCommentCommand {
+public class UpdateCommentApplicationRequest {
     private UUID commentId;
     private String content;
 
-    protected UpdateCommentCommand() {
+    protected UpdateCommentApplicationRequest() {
     }
 
-    public UpdateCommentCommand(UUID commentId, String content) {
+    public UpdateCommentApplicationRequest(UUID commentId, String content) {
         this.commentId = commentId;
         this.content = content;
     }

@@ -1,12 +1,12 @@
 package org.example.deuknetpresentation.controller.category.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.example.deuknetapplication.port.in.category.CreateCategoryCommand;
+import org.example.deuknetapplication.port.in.category.CreateCategoryApplicationRequest;
 
 import java.util.UUID;
 
 @Schema(description = "카테고리 생성 요청")
-public class CreateCategoryRequest extends CreateCategoryCommand {
+public class CreateCategoryRequest extends CreateCategoryApplicationRequest {
 
     public CreateCategoryRequest() {
         super();

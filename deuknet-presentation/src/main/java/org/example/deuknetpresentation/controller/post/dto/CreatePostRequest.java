@@ -1,13 +1,13 @@
 package org.example.deuknetpresentation.controller.post.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.example.deuknetapplication.port.in.post.CreatePostCommand;
+import org.example.deuknetapplication.port.in.post.CreatePostApplicationRequest;
 
 import java.util.List;
 import java.util.UUID;
 
 @Schema(description = "게시글 작성 요청")
-public class CreatePostRequest extends CreatePostCommand {
+public class CreatePostRequest extends CreatePostApplicationRequest {
 
     public CreatePostRequest() {
         super();

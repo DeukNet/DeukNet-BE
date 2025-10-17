@@ -1,6 +1,6 @@
 package org.example.deuknetapplication.service.comment;
 
-import org.example.deuknetapplication.port.in.comment.CreateCommentCommand;
+import org.example.deuknetapplication.port.in.comment.CreateCommentAppliationRequest;
 import org.example.deuknetapplication.port.in.comment.CreateCommentUseCase;
 import org.example.deuknetapplication.port.out.repository.CommentRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
@@ -23,14 +23,14 @@ public class CreateCommentService implements CreateCommentUseCase {
     }
 
     @Override
-    public UUID createComment(CreateCommentCommand command) {
+    public UUID createComment(CreateCommentAppliationRequest request) {
         UUID currentUserId = currentUserPort.getCurrentUserId();
 
         Comment comment = Comment.create(
-                command.getPostId(),
+                request.getPostId(),
                 currentUserId,
-                org.example.deuknetdomain.common.vo.Content.from(command.getContent()),
-                command.getParentCommentId()
+                org.example.deuknetdomain.common.vo.Content.from(request.getContent()),
+                request.getParentCommentId()
         );
 
         comment = commentRepository.save(comment);
