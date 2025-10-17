@@ -26,7 +26,7 @@ class PostControllerTest extends AbstractTest {
         mockMvc.perform(post("/api/posts")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
     }
 
     @Test
@@ -42,7 +42,7 @@ class PostControllerTest extends AbstractTest {
         mockMvc.perform(put("/api/posts/" + id)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
     }
 
     @Test
@@ -51,7 +51,7 @@ class PostControllerTest extends AbstractTest {
         UUID id = create();
 
         mockMvc.perform(post("/api/posts/" + id + "/publish"))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
     }
 
     @Test
@@ -60,7 +60,7 @@ class PostControllerTest extends AbstractTest {
         UUID id = create();
 
         mockMvc.perform(delete("/api/posts/" + id))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
     }
 
     private UUID create() throws Exception {
@@ -72,7 +72,7 @@ class PostControllerTest extends AbstractTest {
         MvcResult r = mockMvc.perform(post("/api/posts")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn();
 
         return UUID.fromString(r.getResponse().getContentAsString().replaceAll("\"", ""));

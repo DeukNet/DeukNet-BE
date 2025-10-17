@@ -27,7 +27,7 @@ class CommentControllerTest extends AbstractTest {
         mockMvc.perform(post("/api/posts/" + postId + "/comments")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
     }
 
     @Test
@@ -42,7 +42,7 @@ class CommentControllerTest extends AbstractTest {
         mockMvc.perform(put("/api/posts/" + postId + "/comments/" + commentId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
     }
 
     @Test
@@ -52,7 +52,7 @@ class CommentControllerTest extends AbstractTest {
         UUID commentId = createComment(postId);
 
         mockMvc.perform(delete("/api/posts/" + postId + "/comments/" + commentId))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
     }
 
     private UUID createPost() throws Exception {
@@ -64,7 +64,7 @@ class CommentControllerTest extends AbstractTest {
         MvcResult r = mockMvc.perform(post("/api/posts")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn();
 
         return UUID.fromString(r.getResponse().getContentAsString().replaceAll("\"", ""));
@@ -78,7 +78,7 @@ class CommentControllerTest extends AbstractTest {
         MvcResult r = mockMvc.perform(post("/api/posts/" + postId + "/comments")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn();
 
         return UUID.fromString(r.getResponse().getContentAsString().replaceAll("\"", ""));

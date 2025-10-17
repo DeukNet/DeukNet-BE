@@ -1,6 +1,6 @@
 package org.example.deuknetinfrastructure.data.command.post;
 
-import org.example.deuknetdomain.model.command.post.postcategory.PostCategoryAssignment;
+import org.example.deuknetdomain.model.command.post.PostCategoryAssignment;
 import org.springframework.stereotype.Component;
 
 @Component

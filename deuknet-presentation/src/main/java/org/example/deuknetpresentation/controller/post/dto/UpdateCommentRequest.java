@@ -1,25 +1,24 @@
 package org.example.deuknetpresentation.controller.post.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.example.deuknetapplication.port.in.comment.UpdateCommentCommand;
+
+import java.util.UUID;
 
 @Schema(description = "댓글 수정 요청")
-public class UpdateCommentRequest {
-    
-    @Schema(description = "댓글 내용", example = "수정된 댓글 내용입니다.", required = true)
-    private String content;
+public class UpdateCommentRequest extends UpdateCommentCommand {
 
     public UpdateCommentRequest() {
+        super();
     }
 
-    public UpdateCommentRequest(String content) {
-        this.content = content;
+    public UpdateCommentRequest(UUID commentId, String content) {
+        super(commentId, content);
     }
 
+    @Override
+    @Schema(description = "댓글 내용", example = "수정된 댓글 내용입니다.", required = true)
     public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
+        return super.getContent();
     }
 }

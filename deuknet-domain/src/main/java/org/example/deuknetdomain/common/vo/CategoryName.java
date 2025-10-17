@@ -1,7 +1,9 @@
 package org.example.deuknetdomain.common.vo;
 
+import lombok.Getter;
 import org.example.deuknetdomain.common.exception.InvalidValueException;
 
+@Getter
 public class CategoryName {
     
     private static final int MAX_LENGTH = 50;
@@ -23,9 +25,5 @@ public class CategoryName {
         if (value.length() > MAX_LENGTH) {
             throw new InvalidValueException("Category name cannot exceed " + MAX_LENGTH + " characters");
         }
-    }
-
-    public String getValue() {
-        return value;
     }
 }

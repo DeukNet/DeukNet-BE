@@ -26,7 +26,7 @@ class PostLifecycleTest extends AbstractTest {
         MvcResult createResult = mockMvc.perform(post("/api/posts")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createReq)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn();
 
         UUID postId = UUID.fromString(createResult.getResponse().getContentAsString().replaceAll("\"", ""));
@@ -39,10 +39,10 @@ class PostLifecycleTest extends AbstractTest {
         mockMvc.perform(put("/api/posts/" + postId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateReq)))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         mockMvc.perform(post("/api/posts/" + postId + "/publish"))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         CreateCommentRequest commentReq = new CreateCommentRequest();
         commentReq.setContent("Comment");
@@ -51,7 +51,7 @@ class PostLifecycleTest extends AbstractTest {
         mockMvc.perform(post("/api/posts/" + postId + "/comments")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(commentReq)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         AddReactionRequest reactionReq = new AddReactionRequest();
         reactionReq.setReactionType("LIKE");
@@ -59,9 +59,9 @@ class PostLifecycleTest extends AbstractTest {
         mockMvc.perform(post("/api/posts/" + postId + "/reactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(reactionReq)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         mockMvc.perform(delete("/api/posts/" + postId))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
     }
 }

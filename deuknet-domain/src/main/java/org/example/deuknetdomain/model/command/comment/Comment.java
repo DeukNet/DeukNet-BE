@@ -1,14 +1,15 @@
 package org.example.deuknetdomain.model.command.comment;
 
 import lombok.Getter;
+import org.example.deuknetdomain.common.seedwork.AggregateRoot;
 import org.example.deuknetdomain.common.vo.Content;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
 @Getter
-public class Comment {
-    private final UUID id;
+public class Comment extends AggregateRoot {
+
     private final UUID postId;
     private final UUID authorId;
     private Content content;
@@ -18,7 +19,7 @@ public class Comment {
 
     private Comment(UUID id, UUID postId, UUID authorId, Content content,
                    UUID parentCommentId, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.id = id;
+        super(id);
         this.postId = postId;
         this.authorId = authorId;
         this.content = content;

@@ -1,7 +1,7 @@
 package org.example.deuknetinfrastructure.data.command.post;
 
 import org.example.deuknetapplication.port.out.repository.PostCategoryAssignmentRepository;
-import org.example.deuknetdomain.model.command.post.postcategory.PostCategoryAssignment;
+import org.example.deuknetdomain.model.command.post.PostCategoryAssignment;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

@@ -1,7 +1,7 @@
 package org.example.deuknetinfrastructure.data.command.post;
 
 import org.example.deuknetapplication.port.out.repository.PostRepository;
-import org.example.deuknetdomain.model.command.post.post.Post;
+import org.example.deuknetdomain.model.command.post.Post;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;

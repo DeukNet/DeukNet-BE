@@ -1,8 +1,13 @@
 package org.example.deuknetinfrastructure.data.command.category;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.UUID;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "categories")
 public class CategoryEntity {
@@ -23,30 +28,6 @@ public class CategoryEntity {
     public CategoryEntity(UUID id, String name, UUID parentCategoryId) {
         this.id = id;
         this.name = name;
-        this.parentCategoryId = parentCategoryId;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public UUID getParentCategoryId() {
-        return parentCategoryId;
-    }
-
-    public void setParentCategoryId(UUID parentCategoryId) {
         this.parentCategoryId = parentCategoryId;
     }
 }

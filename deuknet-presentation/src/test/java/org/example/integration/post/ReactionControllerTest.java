@@ -26,7 +26,7 @@ class ReactionControllerTest extends AbstractTest {
         mockMvc.perform(post("/api/posts/" + postId + "/reactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
     }
 
     private UUID createPost() throws Exception {
@@ -38,7 +38,7 @@ class ReactionControllerTest extends AbstractTest {
         MvcResult r = mockMvc.perform(post("/api/posts")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn();
 
         return UUID.fromString(r.getResponse().getContentAsString().replaceAll("\"", ""));

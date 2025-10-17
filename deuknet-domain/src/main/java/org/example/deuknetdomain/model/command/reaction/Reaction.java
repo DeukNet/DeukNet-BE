@@ -3,11 +3,11 @@ package org.example.deuknetdomain.model.command.reaction;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.Getter;
+import org.example.deuknetdomain.common.seedwork.AggregateRoot;
 
 @Getter
-public class Reaction {
+public class Reaction extends AggregateRoot {
 
-    private final UUID id;
     private final ReactionType reactionType;
     private final TargetType targetType;
     private final UUID targetId;
@@ -16,7 +16,7 @@ public class Reaction {
 
     private Reaction(UUID id, ReactionType reactionType, TargetType targetType, 
                     UUID targetId, UUID userId, LocalDateTime createdAt) {
-        this.id = id;
+        super(id);
         this.reactionType = reactionType;
         this.targetType = targetType;
         this.targetId = targetId;

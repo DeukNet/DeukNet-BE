@@ -1,13 +1,14 @@
 package org.example.deuknetapplication.service.post;
 
+import org.example.deuknetapplication.port.in.post.UpdatePostCommand;
 import org.example.deuknetapplication.port.in.post.UpdatePostUseCase;
 import org.example.deuknetapplication.port.out.repository.PostCategoryAssignmentRepository;
 import org.example.deuknetapplication.port.out.repository.PostRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
 import org.example.deuknetdomain.common.exception.EntityNotFoundException;
 import org.example.deuknetdomain.common.exception.ForbiddenException;
-import org.example.deuknetdomain.model.command.post.post.Post;
-import org.example.deuknetdomain.model.command.post.postcategory.PostCategoryAssignment;
+import org.example.deuknetdomain.model.command.post.Post;
+import org.example.deuknetdomain.model.command.post.PostCategoryAssignment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,23 +35,26 @@ public class UpdatePostService implements UpdatePostUseCase {
     @Override
     public void updatePost(UpdatePostCommand command) {
         UUID currentUserId = currentUserPort.getCurrentUserId();
-        
-        Post post = postRepository.findById(command.postId())
+
+        Post post = postRepository.findById(command.getPostId())
                 .orElseThrow(() -> new EntityNotFoundException("Post"));
-        
+
         if (!post.getAuthorId().equals(currentUserId)) {
             throw new ForbiddenException("Not authorized to update this post");
         }
-        
-        post.updateContent(command.title(), command.content());
+
+        post.updateContent(
+                org.example.deuknetdomain.common.vo.Title.from(command.getTitle()),
+                org.example.deuknetdomain.common.vo.Content.from(command.getContent())
+        );
         postRepository.save(post);
-        
-        postCategoryAssignmentRepository.deleteByPostId(command.postId());
-        
-        if (command.categoryIds() != null && !command.categoryIds().isEmpty()) {
-            for (UUID categoryId : command.categoryIds()) {
+
+        postCategoryAssignmentRepository.deleteByPostId(command.getPostId());
+
+        if (command.getCategoryIds() != null && !command.getCategoryIds().isEmpty()) {
+            for (UUID categoryId : command.getCategoryIds()) {
                 PostCategoryAssignment assignment = PostCategoryAssignment.create(
-                        command.postId(),
+                        command.getPostId(),
                         categoryId
                 );
                 postCategoryAssignmentRepository.save(assignment);

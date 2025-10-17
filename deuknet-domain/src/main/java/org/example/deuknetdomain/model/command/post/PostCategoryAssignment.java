@@ -1,17 +1,17 @@
-package org.example.deuknetdomain.model.command.post.postcategory;
+package org.example.deuknetdomain.model.command.post;
 
 import java.util.UUID;
 import lombok.Getter;
+import org.example.deuknetdomain.common.seedwork.Entity;
 
 @Getter
-public class PostCategoryAssignment {
+public class PostCategoryAssignment extends Entity {
 
-    private final UUID id;
     private final UUID postId;
     private final UUID categoryId;
 
     private PostCategoryAssignment(UUID id, UUID postId, UUID categoryId) {
-        this.id = id;
+        super(id);
         this.postId = postId;
         this.categoryId = categoryId;
     }

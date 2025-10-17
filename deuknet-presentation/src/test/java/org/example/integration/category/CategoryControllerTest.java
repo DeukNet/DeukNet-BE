@@ -24,7 +24,7 @@ class CategoryControllerTest extends AbstractTest {
         mockMvc.perform(post("/api/categories")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
     }
 
     @Test
@@ -38,7 +38,7 @@ class CategoryControllerTest extends AbstractTest {
         mockMvc.perform(put("/api/categories/" + id)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
     }
 
     @Test
@@ -47,7 +47,7 @@ class CategoryControllerTest extends AbstractTest {
         UUID id = create("ToDelete");
 
         mockMvc.perform(delete("/api/categories/" + id))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
     }
 
     private UUID create(String name) throws Exception {
@@ -58,7 +58,7 @@ class CategoryControllerTest extends AbstractTest {
         MvcResult r = mockMvc.perform(post("/api/categories")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn();
 
         return UUID.fromString(r.getResponse().getContentAsString().replaceAll("\"", ""));

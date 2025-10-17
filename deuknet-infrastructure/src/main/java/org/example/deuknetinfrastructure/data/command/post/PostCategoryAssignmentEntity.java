@@ -1,8 +1,13 @@
 package org.example.deuknetinfrastructure.data.command.post;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.UUID;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "post_category_assignments")
 public class PostCategoryAssignmentEntity {
@@ -23,30 +28,6 @@ public class PostCategoryAssignmentEntity {
     public PostCategoryAssignmentEntity(UUID id, UUID postId, UUID categoryId) {
         this.id = id;
         this.postId = postId;
-        this.categoryId = categoryId;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public UUID getPostId() {
-        return postId;
-    }
-
-    public void setPostId(UUID postId) {
-        this.postId = postId;
-    }
-
-    public UUID getCategoryId() {
-        return categoryId;
-    }
-
-    public void setCategoryId(UUID categoryId) {
         this.categoryId = categoryId;
     }
 }

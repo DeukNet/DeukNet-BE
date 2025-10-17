@@ -1,14 +1,15 @@
-package org.example.deuknetdomain.model.command.post.post;
+package org.example.deuknetdomain.model.command.post;
 
 import lombok.Getter;
+import org.example.deuknetdomain.common.seedwork.AggregateRoot;
 import org.example.deuknetdomain.common.vo.Content;
 import org.example.deuknetdomain.common.vo.Title;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
-public class Post {
-    private final UUID id;
+public class Post extends AggregateRoot {
+
     private Title title;
     private Content content;
     private final UUID authorId;
@@ -19,7 +20,7 @@ public class Post {
 
     private Post(UUID id, Title title, Content content, UUID authorId,
                  PostStatus status, Long viewCount, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.id = id;
+        super(id);
         this.title = title;
         this.content = content;
         this.authorId = authorId;

@@ -1,4 +1,4 @@
-package org.example.deuknetdomain.model.command.post.post;
+package org.example.deuknetdomain.model.command.post;
 
 public enum PostStatus {
     DRAFT,

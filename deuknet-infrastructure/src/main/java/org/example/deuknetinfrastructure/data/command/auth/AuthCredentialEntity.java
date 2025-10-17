@@ -1,10 +1,14 @@
 package org.example.deuknetinfrastructure.data.command.auth;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.example.deuknetdomain.model.command.auth.AuthProvider;
 
 import java.util.UUID;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "auth_credentials")
 public class AuthCredentialEntity {
@@ -33,35 +37,4 @@ public class AuthCredentialEntity {
         this.email = email;
     }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public UUID getUserId() {
-        return userId;
-    }
-
-    public void setUserId(UUID userId) {
-        this.userId = userId;
-    }
-
-    public AuthProvider getAuthProvider() {
-        return authProvider;
-    }
-
-    public void setAuthProvider(AuthProvider authProvider) {
-        this.authProvider = authProvider;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
 }

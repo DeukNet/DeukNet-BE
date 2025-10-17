@@ -35,10 +35,8 @@ public class GoogleOAuthClient implements OAuthClient {
 
     @Override
     public OAuthUserInfo getUserInfo(String authorizationCode) {
-        // 1. Get Access Token
         String accessToken = getAccessToken(authorizationCode);
         
-        // 2. Get User Info
         return fetchUserInfo(accessToken);
     }
 

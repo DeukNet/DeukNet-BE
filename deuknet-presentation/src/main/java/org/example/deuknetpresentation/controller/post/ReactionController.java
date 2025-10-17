@@ -9,7 +9,7 @@ import org.example.deuknetapplication.port.in.reaction.AddReactionUseCase;
 import org.example.deuknetapplication.port.in.reaction.RemoveReactionUseCase;
 import org.example.deuknetdomain.model.command.reaction.ReactionType;
 import org.example.deuknetpresentation.controller.post.dto.AddReactionRequest;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -36,13 +36,14 @@ public class ReactionController {
                     "리액션 타입: LIKE, LOVE, HAHA, WOW, SAD, ANGRY"
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "리액션 추가 성공"),
+            @ApiResponse(responseCode = "201", description = "리액션 추가 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 (유효하지 않은 리액션 타입)"),
             @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
     })
     @PostMapping
-    public ResponseEntity<Void> addReaction(
+    @ResponseStatus(HttpStatus.CREATED)
+    public void addReaction(
             @Parameter(description = "게시글 ID", required = true)
             @PathVariable UUID postId,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -55,9 +56,8 @@ public class ReactionController {
                 postId,
                 ReactionType.valueOf(request.getReactionType())
         );
-        
+
         addReactionUseCase.addReaction(command);
-        return ResponseEntity.ok().build();
     }
 
     @Operation(
@@ -65,17 +65,17 @@ public class ReactionController {
             description = "자신이 추가한 리액션을 삭제합니다."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "리액션 삭제 성공"),
+            @ApiResponse(responseCode = "204", description = "리액션 삭제 성공"),
             @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "403", description = "권한 없음 (본인의 리액션이 아님)"),
             @ApiResponse(responseCode = "404", description = "리액션을 찾을 수 없음")
     })
     @DeleteMapping("/{reactionId}")
-    public ResponseEntity<Void> removeReaction(
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeReaction(
             @Parameter(description = "리액션 ID", required = true)
             @PathVariable UUID reactionId
     ) {
         removeReactionUseCase.removeReaction(reactionId);
-        return ResponseEntity.ok().build();
     }
 }

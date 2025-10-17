@@ -1,18 +1,19 @@
 package org.example.deuknetdomain.model.command.category;
 
 import lombok.Getter;
+import org.example.deuknetdomain.common.seedwork.AggregateRoot;
 import org.example.deuknetdomain.common.vo.CategoryName;
 import java.util.Optional;
 import java.util.UUID;
 
 @Getter
-public class Category {
-    private final UUID id;
+public class Category extends AggregateRoot {
+
     private CategoryName name;
     private final UUID parentCategoryId;
 
     private Category(UUID id, CategoryName name, UUID parentCategoryId) {
-        this.id = id;
+        super(id);
         this.name = name;
         this.parentCategoryId = parentCategoryId;
     }

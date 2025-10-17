@@ -5,7 +5,7 @@ import org.example.deuknetapplication.port.out.repository.PostRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
 import org.example.deuknetdomain.common.exception.EntityNotFoundException;
 import org.example.deuknetdomain.common.exception.ForbiddenException;
-import org.example.deuknetdomain.model.command.post.post.Post;
+import org.example.deuknetdomain.model.command.post.Post;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

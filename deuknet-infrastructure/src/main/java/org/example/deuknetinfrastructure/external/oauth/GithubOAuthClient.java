@@ -83,7 +83,6 @@ public class GithubOAuthClient implements OAuthClient {
         
         Map<String, Object> userInfo = response.getBody();
         
-        // Github doesn't provide email in basic scope, might need to fetch separately
         String email = (String) userInfo.get("email");
         if (email == null || email.isEmpty()) {
             email = fetchPrimaryEmail(accessToken);

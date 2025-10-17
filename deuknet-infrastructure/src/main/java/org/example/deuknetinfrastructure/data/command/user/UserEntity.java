@@ -1,8 +1,13 @@
 package org.example.deuknetinfrastructure.data.command.user;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.UUID;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "users")
 public class UserEntity {
@@ -36,54 +41,6 @@ public class UserEntity {
         this.username = username;
         this.displayName = displayName;
         this.bio = bio;
-        this.avatarUrl = avatarUrl;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public UUID getAuthCredentialId() {
-        return authCredentialId;
-    }
-
-    public void setAuthCredentialId(UUID authCredentialId) {
-        this.authCredentialId = authCredentialId;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getDisplayName() {
-        return displayName;
-    }
-
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
-    }
-
-    public String getBio() {
-        return bio;
-    }
-
-    public void setBio(String bio) {
-        this.bio = bio;
-    }
-
-    public String getAvatarUrl() {
-        return avatarUrl;
-    }
-
-    public void setAvatarUrl(String avatarUrl) {
         this.avatarUrl = avatarUrl;
     }
 }
