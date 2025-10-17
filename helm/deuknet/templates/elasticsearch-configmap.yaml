@@ -1,0 +1,25 @@
+{{- if .Values.elasticsearch.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elasticsearch-config
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.elasticsearch.name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  elasticsearch.yml: |
+    cluster.name: deuknet-cluster
+    network.host: 0.0.0.0
+    discovery.type: {{ .Values.elasticsearch.env.discoveryType }}
+
+    # Security settings - basic auth only, no SSL
+    xpack.security.enabled: {{ .Values.elasticsearch.config.xpackSecurityEnabled }}
+    xpack.security.enrollment.enabled: {{ .Values.elasticsearch.config.xpackSecurityEnrollmentEnabled }}
+
+    # Disable SSL
+    xpack.security.http.ssl.enabled: {{ .Values.elasticsearch.config.xpackSecurityHttpSslEnabled }}
+    xpack.security.transport.ssl.enabled: {{ .Values.elasticsearch.config.xpackSecurityTransportSslEnabled }}
+{{- end }}

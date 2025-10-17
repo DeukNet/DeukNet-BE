@@ -1,0 +1,59 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Your release is named {{ .Release.Name }}.
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }}
+  $ helm get all {{ .Release.Name }}
+
+{{- if .Values.app }}
+
+Application Access:
+{{- if eq .Values.app.service.type "NodePort" }}
+  Application URL: http://<node-ip>:{{ .Values.app.service.nodePort }}
+
+  For Minikube:
+  $ minikube service {{ .Values.app.name }}-service --url
+{{- else if eq .Values.app.service.type "LoadBalancer" }}
+  Get the application URL by running:
+  $ kubectl get svc {{ .Values.app.name }}-service -n {{ .Values.global.namespace }}
+{{- else }}
+  Forward port to access the application:
+  $ kubectl port-forward svc/{{ .Values.app.name }}-service {{ .Values.app.service.port }}:{{ .Values.app.service.port }} -n {{ .Values.global.namespace }}
+  Then access: http://localhost:{{ .Values.app.service.port }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.kibana.enabled }}
+
+Kibana Access:
+{{- if eq .Values.kibana.service.type "NodePort" }}
+  Kibana URL: http://<node-ip>:{{ .Values.kibana.service.nodePort }}
+
+  For Minikube:
+  $ minikube service {{ .Values.kibana.name }} --url
+{{- else }}
+  Forward port to access Kibana:
+  $ kubectl port-forward svc/{{ .Values.kibana.name }} {{ .Values.kibana.service.port }}:{{ .Values.kibana.service.port }} -n {{ .Values.global.namespace }}
+  Then access: http://localhost:{{ .Values.kibana.service.port }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.elasticsearch.enabled }}
+
+Elasticsearch Credentials:
+  Username: elastic
+  Password: {{ .Values.elasticsearch.env.elasticPassword }}
+{{- end }}
+
+Components Status:
+  Check the status of all components:
+  $ kubectl get all -n {{ .Values.global.namespace }} -l release={{ .Release.Name }}
+
+Logs:
+  Check application logs:
+  $ kubectl logs -f deployment/{{ .Values.app.name }} -n {{ .Values.global.namespace }}
+
+  Check Filebeat logs:
+  $ kubectl logs -f daemonset/{{ .Values.filebeat.name }} -n {{ .Values.global.namespace }}

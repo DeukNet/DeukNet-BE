@@ -1,0 +1,22 @@
+{{- if .Values.postgres.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.postgres.name }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.postgres.name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  selector:
+    app: {{ .Values.postgres.name }}
+    release: {{ .Release.Name }}
+  ports:
+    - name: postgres
+      port: {{ .Values.postgres.service.port }}
+      targetPort: {{ .Values.postgres.service.port }}
+      protocol: TCP
+  type: {{ .Values.postgres.service.type }}
+{{- end }}

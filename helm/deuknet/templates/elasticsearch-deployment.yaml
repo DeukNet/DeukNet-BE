@@ -1,0 +1,55 @@
+{{- if .Values.elasticsearch.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.elasticsearch.name }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.elasticsearch.name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.elasticsearch.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.elasticsearch.name }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.elasticsearch.name }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Values.elasticsearch.name }}
+          image: "{{ .Values.elasticsearch.image.repository }}:{{ .Values.elasticsearch.image.tag }}"
+          imagePullPolicy: {{ .Values.elasticsearch.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.elasticsearch.service.httpPort }}
+              protocol: TCP
+            - name: transport
+              containerPort: {{ .Values.elasticsearch.service.transportPort }}
+              protocol: TCP
+          env:
+            - name: discovery.type
+              value: {{ .Values.elasticsearch.env.discoveryType }}
+            - name: ES_JAVA_OPTS
+              value: {{ .Values.elasticsearch.env.javaOpts | quote }}
+            - name: ELASTIC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: elasticsearch-credentials
+                  key: elastic-password
+          volumeMounts:
+            - name: config
+              mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+              subPath: elasticsearch.yml
+          resources:
+            {{- toYaml .Values.elasticsearch.resources | nindent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: elasticsearch-config
+{{- end }}

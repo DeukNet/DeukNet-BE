@@ -1,0 +1,50 @@
+# Development environment values
+global:
+  namespace: deuknet-dev
+
+app:
+  name: deuknet-app
+  replicaCount: 1
+
+  image:
+    repository: deuknet-app
+    tag: dev
+    pullPolicy: Always
+
+  service:
+    type: NodePort
+    nodePort: 30080
+
+  env:
+    springProfilesActive: dev
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 1
+      memory: 1Gi
+
+postgres:
+  enabled: true
+  env:
+    database: deuknet_dev
+    username: deuknet_user
+    password: dev_postgres_password_2024
+
+elasticsearch:
+  enabled: true
+  env:
+    elasticPassword: dev_elastic_password_2024
+
+kibana:
+  enabled: true
+  env:
+    elasticsearchPassword: dev_elastic_password_2024
+
+logstash:
+  enabled: true
+
+filebeat:
+  enabled: true

@@ -1,0 +1,70 @@
+{{- if .Values.filebeat.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebeat-config
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.filebeat.name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  filebeat.yml: |
+    filebeat.autodiscover:
+      providers:
+        - type: kubernetes
+          node: ${NODE_NAME}
+          hints.enabled: true
+
+          # 템플릿 설정
+          templates:
+            # 기본적으로 모든 Pod 수집
+            - condition:
+                # Job, Setup Job, Kubernetes 시스템 Pod 제외
+                not:
+                  or:
+                    - equals:
+                        kubernetes.namespace: "kube-system"
+                    - equals:
+                        kubernetes.namespace: "kube-public"
+                    - contains:
+                        kubernetes.pod.name: "elasticsearch-setup"
+                    - contains:
+                        kubernetes.labels.job-name: ""  # Job Pod 제외
+              config:
+                - type: container
+                  paths:
+                    - /var/log/containers/*-${data.kubernetes.container.id}.log
+                  processors:
+                    - add_kubernetes_metadata:
+                        host: ${NODE_NAME}
+                        matchers:
+                        - logs_path:
+                            logs_path: "/var/log/containers/"
+
+    # 추가 프로세서
+    processors:
+      # Kubernetes 메타데이터 추가
+      - add_cloud_metadata: ~
+      - add_host_metadata: ~
+
+      # 불필요한 필드 제거
+      - drop_fields:
+          fields: ["agent.ephemeral_id", "agent.id", "ecs.version"]
+          ignore_missing: true
+
+      # Job Pod 로그 드롭
+      - drop_event:
+          when:
+            or:
+              - contains:
+                  kubernetes.pod.name: "elasticsearch-setup"
+              - equals:
+                  kubernetes.namespace: "kube-system"
+              - equals:
+                  kubernetes.namespace: "kube-public"
+
+    output.logstash:
+      hosts: ["{{ .Values.logstash.name }}:{{ .Values.logstash.service.port }}"]
+{{- end }}

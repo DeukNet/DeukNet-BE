@@ -1,0 +1,184 @@
+# Default values for deuknet
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Global settings
+global:
+  namespace: default
+
+# Application settings
+app:
+  name: myapp
+  replicaCount: 1
+
+  image:
+    repository: myapp
+    tag: local
+    pullPolicy: IfNotPresent
+
+  service:
+    type: NodePort
+    port: 80
+    targetPort: 8080
+    nodePort: 30080
+
+  env:
+    springProfilesActive: prod
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 2
+      memory: 1024Mi
+
+  livenessProbe:
+    httpGet:
+      path: /actuator/health/liveness
+      port: 8080
+    initialDelaySeconds: 10
+    periodSeconds: 15
+
+  readinessProbe:
+    httpGet:
+      path: /actuator/health/readiness
+      port: 8080
+    initialDelaySeconds: 5
+    periodSeconds: 10
+
+  labels:
+    collectLogs: "true"
+
+# PostgreSQL settings
+postgres:
+  enabled: true
+  name: postgres
+  replicaCount: 1
+
+  image:
+    repository: postgres
+    tag: 15-alpine
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 5432
+
+  env:
+    database: app_db
+    username: app_user
+    password: app_pass
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Elasticsearch settings
+elasticsearch:
+  enabled: true
+  name: elasticsearch
+  replicaCount: 1
+
+  image:
+    repository: docker.elastic.co/elasticsearch/elasticsearch
+    tag: 8.11.0
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    httpPort: 9200
+    transportPort: 9300
+
+  env:
+    discoveryType: single-node
+    javaOpts: "-Xms512m -Xmx512m"
+    elasticPassword: changeme
+
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+
+  config:
+    xpackSecurityEnabled: true
+    xpackSecurityEnrollmentEnabled: true
+    xpackSecurityHttpSslEnabled: false
+    xpackSecurityTransportSslEnabled: false
+
+# Logstash settings
+logstash:
+  enabled: true
+  name: logstash
+  replicaCount: 1
+
+  image:
+    repository: docker.elastic.co/logstash/logstash
+    tag: 8.11.0
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 5044
+
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+# Kibana settings
+kibana:
+  enabled: true
+  name: kibana
+  replicaCount: 1
+
+  image:
+    repository: docker.elastic.co/kibana/kibana
+    tag: 8.11.0
+    pullPolicy: IfNotPresent
+
+  service:
+    type: NodePort
+    port: 5601
+    nodePort: 30561
+
+  env:
+    elasticsearchHosts: http://elasticsearch:9200
+    elasticsearchUsername: elastic
+    elasticsearchPassword: changeme
+
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+# Filebeat settings
+filebeat:
+  enabled: true
+  name: filebeat
+
+  image:
+    repository: docker.elastic.co/beats/filebeat
+    tag: 8.11.0
+    pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 100Mi
+    limits:
+      cpu: 200m
+      memory: 200Mi

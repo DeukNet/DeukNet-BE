@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.app.name }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.app.name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.app.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app.name }}
+        release: {{ .Release.Name }}
+        collectLogs: {{ .Values.app.labels.collectLogs | quote }}
+    spec:
+      containers:
+        - name: {{ .Values.app.name }}
+          image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
+          imagePullPolicy: {{ .Values.app.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.app.service.targetPort }}
+              protocol: TCP
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: {{ .Values.app.env.springProfilesActive }}
+          resources:
+            {{- toYaml .Values.app.resources | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.app.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.app.readinessProbe | nindent 12 }}

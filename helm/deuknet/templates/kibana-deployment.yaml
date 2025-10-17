@@ -1,0 +1,44 @@
+{{- if .Values.kibana.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.kibana.name }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.kibana.name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.kibana.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.kibana.name }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.kibana.name }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Values.kibana.name }}
+          image: "{{ .Values.kibana.image.repository }}:{{ .Values.kibana.image.tag }}"
+          imagePullPolicy: {{ .Values.kibana.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.kibana.service.port }}
+              protocol: TCP
+          env:
+            - name: ELASTICSEARCH_HOSTS
+              value: {{ .Values.kibana.env.elasticsearchHosts | quote }}
+            - name: ELASTICSEARCH_USERNAME
+              value: "kibana_system"
+            - name: ELASTICSEARCH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: elasticsearch-credentials
+                  key: kibana-password
+          resources:
+            {{- toYaml .Values.kibana.resources | nindent 12 }}
+{{- end }}
