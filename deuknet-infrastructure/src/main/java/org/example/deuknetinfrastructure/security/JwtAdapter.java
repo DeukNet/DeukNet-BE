@@ -55,7 +55,7 @@ public class JwtAdapter implements JwtPort {
             
             return UUID.fromString(claims.getSubject());
         } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid token", e);
+            throw new org.example.deuknetdomain.model.command.auth.exception.InvalidTokenException();
         }
     }
 

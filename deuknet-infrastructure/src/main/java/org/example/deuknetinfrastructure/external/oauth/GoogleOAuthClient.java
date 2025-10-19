@@ -56,7 +56,7 @@ public class GoogleOAuthClient implements OAuthClient {
         ResponseEntity<Map> response = restTemplate.postForEntity(tokenUri, request, Map.class);
         
         if (response.getBody() == null || !response.getBody().containsKey("access_token")) {
-            throw new IllegalStateException("Failed to get access token from Google");
+            throw new org.example.deuknetinfrastructure.external.oauth.exception.OAuthTokenRetrievalException("Google");
         }
         
         return (String) response.getBody().get("access_token");
@@ -76,7 +76,7 @@ public class GoogleOAuthClient implements OAuthClient {
         );
         
         if (response.getBody() == null) {
-            throw new IllegalStateException("Failed to get user info from Google");
+            throw new org.example.deuknetinfrastructure.external.oauth.exception.OAuthUserInfoRetrievalException("Google");
         }
         
         Map<String, Object> userInfo = response.getBody();

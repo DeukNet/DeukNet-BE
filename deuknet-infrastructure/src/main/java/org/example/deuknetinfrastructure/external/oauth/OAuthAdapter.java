@@ -3,6 +3,7 @@ package org.example.deuknetinfrastructure.external.oauth;
 import org.example.deuknetapplication.port.out.external.OAuthPort;
 import org.example.deuknetdomain.model.command.auth.AuthProvider;
 import org.example.deuknetdomain.model.command.auth.OAuthUserInfo;
+import org.example.deuknetdomain.model.command.auth.exception.UnsupportedOAuthProviderException;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -22,7 +23,7 @@ public class OAuthAdapter implements OAuthPort {
     public OAuthUserInfo getUserInfo(String authorizationCode, AuthProvider provider) {
         OAuthClient client = oauthClients.get(provider);
         if (client == null) {
-            throw new IllegalArgumentException("Unsupported OAuth provider: " + provider);
+            throw new UnsupportedOAuthProviderException();
         }
         return client.getUserInfo(authorizationCode);
     }

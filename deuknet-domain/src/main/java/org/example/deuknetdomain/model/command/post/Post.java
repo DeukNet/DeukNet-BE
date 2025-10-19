@@ -56,7 +56,7 @@ public class Post extends AggregateRoot {
 
     public void publish() {
         if (status != PostStatus.DRAFT) {
-            throw new IllegalStateException("Only draft posts can be published");
+            throw new org.example.deuknetdomain.model.command.post.exception.CannotPublishNonDraftPostException();
         }
         this.status = PostStatus.PUBLISHED;
         this.updatedAt = LocalDateTime.now();

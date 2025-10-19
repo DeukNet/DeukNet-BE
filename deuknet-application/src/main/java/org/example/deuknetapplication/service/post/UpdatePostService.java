@@ -1,12 +1,12 @@
 package org.example.deuknetapplication.service.post;
 
+import org.example.deuknetapplication.common.exception.OwnerMismatchException;
+import org.example.deuknetapplication.common.exception.ResourceNotFoundException;
 import org.example.deuknetapplication.port.in.post.UpdatePostApplcationRequest;
 import org.example.deuknetapplication.port.in.post.UpdatePostUseCase;
 import org.example.deuknetapplication.port.out.repository.PostCategoryAssignmentRepository;
 import org.example.deuknetapplication.port.out.repository.PostRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
-import org.example.deuknetdomain.common.exception.EntityNotFoundException;
-import org.example.deuknetdomain.common.exception.ForbiddenException;
 import org.example.deuknetdomain.model.command.post.Post;
 import org.example.deuknetdomain.model.command.post.PostCategoryAssignment;
 import org.springframework.stereotype.Service;
@@ -37,10 +37,10 @@ public class UpdatePostService implements UpdatePostUseCase {
         UUID currentUserId = currentUserPort.getCurrentUserId();
 
         Post post = postRepository.findById(request.getPostId())
-                .orElseThrow(() -> new EntityNotFoundException("Post"));
+                .orElseThrow(ResourceNotFoundException::new);
 
         if (!post.getAuthorId().equals(currentUserId)) {
-            throw new ForbiddenException("Not authorized to update this post");
+            throw new OwnerMismatchException();
         }
 
         post.updateContent(

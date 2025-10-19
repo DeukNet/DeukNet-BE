@@ -2,22 +2,15 @@ package org.example.deuknetdomain.common.exception;
 
 import lombok.Getter;
 
+/**
+ * 도메인 레이어 예외의 기본 추상 클래스
+ * 모든 도메인 예외는 이 클래스를 상속받습니다.
+ * 각 예외는 HTTP 상태 코드, 에러 코드, 메시지를 가집니다.
+ */
 @Getter
-public abstract class DomainException extends RuntimeException {
-    
-    private final ErrorCode errorCode;
+public abstract class DomainException extends DeukNetException {
 
-    protected DomainException(ErrorCode errorCode) {
-        super(errorCode.getMessage());
-        this.errorCode = errorCode;
-    }
-
-    protected DomainException(ErrorCode errorCode, Throwable cause) {
-        super(errorCode.getMessage(), cause);
-        this.errorCode = errorCode;
-    }
-
-    public int getStatus() {
-        return errorCode.getStatus();
+    protected DomainException(int status, String code, String message) {
+        super(status, code, message);
     }
 }

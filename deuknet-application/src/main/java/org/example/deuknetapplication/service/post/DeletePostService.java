@@ -1,10 +1,10 @@
 package org.example.deuknetapplication.service.post;
 
+import org.example.deuknetapplication.common.exception.OwnerMismatchException;
+import org.example.deuknetapplication.common.exception.ResourceNotFoundException;
 import org.example.deuknetapplication.port.in.post.DeletePostUseCase;
 import org.example.deuknetapplication.port.out.repository.PostRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
-import org.example.deuknetdomain.common.exception.EntityNotFoundException;
-import org.example.deuknetdomain.common.exception.ForbiddenException;
 import org.example.deuknetdomain.model.command.post.Post;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,14 +26,14 @@ public class DeletePostService implements DeletePostUseCase {
     @Override
     public void deletePost(UUID postId) {
         UUID currentUserId = currentUserPort.getCurrentUserId();
-        
+
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new EntityNotFoundException("Post"));
-        
+                .orElseThrow(ResourceNotFoundException::new);
+
         if (!post.getAuthorId().equals(currentUserId)) {
-            throw new ForbiddenException("Not authorized to delete this post");
+            throw new OwnerMismatchException();
         }
-        
+
         post.delete();
         postRepository.save(post);
     }

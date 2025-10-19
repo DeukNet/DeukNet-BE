@@ -1,6 +1,7 @@
 package org.example.deuknetinfrastructure.security;
 
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
+import org.example.deuknetdomain.common.exception.ForbiddenException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -15,7 +16,7 @@ public class SecurityUtil implements CurrentUserPort {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new IllegalStateException("User is not authenticated");
+            throw new ForbiddenException("User is not authenticated");
         }
         
         Object principal = authentication.getPrincipal();
@@ -23,6 +24,6 @@ public class SecurityUtil implements CurrentUserPort {
             return ((UserPrincipal) principal).getUserId();
         }
         
-        throw new IllegalStateException("Invalid authentication principal");
+        throw new ForbiddenException("Invalid authentication principal");
     }
 }

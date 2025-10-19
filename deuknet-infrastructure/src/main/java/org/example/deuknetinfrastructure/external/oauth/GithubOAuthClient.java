@@ -58,7 +58,7 @@ public class GithubOAuthClient implements OAuthClient {
         ResponseEntity<Map> response = restTemplate.postForEntity(tokenUri, request, Map.class);
         
         if (response.getBody() == null || !response.getBody().containsKey("access_token")) {
-            throw new IllegalStateException("Failed to get access token from Github");
+            throw new org.example.deuknetinfrastructure.external.oauth.exception.OAuthTokenRetrievalException("Github");
         }
         
         return (String) response.getBody().get("access_token");
@@ -78,7 +78,7 @@ public class GithubOAuthClient implements OAuthClient {
         );
         
         if (response.getBody() == null) {
-            throw new IllegalStateException("Failed to get user info from Github");
+            throw new org.example.deuknetinfrastructure.external.oauth.exception.OAuthUserInfoRetrievalException("Github");
         }
         
         Map<String, Object> userInfo = response.getBody();
@@ -110,7 +110,7 @@ public class GithubOAuthClient implements OAuthClient {
         );
         
         if (response.getBody() == null || response.getBody().length == 0) {
-            throw new IllegalStateException("Failed to get email from Github");
+            throw new org.example.deuknetinfrastructure.external.oauth.exception.OAuthEmailRetrievalException("Github");
         }
         
         // Find primary email

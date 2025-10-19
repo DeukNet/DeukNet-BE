@@ -1,10 +1,10 @@
 package org.example.deuknetapplication.service.comment;
 
+import org.example.deuknetapplication.common.exception.OwnerMismatchException;
+import org.example.deuknetapplication.common.exception.ResourceNotFoundException;
 import org.example.deuknetapplication.port.in.comment.DeleteCommentUseCase;
 import org.example.deuknetapplication.port.out.repository.CommentRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
-import org.example.deuknetdomain.common.exception.EntityNotFoundException;
-import org.example.deuknetdomain.common.exception.ForbiddenException;
 import org.example.deuknetdomain.model.command.comment.Comment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,12 +26,12 @@ public class DeleteCommentService implements DeleteCommentUseCase {
     @Override
     public void deleteComment(UUID commentId) {
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new EntityNotFoundException("Comment"));
-        
+                .orElseThrow(ResourceNotFoundException::new);
+
         if (!comment.getAuthorId().equals(currentUserPort.getCurrentUserId())) {
-            throw new ForbiddenException("Not authorized to delete this comment");
+            throw new OwnerMismatchException();
         }
-        
+
         commentRepository.delete(comment);
     }
 }

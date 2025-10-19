@@ -19,7 +19,7 @@ public class RefreshTokenService implements RefreshTokenUseCase {
     @Override
     public TokenPair refresh(String refreshToken) {
         if (!jwtPort.isRefreshToken(refreshToken)) {
-            throw new IllegalArgumentException("Invalid refresh token");
+            throw new org.example.deuknetdomain.model.command.auth.exception.InvalidRefreshTokenException();
         }
         
         UUID userId = jwtPort.validateToken(refreshToken);

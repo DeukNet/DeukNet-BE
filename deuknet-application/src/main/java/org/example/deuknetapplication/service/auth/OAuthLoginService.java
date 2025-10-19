@@ -51,7 +51,7 @@ public class OAuthLoginService implements OAuthLoginUseCase {
         
         // 3. User 조회
         User user = userRepository.findByAuthCredentialId(authCredential.getId())
-                .orElseThrow(() -> new IllegalStateException("User not found for auth credential"));
+                .orElseThrow(org.example.deuknetdomain.model.command.user.exception.UserNotFoundException::new);
         
         // 4. JWT 토큰 생성
         String accessToken = jwtPort.generateAccessToken(user.getId());

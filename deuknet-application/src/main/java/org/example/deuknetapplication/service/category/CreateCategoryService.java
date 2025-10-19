@@ -3,9 +3,8 @@ package org.example.deuknetapplication.service.category;
 import org.example.deuknetapplication.port.in.category.CreateCategoryApplicationRequest;
 import org.example.deuknetapplication.port.in.category.CreateCategoryUseCase;
 import org.example.deuknetapplication.port.out.repository.CategoryRepository;
-import org.example.deuknetdomain.common.exception.BusinessException;
-import org.example.deuknetdomain.common.exception.CommonErrorCode;
 import org.example.deuknetdomain.model.command.category.Category;
+import org.example.deuknetdomain.model.command.category.exception.CategoryAlreadyExistsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,7 +24,7 @@ public class CreateCategoryService implements CreateCategoryUseCase {
     public UUID createCategory(CreateCategoryApplicationRequest request) {
         categoryRepository.findByName(request.getName())
                 .ifPresent(c -> {
-                    throw new BusinessException(CommonErrorCode.DUPLICATE_RESOURCE);
+                    throw new CategoryAlreadyExistsException();
                 });
 
         Category category = Category.create(
