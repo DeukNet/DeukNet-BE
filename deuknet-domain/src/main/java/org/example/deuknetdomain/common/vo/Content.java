@@ -1,12 +1,13 @@
 package org.example.deuknetdomain.common.vo;
 
 import org.example.deuknetdomain.common.exception.InvalidValueException;
+import org.example.deuknetdomain.common.seedwork.ValueObject;
 
 import java.util.Objects;
 import lombok.Getter;
 
 @Getter
-public final class Content {
+public final class Content extends ValueObject {
     private static final int MAX_LENGTH = 10000;
     private final String value;
 

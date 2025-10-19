@@ -2,9 +2,12 @@ package org.example.deuknetdomain.common.vo;
 
 import lombok.Getter;
 import org.example.deuknetdomain.common.exception.InvalidValueException;
+import org.example.deuknetdomain.common.seedwork.ValueObject;
+
+import java.util.Objects;
 
 @Getter
-public class Title {
+public class Title extends ValueObject {
     private static final int MAX_LENGTH = 200;
     private final String value;
 
@@ -21,6 +24,11 @@ public class Title {
         return new Title(value);
     }
 
+    @Override
+    protected void validate() {
+        validate(value);
+    }
+
     private static void validate(String value) {
         if (value == null || value.isBlank()) {
             throw new InvalidValueException("Title cannot be empty");
@@ -28,5 +36,18 @@ public class Title {
         if (value.length() > MAX_LENGTH) {
             throw new InvalidValueException("Title cannot exceed " + MAX_LENGTH + " characters");
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Title)) return false;
+        Title title = (Title) o;
+        return Objects.equals(value, title.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(value);
     }
 }
