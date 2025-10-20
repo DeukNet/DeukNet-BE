@@ -37,43 +37,35 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
-    // 🔥 필수: 모듈 간 의존성
     implementation project(':deuknet-domain')
     implementation project(':deuknet-presentation')
     implementation project(":deuknet-application")
 
-    // 🔥 필수: JPA 관련 의존성
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
-    // 🔥 필수: Web 의존성 (REST API용)
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
-    // 🔥 QueryDSL 의존성
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
     implementation 'com.querydsl:querydsl-core:5.0.0'
     annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
     annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
     annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
 
-    // 🔥 선택: 데이터베이스 (H2는 개발용, PostgreSQL/MySQL 등은 실운영용)
-    runtimeOnly 'org.postgresql:postgresql' // PostgreSQL 사용시
+    runtimeOnly 'org.postgresql:postgresql'
 
-    // 🔥 필수: Lombok (이미 사용중)
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
-    // 🔥 필수: Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
-    // 🔥 JWT 의존성
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
-    // 🔥 Spring Security
     implementation 'org.springframework.boot:spring-boot-starter-security'
 
-    // 기본 Spring Boot 의존성들
+    compileOnly 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+
     implementation 'org.springframework.boot:spring-boot-starter'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     runtimeOnly 'org.postgresql:postgresql'
