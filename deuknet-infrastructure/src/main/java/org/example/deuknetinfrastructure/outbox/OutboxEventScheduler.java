@@ -27,6 +27,7 @@ import java.util.List;
 public class OutboxEventScheduler {
 
     private final OutboxEventRepository outboxEventRepository;
+    private final OutboxEventQueryAdapter outboxEventQueryAdapter;
 
     // TODO: 실제 메시지 브로커 연동 시 추가
     // private final KafkaTemplate<String, String> kafkaTemplate;
@@ -37,7 +38,7 @@ public class OutboxEventScheduler {
     @Scheduled(fixedDelay = 5000)
     @Transactional
     public void publishPendingEvents() {
-        List<OutboxEvent> pendingEvents = outboxEventRepository.findPendingEvents(100);
+        List<OutboxEvent> pendingEvents = outboxEventQueryAdapter.findPendingEvents(100);
 
         if (!pendingEvents.isEmpty()) {
             log.info("Publishing {} pending outbox events", pendingEvents.size());
@@ -62,7 +63,7 @@ public class OutboxEventScheduler {
     public void retryFailedEvents() {
         LocalDateTime retryAfter = LocalDateTime.now().minusMinutes(5);
         List<OutboxEvent> failedEvents =
-            outboxEventRepository.findFailedEventsForRetry(retryAfter, 3);
+            outboxEventQueryAdapter.findFailedEventsForRetry(retryAfter, 3);
 
         if (!failedEvents.isEmpty()) {
             log.info("Retrying {} failed outbox events", failedEvents.size());
@@ -86,7 +87,7 @@ public class OutboxEventScheduler {
     @Transactional
     public void cleanupOldEvents() {
         LocalDateTime before = LocalDateTime.now().minusDays(7);
-        List<OutboxEvent> oldEvents = outboxEventRepository.findPublishedEventsBefore(before);
+        List<OutboxEvent> oldEvents = outboxEventQueryAdapter.findPublishedEventsBefore(before);
 
         if (!oldEvents.isEmpty()) {
             log.info("Cleaning up {} old outbox events", oldEvents.size());
