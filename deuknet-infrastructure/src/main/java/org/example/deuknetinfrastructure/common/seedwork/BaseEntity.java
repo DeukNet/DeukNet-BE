@@ -39,6 +39,11 @@ public abstract class BaseEntity extends BaseTimeEntity implements Persistable {
         this.id = id;
     }
 
+    @Override
+    public UUID getId() {
+        return id;
+    }
+
     /**
      * ID 기반 동등성 비교
      * 같은 ID를 가진 Entity는 동일한 객체로 간주됩니다.
