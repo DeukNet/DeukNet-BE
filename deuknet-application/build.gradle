@@ -26,13 +26,10 @@ dependencyManagement {
 }
 
 dependencies {
-    // 🔥 필수: 도메인 모듈 의존성
     implementation project(':deuknet-domain')
 
-    // 🔥 필수: Spring Boot Starter
     implementation 'org.springframework.boot:spring-boot-starter'
 
-    // 🔥 필수: Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
