@@ -38,6 +38,7 @@ dependencies {
     // TestContainers
     testImplementation 'org.testcontainers:testcontainers:1.19.3'
     testImplementation 'org.testcontainers:postgresql:1.19.3'
+    testImplementation 'org.testcontainers:elasticsearch:1.19.3'
     testImplementation 'org.testcontainers:junit-jupiter:1.19.3'
     
     // Infrastructure 의존성 (테스트에서 DB 사용)
@@ -45,6 +46,12 @@ dependencies {
     
     // Spring Transaction (for @Transactional)
     testImplementation 'org.springframework:spring-tx'
+
+    // Spring JDBC (for JdbcTemplate in tests)
+    testImplementation 'org.springframework:spring-jdbc'
+
+    // Spring Data JPA (for JpaRepository in tests)
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

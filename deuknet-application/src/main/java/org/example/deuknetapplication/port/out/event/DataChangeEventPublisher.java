@@ -1,5 +1,7 @@
 package org.example.deuknetapplication.port.out.event;
 
+import org.example.deuknetdomain.common.seedwork.Projection;
+
 import java.util.UUID;
 
 /**
@@ -34,7 +36,7 @@ public interface DataChangeEventPublisher {
      *
      * @param eventType 이벤트 타입 (예: "PostCreated", "CommentAdded")
      * @param aggregateId 변경된 엔티티의 ID
-     * @param payload 변경 데이터
+     * @param projection 변경 데이터를 담은 Projection 객체
      */
-    void publish(String eventType, UUID aggregateId, Object payload);
+    void publish(String eventType, UUID aggregateId, Projection projection);
 }

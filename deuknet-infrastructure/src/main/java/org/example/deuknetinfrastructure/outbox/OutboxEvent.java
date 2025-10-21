@@ -19,10 +19,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
-@Table(name = "outbox_events", indexes = {
-    @Index(name = "idx_outbox_status_created", columnList = "status,created_at"),
-    @Index(name = "idx_outbox_aggregate_id", columnList = "aggregate_id")
-})
+@Table(name = "outbox_events")
 public class OutboxEvent extends BaseEntity {
 
     /**
@@ -30,6 +27,14 @@ public class OutboxEvent extends BaseEntity {
      */
     @Column(name = "event_type", nullable = false, length = 255)
     private String eventType;
+
+    /**
+     * 페이로드 타입 (완전한 클래스명)
+     * 역직렬화 시 사용됩니다.
+     * 예: "org.example.deuknetdomain.model.query.post.PostDetailProjection"
+     */
+    @Column(name = "payload_type", nullable = false, length = 255)
+    private String payloadType;
 
     /**
      * 이벤트가 발생한 Aggregate의 ID
@@ -73,9 +78,10 @@ public class OutboxEvent extends BaseEntity {
         super();
     }
 
-    public OutboxEvent(UUID id, String eventType, UUID aggregateId, String payload) {
+    public OutboxEvent(UUID id, String eventType, String payloadType, UUID aggregateId, String payload) {
         super(id);
         this.eventType = eventType;
+        this.payloadType = payloadType;
         this.aggregateId = aggregateId;
         this.payload = payload;
         this.status = OutboxStatus.PENDING;

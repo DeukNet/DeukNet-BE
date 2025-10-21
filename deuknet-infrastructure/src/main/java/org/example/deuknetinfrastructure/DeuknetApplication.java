@@ -2,12 +2,19 @@ package org.example.deuknetinfrastructure;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @SpringBootApplication(scanBasePackages = {
     "org.example.deuknetinfrastructure",
     "org.example.deuknetpresentation",
     "org.example.deuknetapplication"
 })
+@EntityScan(basePackages = {
+    "org.example.deuknetinfrastructure.data.command",
+    "org.example.deuknetinfrastructure.outbox"
+})
+@EnableJpaAuditing
 public class DeuknetApplication {
 
     public static void main(String[] args) {

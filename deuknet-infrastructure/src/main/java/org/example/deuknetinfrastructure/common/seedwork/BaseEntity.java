@@ -28,7 +28,7 @@ public abstract class BaseEntity extends BaseTimeEntity implements Persistable {
      * UUID를 사용하여 분산 환경에서도 충돌 없이 ID를 생성할 수 있습니다.
      */
     @Id
-    @Column(name = "id", columnDefinition = "BINARY(16)")
+    @Column(name = "id", columnDefinition = "UUID")
     private UUID id;
 
     protected BaseEntity() {
