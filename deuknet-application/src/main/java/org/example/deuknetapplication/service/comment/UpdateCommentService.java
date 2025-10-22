@@ -6,7 +6,7 @@ import org.example.deuknetapplication.port.in.comment.UpdateCommentApplicationRe
 import org.example.deuknetapplication.port.in.comment.UpdateCommentUseCase;
 import org.example.deuknetapplication.port.out.repository.CommentRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
-import org.example.deuknetdomain.model.command.comment.Comment;
+import org.example.deuknetdomain.domain.comment.Comment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

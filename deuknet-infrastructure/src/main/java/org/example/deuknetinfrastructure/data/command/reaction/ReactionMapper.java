@@ -1,6 +1,6 @@
 package org.example.deuknetinfrastructure.data.command.reaction;
 
-import org.example.deuknetdomain.model.command.reaction.Reaction;
+import org.example.deuknetdomain.domain.reaction.Reaction;
 import org.springframework.stereotype.Component;
 
 @Component

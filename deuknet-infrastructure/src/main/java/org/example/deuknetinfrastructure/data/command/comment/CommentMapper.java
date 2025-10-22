@@ -1,7 +1,7 @@
 package org.example.deuknetinfrastructure.data.command.comment;
 
 import org.example.deuknetdomain.common.vo.Content;
-import org.example.deuknetdomain.model.command.comment.Comment;
+import org.example.deuknetdomain.domain.comment.Comment;
 import org.springframework.stereotype.Component;
 
 @Component

@@ -1,8 +1,8 @@
 package org.example.acceptance;
 
 import org.example.deuknetapplication.port.out.external.OAuthPort;
-import org.example.deuknetdomain.model.command.auth.AuthProvider;
-import org.example.deuknetdomain.model.command.auth.OAuthUserInfo;
+import org.example.deuknetdomain.domain.auth.AuthProvider;
+import org.example.deuknetdomain.domain.auth.OAuthUserInfo;
 import org.example.deuknetpresentation.controller.auth.dto.*;
 import org.example.seedwork.AbstractTest;
 import org.junit.jupiter.api.Test;

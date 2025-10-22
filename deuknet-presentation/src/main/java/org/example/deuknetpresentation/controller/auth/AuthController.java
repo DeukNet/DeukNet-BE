@@ -2,7 +2,7 @@ package org.example.deuknetpresentation.controller.auth;
 
 import org.example.deuknetapplication.port.in.auth.OAuthLoginUseCase;
 import org.example.deuknetapplication.port.in.auth.RefreshTokenUseCase;
-import org.example.deuknetdomain.model.command.auth.TokenPair;
+import org.example.deuknetdomain.domain.auth.TokenPair;
 import org.example.deuknetpresentation.controller.auth.dto.OAuthLoginRequest;
 import org.example.deuknetpresentation.controller.auth.dto.RefreshTokenRequest;
 import org.example.deuknetpresentation.controller.auth.dto.TokenResponse;

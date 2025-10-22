@@ -7,10 +7,10 @@ import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
 import org.example.deuknetapplication.port.out.repository.PostRepository;
 import org.example.deuknetapplication.port.out.repository.UserRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
-import org.example.deuknetdomain.model.command.post.Post;
-import org.example.deuknetdomain.model.command.user.User;
-import org.example.deuknetdomain.model.query.post.PostDetailProjection;
-import org.example.deuknetdomain.model.query.post.PostSummaryProjection;
+import org.example.deuknetdomain.domain.post.Post;
+import org.example.deuknetdomain.domain.user.User;
+import org.example.deuknetapplication.projection.post.PostDetailProjection;
+import org.example.deuknetapplication.projection.post.PostSummaryProjection;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

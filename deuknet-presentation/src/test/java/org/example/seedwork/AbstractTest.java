@@ -2,7 +2,7 @@ package org.example.seedwork;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.deuknetapplication.port.out.repository.UserRepository;
-import org.example.deuknetdomain.model.command.user.User;
+import org.example.deuknetdomain.domain.user.User;
 import org.example.seedwork.security.TestSecurityConfig;
 import org.example.deuknetinfrastructure.DeuknetApplication;
 import org.junit.jupiter.api.BeforeEach;

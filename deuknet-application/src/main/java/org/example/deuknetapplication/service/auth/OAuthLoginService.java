@@ -6,11 +6,12 @@ import org.example.deuknetapplication.port.out.repository.AuthCredentialReposito
 import org.example.deuknetapplication.port.out.repository.UserRepository;
 import org.example.deuknetapplication.port.out.security.JwtPort;
 import org.example.deuknetdomain.common.vo.Email;
-import org.example.deuknetdomain.model.command.auth.AuthCredential;
-import org.example.deuknetdomain.model.command.auth.AuthProvider;
-import org.example.deuknetdomain.model.command.auth.OAuthUserInfo;
-import org.example.deuknetdomain.model.command.auth.TokenPair;
-import org.example.deuknetdomain.model.command.user.User;
+import org.example.deuknetdomain.domain.auth.AuthCredential;
+import org.example.deuknetdomain.domain.auth.AuthProvider;
+import org.example.deuknetdomain.domain.auth.OAuthUserInfo;
+import org.example.deuknetdomain.domain.auth.TokenPair;
+import org.example.deuknetdomain.domain.user.User;
+import org.example.deuknetdomain.domain.user.exception.UserNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,7 +52,7 @@ public class OAuthLoginService implements OAuthLoginUseCase {
         
         // 3. User 조회
         User user = userRepository.findByAuthCredentialId(authCredential.getId())
-                .orElseThrow(org.example.deuknetdomain.model.command.user.exception.UserNotFoundException::new);
+                .orElseThrow(UserNotFoundException::new);
         
         // 4. JWT 토큰 생성
         String accessToken = jwtPort.generateAccessToken(user.getId());

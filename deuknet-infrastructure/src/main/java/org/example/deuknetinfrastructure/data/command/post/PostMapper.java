@@ -2,7 +2,7 @@ package org.example.deuknetinfrastructure.data.command.post;
 
 import org.example.deuknetdomain.common.vo.Content;
 import org.example.deuknetdomain.common.vo.Title;
-import org.example.deuknetdomain.model.command.post.Post;
+import org.example.deuknetdomain.domain.post.Post;
 import org.springframework.stereotype.Component;
 
 @Component

@@ -1,6 +1,6 @@
 package org.example.deuknetapplication.port.in.reaction;
 
-import org.example.deuknetdomain.model.command.reaction.ReactionType;
+import org.example.deuknetdomain.domain.reaction.ReactionType;
 
 import java.util.UUID;
 

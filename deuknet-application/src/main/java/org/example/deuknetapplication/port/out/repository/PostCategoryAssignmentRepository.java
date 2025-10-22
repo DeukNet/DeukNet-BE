@@ -1,6 +1,6 @@
 package org.example.deuknetapplication.port.out.repository;
 
-import org.example.deuknetdomain.model.command.post.PostCategoryAssignment;
+import org.example.deuknetdomain.domain.post.PostCategoryAssignment;
 
 import java.util.List;
 import java.util.UUID;

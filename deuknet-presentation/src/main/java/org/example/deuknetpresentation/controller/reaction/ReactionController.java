@@ -2,7 +2,7 @@ package org.example.deuknetpresentation.controller.reaction;
 
 import org.example.deuknetapplication.port.in.reaction.AddReactionUseCase;
 import org.example.deuknetapplication.port.in.reaction.RemoveReactionUseCase;
-import org.example.deuknetdomain.model.command.reaction.ReactionType;
+import org.example.deuknetdomain.domain.reaction.ReactionType;
 import org.example.deuknetpresentation.controller.reaction.dto.AddReactionRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;

@@ -1,8 +1,8 @@
 package org.example.deuknetapplication.port.out.repository;
 
 import org.example.deuknetdomain.common.vo.Email;
-import org.example.deuknetdomain.model.command.auth.AuthCredential;
-import org.example.deuknetdomain.model.command.auth.AuthProvider;
+import org.example.deuknetdomain.domain.auth.AuthCredential;
+import org.example.deuknetdomain.domain.auth.AuthProvider;
 
 import java.util.Optional;
 import java.util.UUID;

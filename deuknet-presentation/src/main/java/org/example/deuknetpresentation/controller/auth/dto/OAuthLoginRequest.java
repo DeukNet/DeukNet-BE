@@ -1,6 +1,6 @@
 package org.example.deuknetpresentation.controller.auth.dto;
 
-import org.example.deuknetdomain.model.command.auth.AuthProvider;
+import org.example.deuknetdomain.domain.auth.AuthProvider;
 
 public class OAuthLoginRequest {
     private String code;

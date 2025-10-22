@@ -3,8 +3,8 @@ package org.example.deuknetinfrastructure.data.command.reaction;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.example.deuknetdomain.model.command.reaction.ReactionType;
-import org.example.deuknetdomain.model.command.reaction.TargetType;
+import org.example.deuknetdomain.domain.reaction.ReactionType;
+import org.example.deuknetdomain.domain.reaction.TargetType;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

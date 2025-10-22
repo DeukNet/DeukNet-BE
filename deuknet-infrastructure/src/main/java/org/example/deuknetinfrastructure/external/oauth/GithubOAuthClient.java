@@ -1,7 +1,7 @@
 package org.example.deuknetinfrastructure.external.oauth;
 
-import org.example.deuknetdomain.model.command.auth.AuthProvider;
-import org.example.deuknetdomain.model.command.auth.OAuthUserInfo;
+import org.example.deuknetdomain.domain.auth.AuthProvider;
+import org.example.deuknetdomain.domain.auth.OAuthUserInfo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;

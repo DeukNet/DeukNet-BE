@@ -1,6 +1,6 @@
 package org.example.deuknetapplication.port.out.repository;
 
-import org.example.deuknetdomain.model.command.user.User;
+import org.example.deuknetdomain.domain.user.User;
 
 import java.util.Optional;
 import java.util.UUID;

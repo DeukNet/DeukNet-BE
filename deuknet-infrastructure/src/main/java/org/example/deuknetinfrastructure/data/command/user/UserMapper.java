@@ -1,6 +1,6 @@
 package org.example.deuknetinfrastructure.data.command.user;
 
-import org.example.deuknetdomain.model.command.user.User;
+import org.example.deuknetdomain.domain.user.User;
 import org.springframework.stereotype.Component;
 
 @Component

@@ -1,7 +1,7 @@
 package org.example.deuknetinfrastructure.data.command.category;
 
 import org.example.deuknetdomain.common.vo.CategoryName;
-import org.example.deuknetdomain.model.command.category.Category;
+import org.example.deuknetdomain.domain.category.Category;
 import org.springframework.stereotype.Component;
 
 @Component

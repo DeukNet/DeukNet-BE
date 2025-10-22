@@ -1,6 +1,6 @@
 package org.example.deuknetinfrastructure.data.command.reaction;
 
-import org.example.deuknetdomain.model.command.reaction.ReactionType;
+import org.example.deuknetdomain.domain.reaction.ReactionType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;

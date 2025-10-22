@@ -5,7 +5,7 @@ import org.example.deuknetapplication.common.exception.ResourceNotFoundException
 import org.example.deuknetapplication.port.in.reaction.RemoveReactionUseCase;
 import org.example.deuknetapplication.port.out.repository.ReactionRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
-import org.example.deuknetdomain.model.command.reaction.Reaction;
+import org.example.deuknetdomain.domain.reaction.Reaction;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

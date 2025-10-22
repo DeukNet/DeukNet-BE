@@ -1,6 +1,6 @@
 package org.example.deuknetapplication.port.out.repository;
 
-import org.example.deuknetdomain.model.command.category.Category;
+import org.example.deuknetdomain.domain.category.Category;
 
 import java.util.List;
 import java.util.Optional;

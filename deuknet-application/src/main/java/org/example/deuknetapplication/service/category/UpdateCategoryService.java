@@ -3,9 +3,9 @@ package org.example.deuknetapplication.service.category;
 import org.example.deuknetapplication.port.in.category.UpdateCategoryApplicationRequest;
 import org.example.deuknetapplication.port.in.category.UpdateCategoryUseCase;
 import org.example.deuknetapplication.port.out.repository.CategoryRepository;
-import org.example.deuknetdomain.model.command.category.Category;
-import org.example.deuknetdomain.model.command.category.exception.CategoryAlreadyExistsException;
-import org.example.deuknetdomain.model.command.category.exception.CategoryNotFoundException;
+import org.example.deuknetdomain.domain.category.Category;
+import org.example.deuknetdomain.domain.category.exception.CategoryAlreadyExistsException;
+import org.example.deuknetdomain.domain.category.exception.CategoryNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
