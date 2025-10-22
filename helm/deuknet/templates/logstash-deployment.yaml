@@ -44,6 +44,11 @@ spec:
           volumeMounts:
             - name: pipeline
               mountPath: /usr/share/logstash/pipeline
+            {{- if .Values.elasticsearch.tls.enabled }}
+            - name: certs
+              mountPath: /usr/share/logstash/config/certs
+              readOnly: true
+            {{- end }}
           resources:
             limits:
               cpu: 500m
@@ -55,4 +60,10 @@ spec:
         - name: pipeline
           configMap:
             name: logstash-pipeline
+        {{- if .Values.elasticsearch.tls.enabled }}
+        - name: certs
+          secret:
+            secretName: {{ .Values.elasticsearch.name }}-certs
+            defaultMode: 0644
+        {{- end }}
 {{- end }}

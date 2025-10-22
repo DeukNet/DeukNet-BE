@@ -1,0 +1,197 @@
+{{- if and .Values.elasticsearch.enabled .Values.elasticsearch.tls.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.elasticsearch.name }}-ca-setup
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.elasticsearch.name }}-ca-setup
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.elasticsearch.name }}-ca-setup
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+        # Elasticsearch certutil을 사용하여 인증서 생성
+        - name: generate-certs
+          image: "{{ .Values.elasticsearch.image.repository }}:{{ .Values.elasticsearch.image.tag }}"
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+
+              echo "Starting Elasticsearch CA and certificate generation..."
+
+              # CA 디렉토리 생성
+              mkdir -p /certs
+
+              # 1. CA 생성
+              echo "Generating CA certificate..."
+              /usr/share/elasticsearch/bin/elasticsearch-certutil ca \
+                --out /certs/elastic-stack-ca.p12 \
+                --pass "" \
+                --days {{ .Values.elasticsearch.tls.caDays }}
+
+              # 2. CA를 PEM 형식으로 변환
+              echo "Converting CA to PEM format..."
+              openssl pkcs12 -in /certs/elastic-stack-ca.p12 \
+                -out /certs/ca.crt \
+                -nokeys \
+                -passin pass:""
+
+              # 3. Elasticsearch용 인증서 생성
+              echo "Generating Elasticsearch certificate..."
+              /usr/share/elasticsearch/bin/elasticsearch-certutil cert \
+                --ca /certs/elastic-stack-ca.p12 \
+                --ca-pass "" \
+                --out /certs/elasticsearch.p12 \
+                --pass "" \
+                --days {{ .Values.elasticsearch.tls.certDays }} \
+                --name {{ .Values.elasticsearch.name }} \
+                --dns {{ .Values.elasticsearch.name }} \
+                --dns {{ .Values.elasticsearch.name }}.{{ .Values.global.namespace }} \
+                --dns {{ .Values.elasticsearch.name }}.{{ .Values.global.namespace }}.svc \
+                --dns {{ .Values.elasticsearch.name }}.{{ .Values.global.namespace }}.svc.cluster.local \
+                --ip 127.0.0.1
+
+              # 4. Elasticsearch 인증서를 PEM 형식으로 변환
+              echo "Converting Elasticsearch certificate to PEM format..."
+              openssl pkcs12 -in /certs/elasticsearch.p12 \
+                -out /certs/elasticsearch.crt \
+                -nokeys \
+                -passin pass:""
+
+              openssl pkcs12 -in /certs/elasticsearch.p12 \
+                -out /certs/elasticsearch.key \
+                -nocerts \
+                -nodes \
+                -passin pass:""
+
+              # 5. Kibana용 인증서 생성
+              echo "Generating Kibana certificate..."
+              /usr/share/elasticsearch/bin/elasticsearch-certutil cert \
+                --ca /certs/elastic-stack-ca.p12 \
+                --ca-pass "" \
+                --out /certs/kibana.p12 \
+                --pass "" \
+                --days {{ .Values.elasticsearch.tls.certDays }} \
+                --name {{ .Values.kibana.name }} \
+                --dns {{ .Values.kibana.name }} \
+                --dns {{ .Values.kibana.name }}.{{ .Values.global.namespace }} \
+                --dns {{ .Values.kibana.name }}.{{ .Values.global.namespace }}.svc \
+                --dns {{ .Values.kibana.name }}.{{ .Values.global.namespace }}.svc.cluster.local
+
+              openssl pkcs12 -in /certs/kibana.p12 \
+                -out /certs/kibana.crt \
+                -nokeys \
+                -passin pass:""
+
+              openssl pkcs12 -in /certs/kibana.p12 \
+                -out /certs/kibana.key \
+                -nocerts \
+                -nodes \
+                -passin pass:""
+
+              # 6. Logstash용 인증서 생성
+              echo "Generating Logstash certificate..."
+              /usr/share/elasticsearch/bin/elasticsearch-certutil cert \
+                --ca /certs/elastic-stack-ca.p12 \
+                --ca-pass "" \
+                --out /certs/logstash.p12 \
+                --pass "" \
+                --days {{ .Values.elasticsearch.tls.certDays }} \
+                --name {{ .Values.logstash.name }} \
+                --dns {{ .Values.logstash.name }} \
+                --dns {{ .Values.logstash.name }}.{{ .Values.global.namespace }} \
+                --dns {{ .Values.logstash.name }}.{{ .Values.global.namespace }}.svc \
+                --dns {{ .Values.logstash.name }}.{{ .Values.global.namespace }}.svc.cluster.local
+
+              openssl pkcs12 -in /certs/logstash.p12 \
+                -out /certs/logstash.crt \
+                -nokeys \
+                -passin pass:""
+
+              openssl pkcs12 -in /certs/logstash.p12 \
+                -out /certs/logstash.key \
+                -nocerts \
+                -nodes \
+                -passin pass:""
+
+              echo "Certificate generation completed!"
+              ls -la /certs/
+
+              # 파일 권한을 다른 컨테이너에서도 읽을 수 있도록 변경
+              chmod -R 644 /certs/*
+              echo "Permissions updated"
+              ls -la /certs/
+          volumeMounts:
+            - name: certs
+              mountPath: /certs
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      containers:
+        # kubectl을 사용하여 Secret 생성
+        - name: create-secret
+          image: bitnami/kubectl:latest
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+
+              echo "Creating Kubernetes Secret with certificates..."
+
+              # Secret이 이미 있는지 확인
+              if kubectl get secret {{ .Values.elasticsearch.name }}-certs -n {{ .Values.global.namespace }} 2>/dev/null; then
+                echo "Secret already exists, deleting..."
+                kubectl delete secret {{ .Values.elasticsearch.name }}-certs -n {{ .Values.global.namespace }}
+              fi
+
+              # Secret 생성
+              kubectl create secret generic {{ .Values.elasticsearch.name }}-certs \
+                -n {{ .Values.global.namespace }} \
+                --from-file=/certs/ca.crt \
+                --from-file=/certs/elasticsearch.p12 \
+                --from-file=/certs/elasticsearch.crt \
+                --from-file=/certs/elasticsearch.key \
+                --from-file=/certs/kibana.p12 \
+                --from-file=/certs/kibana.crt \
+                --from-file=/certs/kibana.key \
+                --from-file=/certs/logstash.p12 \
+                --from-file=/certs/logstash.crt \
+                --from-file=/certs/logstash.key
+
+              echo "CA and certificates secret created successfully!"
+              kubectl get secret {{ .Values.elasticsearch.name }}-certs -n {{ .Values.global.namespace }}
+          volumeMounts:
+            - name: certs
+              mountPath: /certs
+              readOnly: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+      volumes:
+        - name: certs
+          emptyDir: {}
+      serviceAccountName: {{ .Values.elasticsearch.name }}-ca-setup
+{{- end }}

@@ -2,48 +2,8 @@
 global:
   namespace: deuknet-prod
 
-app:
-  name: deuknet-app
-  replicaCount: 3
-
-  image:
-    repository: deuknet-app
-    tag: latest
-    pullPolicy: Always
-
-  service:
-    type: ClusterIP
-
-  env:
-    springProfilesActive: prod
-
-  resources:
-    requests:
-      cpu: 500m
-      memory: 1Gi
-    limits:
-      cpu: 2
-      memory: 2Gi
-
-postgres:
-  enabled: true
-  env:
-    database: deuknet_prod
-    username: deuknet_user
-    password: CHANGE_ME_PROD_POSTGRES_PASSWORD
-
-  resources:
-    requests:
-      cpu: 500m
-      memory: 1Gi
-    limits:
-      cpu: 2
-      memory: 2Gi
-
 elasticsearch:
   enabled: true
-  env:
-    elasticPassword: CHANGE_ME_PROD_ELASTIC_PASSWORD
 
   resources:
     requests:
@@ -53,10 +13,11 @@ elasticsearch:
       cpu: 2000m
       memory: 4Gi
 
+  storage:
+    size: 50Gi
+
 kibana:
   enabled: true
-  env:
-    elasticsearchPassword: CHANGE_ME_PROD_ELASTIC_PASSWORD
 
   resources:
     requests:

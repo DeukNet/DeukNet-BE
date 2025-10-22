@@ -15,11 +15,28 @@ data:
     network.host: 0.0.0.0
     discovery.type: {{ .Values.elasticsearch.env.discoveryType }}
 
-    # Security settings - basic auth only, no SSL
+    # Security settings
     xpack.security.enabled: {{ .Values.elasticsearch.config.xpackSecurityEnabled }}
     xpack.security.enrollment.enabled: {{ .Values.elasticsearch.config.xpackSecurityEnrollmentEnabled }}
 
-    # Disable SSL
-    xpack.security.http.ssl.enabled: {{ .Values.elasticsearch.config.xpackSecurityHttpSslEnabled }}
-    xpack.security.transport.ssl.enabled: {{ .Values.elasticsearch.config.xpackSecurityTransportSslEnabled }}
+    # TLS/SSL settings
+    {{- if .Values.elasticsearch.tls.enabled }}
+    xpack.security.http.ssl.enabled: true
+    xpack.security.transport.ssl.enabled: true
+    {{- else }}
+    xpack.security.http.ssl.enabled: false
+    xpack.security.transport.ssl.enabled: false
+    {{- end }}
+
+    {{- if .Values.elasticsearch.tls.enabled }}
+    # HTTP SSL configuration
+    xpack.security.http.ssl.keystore.path: /usr/share/elasticsearch/config/certs/elasticsearch.p12
+    xpack.security.http.ssl.truststore.path: /usr/share/elasticsearch/config/certs/elasticsearch.p12
+    xpack.security.http.ssl.verification_mode: certificate
+
+    # Transport SSL configuration
+    xpack.security.transport.ssl.keystore.path: /usr/share/elasticsearch/config/certs/elasticsearch.p12
+    xpack.security.transport.ssl.truststore.path: /usr/share/elasticsearch/config/certs/elasticsearch.p12
+    xpack.security.transport.ssl.verification_mode: certificate
+    {{- end }}
 {{- end }}

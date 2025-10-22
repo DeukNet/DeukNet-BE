@@ -1,12 +1,10 @@
 # DeukNet Helm Chart
 
-이 Helm 차트는 DeukNet Spring Boot 애플리케이션과 ELK 스택을 Kubernetes에 배포합니다.
+이 Helm 차트는 DeukNet ELK 스택을 Kubernetes에 배포합니다.
 
 ## 구성 요소
 
-- **Application**: Spring Boot 애플리케이션 (myapp)
-- **PostgreSQL**: 데이터베이스
-- **Elasticsearch**: 로그 저장소
+- **Elasticsearch**: 로그 저장소 및 검색 엔진
 - **Logstash**: 로그 처리 파이프라인
 - **Kibana**: 로그 시각화 대시보드
 - **Filebeat**: 로그 수집기 (DaemonSet)
@@ -87,52 +85,37 @@ helm uninstall deuknet
 
 주요 설정 가능한 파라미터들은 `values.yaml` 파일에 정의되어 있습니다.
 
-### 애플리케이션 설정
-
-| 파라미터 | 설명 | 기본값 |
-|---------|------|--------|
-| `app.replicaCount` | 애플리케이션 복제본 수 | `1` |
-| `app.image.repository` | 이미지 저장소 | `myapp` |
-| `app.image.tag` | 이미지 태그 | `local` |
-| `app.service.type` | 서비스 타입 | `NodePort` |
-| `app.service.nodePort` | NodePort 번호 | `30080` |
-
-### PostgreSQL 설정
-
-| 파라미터 | 설명 | 기본값 |
-|---------|------|--------|
-| `postgres.enabled` | PostgreSQL 활성화 | `true` |
-| `postgres.env.database` | 데이터베이스 이름 | `app_db` |
-| `postgres.env.username` | 사용자 이름 | `app_user` |
-| `postgres.env.password` | 비밀번호 | `app_pass` |
-
 ### Elasticsearch 설정
 
 | 파라미터 | 설명 | 기본값 |
 |---------|------|--------|
 | `elasticsearch.enabled` | Elasticsearch 활성화 | `true` |
 | `elasticsearch.env.elasticPassword` | Elastic 비밀번호 | `changeme` |
+| `elasticsearch.tls.enabled` | TLS/SSL 활성화 | `true` |
+| `elasticsearch.tls.caDays` | CA 인증서 유효기간 (일) | `3650` |
+| `elasticsearch.tls.certDays` | 서버 인증서 유효기간 (일) | `1095` |
 
 ### 환경별 비밀번호 설정
 
 각 환경별 values 파일에는 다음 비밀번호들이 설정되어 있습니다:
 
 - **Development** (`values-dev.yaml`):
-  - PostgreSQL: `dev_postgres_password_2024`
   - Elasticsearch: `dev_elastic_password_2024`
 
 - **Staging** (`values-staging.yaml`):
-  - PostgreSQL: `staging_postgres_password_2024`
   - Elasticsearch: `staging_elastic_password_2024`
 
 - **Production** (`values-prod.yaml`):
-  - PostgreSQL: `CHANGE_ME_PROD_POSTGRES_PASSWORD` ⚠️ **반드시 변경 필요**
   - Elasticsearch: `CHANGE_ME_PROD_ELASTIC_PASSWORD` ⚠️ **반드시 변경 필요**
 
 **⚠️ 보안 권장사항:**
 - Production 환경에서는 반드시 강력한 비밀번호로 변경하세요
 - Kubernetes Secrets을 사용하여 비밀번호를 관리하는 것을 권장합니다
 - values 파일을 Git에 커밋하기 전에 민감한 정보를 확인하세요
+
+**🔐 자동 비밀번호 설정:**
+- `kibana_system`과 `logstash_writer` 사용자 비밀번호는 자동으로 생성되어 Kubernetes Secret에 저장됩니다
+- Elasticsearch 설치 후 자동으로 비밀번호가 생성되고 관련 서비스가 재시작됩니다
 
 ### ELK 스택 비활성화
 
@@ -147,21 +130,6 @@ helm install deuknet ./helm/deuknet \
 ```
 
 ## 접근 방법
-
-### 애플리케이션
-
-Minikube 환경:
-```bash
-minikube service myapp-service --url
-```
-
-일반 클러스터 (NodePort):
-```bash
-# 노드 IP 확인
-kubectl get nodes -o wide
-
-# 접근: http://<NODE-IP>:30080
-```
 
 ### Kibana
 
@@ -197,15 +165,27 @@ helm get manifest deuknet
 ### 로그 확인
 
 ```bash
-# 애플리케이션 로그
-kubectl logs -f deployment/myapp
-
 # Filebeat 로그
 kubectl logs -f daemonset/filebeat
 
 # Elasticsearch 로그
 kubectl logs -f deployment/elasticsearch
+
+# Logstash 로그
+kubectl logs -f deployment/logstash
+
+# Kibana 로그
+kubectl logs -f deployment/kibana
 ```
+
+### Kibana 사용자 정보
+
+- **사용자명**: `elastic`
+- **비밀번호**: values 파일에 설정된 `elasticPassword` 값
+  - 기본값: `changeme`
+  - Dev: `dev_elastic_password_2024`
+  - Staging: `staging_elastic_password_2024`
+  - Prod: 반드시 변경 필요
 
 ## 라이선스
 

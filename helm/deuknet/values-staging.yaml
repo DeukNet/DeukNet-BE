@@ -2,48 +2,8 @@
 global:
   namespace: deuknet-staging
 
-app:
-  name: deuknet-app
-  replicaCount: 2
-
-  image:
-    repository: deuknet-app
-    tag: staging
-    pullPolicy: Always
-
-  service:
-    type: ClusterIP
-
-  env:
-    springProfilesActive: staging
-
-  resources:
-    requests:
-      cpu: 200m
-      memory: 512Mi
-    limits:
-      cpu: 1500m
-      memory: 1536Mi
-
-postgres:
-  enabled: true
-  env:
-    database: deuknet_staging
-    username: deuknet_user
-    password: staging_postgres_password_2024
-
-  resources:
-    requests:
-      cpu: 200m
-      memory: 512Mi
-    limits:
-      cpu: 1
-      memory: 1Gi
-
 elasticsearch:
   enabled: true
-  env:
-    elasticPassword: staging_elastic_password_2024
 
   resources:
     requests:
@@ -53,10 +13,11 @@ elasticsearch:
       cpu: 1500m
       memory: 2560Mi
 
+  storage:
+    size: 20Gi
+
 kibana:
   enabled: true
-  env:
-    elasticsearchPassword: staging_elastic_password_2024
 
 logstash:
   enabled: true

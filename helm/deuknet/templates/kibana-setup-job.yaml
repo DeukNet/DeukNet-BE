@@ -1,0 +1,128 @@
+{{- if and .Values.kibana.enabled .Values.kibana.setup.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.kibana.name }}-setup
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.kibana.name }}-setup
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.kibana.name }}-setup
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+        # Kibana가 준비될 때까지 대기
+        - name: wait-for-kibana
+          image: {{ .Values.kibana.setup.image.repository }}:{{ .Values.kibana.setup.image.tag }}
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Kibana to be ready..."
+              {{- if .Values.elasticsearch.tls.enabled }}
+              until curl -sf --cacert /certs/ca.crt http://{{ .Values.kibana.name }}:{{ .Values.kibana.service.port }}/api/status | grep -q '"level":"available"'; do
+              {{- else }}
+              until curl -sf http://{{ .Values.kibana.name }}:{{ .Values.kibana.service.port }}/api/status | grep -q '"level":"available"'; do
+              {{- end }}
+                echo "Kibana is not ready yet. Retrying in 10 seconds..."
+                sleep 10
+              done
+              echo "Kibana is ready!"
+          {{- if .Values.elasticsearch.tls.enabled }}
+          volumeMounts:
+            - name: certs
+              mountPath: /certs
+              readOnly: true
+          {{- end }}
+      containers:
+        - name: setup-index-pattern
+          image: {{ .Values.kibana.setup.image.repository }}:{{ .Values.kibana.setup.image.tag }}
+          env:
+            - name: KIBANA_URL
+              value: "http://{{ .Values.kibana.name }}:{{ .Values.kibana.service.port }}"
+            - name: ES_USER
+              value: "elastic"
+            - name: ES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: elasticsearch-credentials
+                  key: elastic-password
+            - name: INDEX_PATTERN
+              value: "{{ .Values.kibana.setup.indexPattern.name }}"
+            - name: TIME_FIELD
+              value: "{{ .Values.kibana.setup.indexPattern.timeField }}"
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+
+              echo "Setting up Kibana index pattern: ${INDEX_PATTERN}"
+
+              {{- if .Values.elasticsearch.tls.enabled }}
+              CURL_OPTS="--cacert /certs/ca.crt"
+              {{- else }}
+              CURL_OPTS=""
+              {{- end }}
+
+              # Index Pattern 생성
+              RESPONSE=$(curl ${CURL_OPTS} -X POST "${KIBANA_URL}/api/saved_objects/index-pattern/${INDEX_PATTERN}" \
+                -u "${ES_USER}:${ES_PASSWORD}" \
+                -H 'kbn-xsrf: true' \
+                -H 'Content-Type: application/json' \
+                -d '{
+                  "attributes": {
+                    "title": "'"${INDEX_PATTERN}"'",
+                    "timeFieldName": "'"${TIME_FIELD}"'"
+                  }
+                }' -w "\n%{http_code}" -s)
+
+              HTTP_CODE=$(echo "$RESPONSE" | tail -n 1)
+              BODY=$(echo "$RESPONSE" | sed '$d')
+
+              if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "409" ]; then
+                echo "Index pattern created or already exists"
+                echo "$BODY"
+
+                # Default Index Pattern 설정
+                curl ${CURL_OPTS} -X POST "${KIBANA_URL}/api/kibana/settings/defaultIndex" \
+                  -u "${ES_USER}:${ES_PASSWORD}" \
+                  -H 'kbn-xsrf: true' \
+                  -H 'Content-Type: application/json' \
+                  -d '{
+                    "value": "'"${INDEX_PATTERN}"'"
+                  }'
+
+                echo "Default index pattern set to ${INDEX_PATTERN}"
+              else
+                echo "Failed to create index pattern. HTTP Code: $HTTP_CODE"
+                echo "$BODY"
+                exit 1
+              fi
+
+              echo "Kibana setup completed successfully!"
+          {{- if .Values.elasticsearch.tls.enabled }}
+          volumeMounts:
+            - name: certs
+              mountPath: /certs
+              readOnly: true
+          {{- end }}
+      {{- if .Values.elasticsearch.tls.enabled }}
+      volumes:
+        - name: certs
+          secret:
+            secretName: {{ .Values.elasticsearch.name }}-certs
+            defaultMode: 0644
+      {{- end }}
+{{- end }}

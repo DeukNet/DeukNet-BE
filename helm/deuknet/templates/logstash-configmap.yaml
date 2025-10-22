@@ -19,10 +19,14 @@ data:
 
     output {
       elasticsearch {
-        hosts => ["http://{{ .Values.elasticsearch.name }}:{{ .Values.elasticsearch.service.httpPort }}"]
+        hosts => ["{{ if .Values.elasticsearch.tls.enabled }}https{{ else }}http{{ end }}://{{ .Values.elasticsearch.name }}:{{ .Values.elasticsearch.service.httpPort }}"]
         user => "${ELASTICSEARCH_USERNAME}"
         password => "${ELASTICSEARCH_PASSWORD}"
         index => "logs-%{+YYYY.MM.dd}"
+        {{- if .Values.elasticsearch.tls.enabled }}
+        cacert => "/usr/share/logstash/config/certs/ca.crt"
+        ssl_certificate_verification => true
+        {{- end }}
       }
     }
 {{- end }}

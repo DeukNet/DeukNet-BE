@@ -1,0 +1,141 @@
+{{- if .Values.elasticsearch.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.elasticsearch.name }}-headless
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.elasticsearch.name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  clusterIP: None
+  selector:
+    app: {{ .Values.elasticsearch.name }}
+    release: {{ .Release.Name }}
+  ports:
+    - name: http
+      port: {{ .Values.elasticsearch.service.httpPort }}
+      protocol: TCP
+    - name: transport
+      port: {{ .Values.elasticsearch.service.transportPort }}
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.elasticsearch.name }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.elasticsearch.name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  serviceName: {{ .Values.elasticsearch.name }}-headless
+  replicas: {{ .Values.elasticsearch.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.elasticsearch.name }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.elasticsearch.name }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Values.elasticsearch.name }}
+          image: "{{ .Values.elasticsearch.image.repository }}:{{ .Values.elasticsearch.image.tag }}"
+          imagePullPolicy: {{ .Values.elasticsearch.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.elasticsearch.service.httpPort }}
+              protocol: TCP
+            - name: transport
+              containerPort: {{ .Values.elasticsearch.service.transportPort }}
+              protocol: TCP
+          env:
+            - name: cluster.name
+              value: {{ .Values.global.namespace }}-cluster
+            - name: node.name
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: discovery.type
+              value: {{ .Values.elasticsearch.env.discoveryType }}
+            - name: ES_JAVA_OPTS
+              value: {{ .Values.elasticsearch.env.javaOpts | quote }}
+            - name: ELASTIC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: elasticsearch-credentials
+                  key: elastic-password
+          volumeMounts:
+            - name: data
+              mountPath: /usr/share/elasticsearch/data
+            - name: config
+              mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+              subPath: elasticsearch.yml
+            {{- if .Values.elasticsearch.tls.enabled }}
+            - name: certs
+              mountPath: /usr/share/elasticsearch/config/certs
+              readOnly: true
+            {{- end }}
+          resources:
+            {{- toYaml .Values.elasticsearch.resources | nindent 12 }}
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  {{- if .Values.elasticsearch.tls.enabled }}
+                  curl -sf -k -u "elastic:${ELASTIC_PASSWORD}" https://localhost:9200/_cluster/health?local=true
+                  {{- else }}
+                  curl -sf http://localhost:9200/_cluster/health?local=true
+                  {{- end }}
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  {{- if .Values.elasticsearch.tls.enabled }}
+                  curl -sf -k -u "elastic:${ELASTIC_PASSWORD}" https://localhost:9200/_cluster/health?local=true
+                  {{- else }}
+                  curl -sf http://localhost:9200/_cluster/health?local=true
+                  {{- end }}
+            initialDelaySeconds: 90
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: config
+          configMap:
+            name: elasticsearch-config
+        {{- if .Values.elasticsearch.tls.enabled }}
+        - name: certs
+          secret:
+            secretName: {{ .Values.elasticsearch.name }}-certs
+            defaultMode: 0644
+        {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          app: {{ .Values.elasticsearch.name }}
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        {{- if .Values.elasticsearch.storage.storageClass }}
+        storageClassName: {{ .Values.elasticsearch.storage.storageClass }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.elasticsearch.storage.size }}
+{{- end }}

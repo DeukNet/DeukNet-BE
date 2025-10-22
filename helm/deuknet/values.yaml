@@ -6,78 +6,6 @@
 global:
   namespace: default
 
-# Application settings
-app:
-  name: myapp
-  replicaCount: 1
-
-  image:
-    repository: myapp
-    tag: local
-    pullPolicy: IfNotPresent
-
-  service:
-    type: NodePort
-    port: 80
-    targetPort: 8080
-    nodePort: 30080
-
-  env:
-    springProfilesActive: prod
-
-  resources:
-    requests:
-      cpu: 100m
-      memory: 512Mi
-    limits:
-      cpu: 2
-      memory: 1024Mi
-
-  livenessProbe:
-    httpGet:
-      path: /actuator/health/liveness
-      port: 8080
-    initialDelaySeconds: 10
-    periodSeconds: 15
-
-  readinessProbe:
-    httpGet:
-      path: /actuator/health/readiness
-      port: 8080
-    initialDelaySeconds: 5
-    periodSeconds: 10
-
-  labels:
-    collectLogs: "true"
-
-# PostgreSQL settings
-postgres:
-  enabled: true
-  name: postgres
-  replicaCount: 1
-
-  image:
-    repository: postgres
-    tag: 15-alpine
-    pullPolicy: IfNotPresent
-
-  service:
-    type: ClusterIP
-    port: 5432
-
-  env:
-    database: app_db
-    username: app_user
-    password: app_pass
-
-  resources:
-    requests:
-      cpu: 100m
-      memory: 256Mi
-    limits:
-      cpu: 500m
-      memory: 512Mi
-
 # Elasticsearch settings
 elasticsearch:
   enabled: true
@@ -97,7 +25,9 @@ elasticsearch:
   env:
     discoveryType: single-node
     javaOpts: "-Xms512m -Xmx512m"
-    elasticPassword: changeme
+    # elasticPassword는 Secret으로 관리됩니다
+    # Secret 이름: elasticsearch-credentials
+    # 비밀번호 확인: kubectl get secret elasticsearch-credentials -n <namespace> -o jsonpath='{.data.elastic-password}' | base64 -d
 
   resources:
     requests:
@@ -110,8 +40,20 @@ elasticsearch:
   config:
     xpackSecurityEnabled: true
     xpackSecurityEnrollmentEnabled: true
-    xpackSecurityHttpSslEnabled: false
-    xpackSecurityTransportSslEnabled: false
+
+  # TLS/CA 설정
+  tls:
+    enabled: true
+    # CA 인증서 유효기간 (일)
+    caDays: 3650
+    # 서버 인증서 유효기간 (일)
+    certDays: 1095
+
+  # Storage 설정
+  storage:
+    size: 10Gi
+    # storageClass를 지정하지 않으면 기본 StorageClass 사용
+    storageClass: ""
 
 # Logstash settings
 logstash:
@@ -154,8 +96,8 @@ kibana:
 
   env:
     elasticsearchHosts: http://elasticsearch:9200
-    elasticsearchUsername: elastic
-    elasticsearchPassword: changeme
+    # elasticsearchUsername과 elasticsearchPassword는 Secret으로 관리됩니다
+    # Secret 이름: elasticsearch-credentials
 
   resources:
     requests:
@@ -164,6 +106,16 @@ kibana:
     limits:
       cpu: 500m
       memory: 1Gi
+
+  # KQL 자동 설정
+  setup:
+    enabled: true
+    image:
+      repository: curlimages/curl
+      tag: latest
+    indexPattern:
+      name: "logstash-*"
+      timeField: "@timestamp"
 
 # Filebeat settings
 filebeat:

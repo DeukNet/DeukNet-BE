@@ -31,7 +31,11 @@ spec:
               protocol: TCP
           env:
             - name: ELASTICSEARCH_HOSTS
+              {{- if .Values.elasticsearch.tls.enabled }}
+              value: "https://{{ .Values.elasticsearch.name }}:{{ .Values.elasticsearch.service.httpPort }}"
+              {{- else }}
               value: {{ .Values.kibana.env.elasticsearchHosts | quote }}
+              {{- end }}
             - name: ELASTICSEARCH_USERNAME
               value: "kibana_system"
             - name: ELASTICSEARCH_PASSWORD
@@ -39,6 +43,25 @@ spec:
                 secretKeyRef:
                   name: elasticsearch-credentials
                   key: kibana-password
+            {{- if .Values.elasticsearch.tls.enabled }}
+            - name: ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES
+              value: "/usr/share/kibana/config/certs/ca.crt"
+            - name: ELASTICSEARCH_SSL_VERIFICATIONMODE
+              value: "certificate"
+            {{- end }}
+          {{- if .Values.elasticsearch.tls.enabled }}
+          volumeMounts:
+            - name: certs
+              mountPath: /usr/share/kibana/config/certs
+              readOnly: true
+          {{- end }}
           resources:
             {{- toYaml .Values.kibana.resources | nindent 12 }}
+      {{- if .Values.elasticsearch.tls.enabled }}
+      volumes:
+        - name: certs
+          secret:
+            secretName: {{ .Values.elasticsearch.name }}-certs
+            defaultMode: 0644
+      {{- end }}
 {{- end }}

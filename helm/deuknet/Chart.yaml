@@ -1,12 +1,14 @@
 apiVersion: v2
 name: deuknet
-description: A Helm chart for DeukNet Spring Boot application with ELK stack
+description: A Helm chart for DeukNet ELK stack with automated setup
 type: application
 version: 0.1.0
 appVersion: "1.0.0"
 keywords:
-  - spring-boot
   - elk-stack
-  - postgres
+  - elasticsearch
+  - logstash
+  - kibana
+  - filebeat
 maintainers:
   - name: DeukNet Team
