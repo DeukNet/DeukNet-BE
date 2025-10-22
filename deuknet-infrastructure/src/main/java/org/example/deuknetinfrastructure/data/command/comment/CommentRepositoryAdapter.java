@@ -36,4 +36,9 @@ public class CommentRepositoryAdapter implements CommentRepository {
         CommentEntity entity = mapper.toEntity(comment);
         jpaCommentRepository.delete(entity);
     }
+
+    @Override
+    public long countByPostId(UUID postId) {
+        return jpaCommentRepository.countByPostId(postId);
+    }
 }

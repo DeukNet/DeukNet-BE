@@ -1,8 +1,11 @@
 package org.example.seedwork;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.deuknetapplication.port.out.repository.UserRepository;
+import org.example.deuknetdomain.model.command.user.User;
 import org.example.seedwork.security.TestSecurityConfig;
 import org.example.deuknetinfrastructure.DeuknetApplication;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,6 +16,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
+
+import java.util.UUID;
 
 @SpringBootTest(classes = DeuknetApplication.class)
 @AutoConfigureMockMvc
@@ -51,4 +56,21 @@ public abstract class AbstractTest {
 
     @Autowired
     protected ObjectMapper objectMapper;
+
+    @Autowired
+    protected UserRepository userRepository;
+
+    @BeforeEach
+    void setUpTestUser() {
+        // 테스트용 User 생성
+        User testUser = User.restore(
+                TestSecurityConfig.TEST_USER_ID,
+                UUID.randomUUID(),
+                "testuser",
+                "Test User",
+                "Test bio",
+                "https://example.com/avatar.jpg"
+        );
+        userRepository.save(testUser);
+    }
 }

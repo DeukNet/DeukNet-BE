@@ -1,5 +1,6 @@
 package org.example.deuknetdomain.model.query.post;
 
+import lombok.Builder;
 import lombok.Getter;
 import org.example.deuknetdomain.common.seedwork.Projection;
 
@@ -24,6 +25,7 @@ public class PostSummaryProjection extends Projection {
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
+    @Builder
     public PostSummaryProjection(UUID id, String title, UUID authorId, String authorDisplayName,
                                  String status, Long viewCount, Long commentCount,
                                  LocalDateTime createdAt, LocalDateTime updatedAt) {

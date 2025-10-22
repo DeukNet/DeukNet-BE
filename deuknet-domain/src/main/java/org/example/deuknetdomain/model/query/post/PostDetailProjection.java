@@ -1,5 +1,6 @@
 package org.example.deuknetdomain.model.query.post;
 
+import lombok.Builder;
 import lombok.Getter;
 import org.example.deuknetdomain.common.seedwork.Projection;
 
@@ -36,6 +37,7 @@ public class PostDetailProjection extends Projection {
     private final Long commentCount;
     private final Long likeCount;
 
+    @Builder
     public PostDetailProjection(UUID id, String title, String content,
                                 UUID authorId, String authorUsername, String authorDisplayName, String authorAvatarUrl,
                                 String status, Long viewCount, LocalDateTime createdAt, LocalDateTime updatedAt,

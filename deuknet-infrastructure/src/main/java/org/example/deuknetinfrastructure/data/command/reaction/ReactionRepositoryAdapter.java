@@ -2,6 +2,7 @@ package org.example.deuknetinfrastructure.data.command.reaction;
 
 import org.example.deuknetapplication.port.out.repository.ReactionRepository;
 import org.example.deuknetdomain.model.command.reaction.Reaction;
+import org.example.deuknetdomain.model.command.reaction.ReactionType;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -35,5 +36,10 @@ public class ReactionRepositoryAdapter implements ReactionRepository {
     public void delete(Reaction reaction) {
         ReactionEntity entity = mapper.toEntity(reaction);
         jpaReactionRepository.delete(entity);
+    }
+
+    @Override
+    public long countByTargetIdAndReactionType(UUID targetId, ReactionType reactionType) {
+        return jpaReactionRepository.countByTargetIdAndReactionType(targetId, reactionType);
     }
 }

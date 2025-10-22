@@ -40,21 +40,45 @@ class PostControllerTest extends AbstractTest {
 
         UUID postId = UUID.fromString(result.getResponse().getContentAsString().replaceAll("\"", ""));
 
-        // Then - Outbox 이벤트 생성 검증
+        // Then - Outbox 이벤트 생성 검증 (Detail + Summary + Count 3개)
         List<OutboxEvent> outboxEvents = outboxEventRepository.findByAggregateId(postId);
 
-        assertThat(outboxEvents).hasSize(1);
+        assertThat(outboxEvents).hasSize(3);
 
-        OutboxEvent outboxEvent = outboxEvents.get(0);
-        assertThat(outboxEvent.getEventType()).isEqualTo("PostCreated");
-        assertThat(outboxEvent.getPayloadType()).isEqualTo("org.example.deuknetdomain.model.query.post.PostDetailProjection");
-        assertThat(outboxEvent.getAggregateId()).isEqualTo(postId);
-        assertThat(outboxEvent.getStatus().name()).isEqualTo("PENDING");
-        assertThat(outboxEvent.getPayload()).isNotNull();
+        // PostDetailProjection 이벤트 검증
+        OutboxEvent detailEvent = outboxEvents.stream()
+                .filter(e -> e.getPayloadType().contains("PostDetailProjection"))
+                .findFirst()
+                .orElseThrow();
 
-        String payload = outboxEvent.getPayload();
-        assertThat(payload).contains("\"title\":\"Test Post\"");
-        assertThat(payload).contains("\"content\":\"Test Content\"");
+        assertThat(detailEvent.getEventType()).isEqualTo("PostCreated");
+        assertThat(detailEvent.getAggregateId()).isEqualTo(postId);
+        assertThat(detailEvent.getStatus().name()).isEqualTo("PENDING");
+        assertThat(detailEvent.getPayload()).contains("\"title\":\"Test Post\"");
+        assertThat(detailEvent.getPayload()).contains("\"content\":\"Test Content\"");
+
+        // PostSummaryProjection 이벤트 검증
+        OutboxEvent summaryEvent = outboxEvents.stream()
+                .filter(e -> e.getPayloadType().contains("PostSummaryProjection"))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(summaryEvent.getEventType()).isEqualTo("PostCreated");
+        assertThat(summaryEvent.getAggregateId()).isEqualTo(postId);
+        assertThat(summaryEvent.getStatus().name()).isEqualTo("PENDING");
+        assertThat(summaryEvent.getPayload()).contains("\"title\":\"Test Post\"");
+
+        // PostCountProjection 이벤트 검증
+        OutboxEvent countEvent = outboxEvents.stream()
+                .filter(e -> e.getPayloadType().contains("PostCountProjection"))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(countEvent.getEventType()).isEqualTo("PostCreated");
+        assertThat(countEvent.getAggregateId()).isEqualTo(postId);
+        assertThat(countEvent.getStatus().name()).isEqualTo("PENDING");
+        assertThat(countEvent.getPayload()).contains("\"commentCount\":0");
+        assertThat(countEvent.getPayload()).contains("\"likeCount\":0");
     }
 
     @Test
