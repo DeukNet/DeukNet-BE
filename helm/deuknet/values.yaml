@@ -107,6 +107,24 @@ kibana:
       cpu: 500m
       memory: 1Gi
 
+  # Ingress settings
+  ingress:
+    enabled: true
+    className: nginx  # Ingress class (nginx, traefik 등)
+    annotations:
+      # nginx.ingress.kubernetes.io/rewrite-target: /
+      # cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - host: kibana.local  # 원하는 도메인으로 변경하세요
+        paths:
+          - path: /
+            pathType: Prefix
+    # TLS 설정 (선택사항)
+    tls: []
+    #  - secretName: kibana-tls
+    #    hosts:
+    #      - kibana.local
+
   # KQL 자동 설정
   setup:
     enabled: true
