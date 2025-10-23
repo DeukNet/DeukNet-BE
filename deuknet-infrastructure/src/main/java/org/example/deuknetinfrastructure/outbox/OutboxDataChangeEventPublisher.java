@@ -40,17 +40,17 @@ public class OutboxDataChangeEventPublisher implements DataChangeEventPublisher 
      *
      * @param eventType 이벤트 타입
      * @param aggregateId Aggregate ID
-     * @param projection 발행할 Projection 객체 (자동으로 JSON 직렬화)
+     * @param projection 발행할 Projection 객체 (자동으로 JSON 직렬화), null 가능 (삭제 이벤트 등)
      */
     @Override
     @Transactional
     public void publish(String eventType, UUID aggregateId, Projection projection) {
         try {
             // 1. Projection을 JSON으로 직렬화
-            String jsonPayload = objectMapper.writeValueAsString(projection);
+            String jsonPayload = projection != null ? objectMapper.writeValueAsString(projection) : null;
 
             // 2. Projection의 타입 정보 추출
-            String payloadType = projection.getClass().getName();
+            String payloadType = projection != null ? projection.getClass().getName() : null;
 
             // 3. OutboxEvent 엔티티 생성
             OutboxEvent outboxEvent = new OutboxEvent(

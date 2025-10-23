@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.example.deuknetapplication.port.out.security.JwtPort;
+import org.example.deuknetdomain.domain.auth.TokenPair;
 import org.example.deuknetdomain.domain.auth.exception.InvalidTokenException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -73,6 +74,14 @@ public class JwtAdapter implements JwtPort {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    @Override
+    public TokenPair createTokenPair(UUID userId) {
+        String accessToken = generateAccessToken(userId);
+        String refreshToken = generateRefreshToken(userId);
+
+        return new TokenPair(accessToken, refreshToken);
     }
 
     private String generateToken(UUID userId, long validityMs, String tokenType) {

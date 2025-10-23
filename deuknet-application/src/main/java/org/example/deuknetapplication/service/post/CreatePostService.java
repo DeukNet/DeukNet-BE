@@ -4,24 +4,32 @@ import org.example.deuknetapplication.common.exception.ResourceNotFoundException
 import org.example.deuknetapplication.port.in.post.CreatePostApplicationRequest;
 import org.example.deuknetapplication.port.in.post.CreatePostUseCase;
 import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
-import org.example.deuknetapplication.port.out.repository.CommentRepository;
 import org.example.deuknetapplication.port.out.repository.PostCategoryAssignmentRepository;
 import org.example.deuknetapplication.port.out.repository.PostRepository;
-import org.example.deuknetapplication.port.out.repository.ReactionRepository;
 import org.example.deuknetapplication.port.out.repository.UserRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
+import org.example.deuknetapplication.projection.post.PostCountProjection;
+import org.example.deuknetapplication.projection.post.PostDetailProjection;
+import org.example.deuknetdomain.common.vo.Content;
+import org.example.deuknetdomain.common.vo.Title;
 import org.example.deuknetdomain.domain.post.Post;
 import org.example.deuknetdomain.domain.post.PostCategoryAssignment;
 import org.example.deuknetdomain.domain.user.User;
-import org.example.deuknetapplication.projection.post.PostCountProjection;
-import org.example.deuknetapplication.projection.post.PostDetailProjection;
-import org.example.deuknetapplication.projection.post.PostSummaryProjection;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
+/**
+ * Post 생성 서비스 (SRP 준수)
+ *
+ * 책임:
+ * - Post Aggregate 생성 및 저장
+ * - 카테고리 할당
+ * - 이벤트 발행 (Outbox Pattern)
+ */
 @Service
 @Transactional
 public class CreatePostService implements CreatePostUseCase {
@@ -29,8 +37,6 @@ public class CreatePostService implements CreatePostUseCase {
     private final PostRepository postRepository;
     private final PostCategoryAssignmentRepository postCategoryAssignmentRepository;
     private final UserRepository userRepository;
-    private final CommentRepository commentRepository;
-    private final ReactionRepository reactionRepository;
     private final CurrentUserPort currentUserPort;
     private final DataChangeEventPublisher dataChangeEventPublisher;
 
@@ -38,55 +44,87 @@ public class CreatePostService implements CreatePostUseCase {
             PostRepository postRepository,
             PostCategoryAssignmentRepository postCategoryAssignmentRepository,
             UserRepository userRepository,
-            CommentRepository commentRepository,
-            ReactionRepository reactionRepository,
             CurrentUserPort currentUserPort,
             DataChangeEventPublisher dataChangeEventPublisher
     ) {
         this.postRepository = postRepository;
         this.postCategoryAssignmentRepository = postCategoryAssignmentRepository;
         this.userRepository = userRepository;
-        this.commentRepository = commentRepository;
-        this.reactionRepository = reactionRepository;
         this.currentUserPort = currentUserPort;
         this.dataChangeEventPublisher = dataChangeEventPublisher;
     }
 
     @Override
     public UUID createPost(CreatePostApplicationRequest request) {
+        // 1. 현재 사용자 조회
+        User author = getCurrentUser();
+
+        // 2. Post Aggregate 생성 및 저장
+        Post post = createPostAggregate(request, author.getId());
+
+        // 3. 카테고리 할당
+        assignCategories(post.getId(), request.getCategoryIds());
+
+        // 4. 이벤트 발행 (Outbox Pattern)
+        publishPostCreatedEvents(post, author, request.getCategoryIds());
+
+        return post.getId();
+    }
+
+    /**
+     * 현재 사용자 조회 (SRP: 사용자 조회 책임 분리)
+     */
+    private User getCurrentUser() {
         UUID currentUserId = currentUserPort.getCurrentUserId();
+        return userRepository.findById(currentUserId)
+                .orElseThrow(ResourceNotFoundException::new);
+    }
 
+    /**
+     * Post Aggregate 생성 및 저장 (SRP: Post 생성 책임 분리)
+     */
+    private Post createPostAggregate(CreatePostApplicationRequest request, UUID authorId) {
         Post post = Post.create(
-                org.example.deuknetdomain.common.vo.Title.from(request.getTitle()),
-                org.example.deuknetdomain.common.vo.Content.from(request.getContent()),
-                currentUserId
+                Title.from(request.getTitle()),
+                Content.from(request.getContent()),
+                authorId
         );
+        return postRepository.save(post);
+    }
 
-        post = postRepository.save(post);
-
-        if (request.getCategoryIds() != null && !request.getCategoryIds().isEmpty()) {
-            for (UUID categoryId : request.getCategoryIds()) {
-                PostCategoryAssignment assignment = PostCategoryAssignment.create(
-                        post.getId(),
-                        categoryId
-                );
-                postCategoryAssignmentRepository.save(assignment);
-            }
+    /**
+     * 카테고리 할당 (SRP: 카테고리 할당 책임 분리)
+     */
+    private void assignCategories(UUID postId, List<UUID> categoryIds) {
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            return;
         }
 
-        // 데이터 변경 이벤트 발행
+        for (UUID categoryId : categoryIds) {
+            PostCategoryAssignment assignment = PostCategoryAssignment.create(postId, categoryId);
+            postCategoryAssignmentRepository.save(assignment);
+        }
+    }
+
+    /**
+     * PostCreated 이벤트 발행 (SRP: 이벤트 발행 책임 분리)
+     *
+     * 여러 Projection에 대한 이벤트를 발행합니다.
+     * - PostDetailProjection: 상세 조회용
+     * - PostCountProjection: 통계 집계용
+     */
+    private void publishPostCreatedEvents(Post post, User author, List<UUID> categoryIds) {
+        publishPostDetailProjection(post, author, categoryIds);
+        publishPostCountProjection(post);
+    }
+
+    /**
+     * PostDetailProjection 이벤트 발행 (SRP: Detail Projection 발행 책임 분리)
+     */
+    private void publishPostDetailProjection(Post post, User author, List<UUID> categoryIds) {
         LocalDateTime now = LocalDateTime.now();
 
-        // User 정보 조회
-        User author = userRepository.findById(currentUserId)
-                .orElseThrow(ResourceNotFoundException::new);
-
-        // Count 정보 조회 (신규 Post이므로 모두 0)
-        long commentCount = 0L;
-        long likeCount = 0L;  // targetId로 조회
-
-        // 1. PostDetail 이벤트 발행 (상세 조회용)
-        PostDetailProjection detailProjection = PostDetailProjection.builder()
+        PostDetailProjection projection = PostDetailProjection.builder()
                 .id(post.getId())
                 .title(post.getTitle().getValue())
                 .content(post.getContent().getValue())
@@ -98,35 +136,25 @@ public class CreatePostService implements CreatePostUseCase {
                 .viewCount(post.getViewCount())
                 .createdAt(now)
                 .updatedAt(now)
-                .categoryIds(request.getCategoryIds())
-                .commentCount(commentCount)
-                .likeCount(likeCount)
+                .categoryIds(categoryIds)
+                .commentCount(0L)
+                .likeCount(0L)
                 .build();
-        dataChangeEventPublisher.publish("PostCreated", post.getId(), detailProjection);
 
-        // 2. PostSummary 이벤트 발행 (목록 조회용)
-        PostSummaryProjection summaryProjection = PostSummaryProjection.builder()
-                .id(post.getId())
-                .title(post.getTitle().getValue())
-                .authorId(post.getAuthorId())
-                .authorDisplayName(author.getDisplayName())
-                .status(post.getStatus().name())
-                .viewCount(post.getViewCount())
-                .commentCount(commentCount)
-                .createdAt(now)
-                .updatedAt(now)
-                .build();
-        dataChangeEventPublisher.publish("PostCreated", post.getId(), summaryProjection);
+        dataChangeEventPublisher.publish("PostCreated", post.getId(), projection);
+    }
 
-        // 3. PostCount 이벤트 발행 (통계 정보용)
-        PostCountProjection countProjection = PostCountProjection.builder()
+    /**
+     * PostCountProjection 이벤트 발행 (SRP: Count Projection 발행 책임 분리)
+     */
+    private void publishPostCountProjection(Post post) {
+        PostCountProjection projection = PostCountProjection.builder()
                 .id(post.getId())
-                .commentCount(commentCount)
-                .likeCount(likeCount)
+                .commentCount(0L)
+                .likeCount(0L)
                 .viewCount(post.getViewCount())
                 .build();
-        dataChangeEventPublisher.publish("PostCreated", post.getId(), countProjection);
 
-        return post.getId();
+        dataChangeEventPublisher.publish("PostCreated", post.getId(), projection);
     }
 }

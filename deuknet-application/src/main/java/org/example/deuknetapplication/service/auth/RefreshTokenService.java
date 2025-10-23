@@ -24,10 +24,7 @@ public class RefreshTokenService implements RefreshTokenUseCase {
         }
         
         UUID userId = jwtPort.validateToken(refreshToken);
-        
-        String newAccessToken = jwtPort.generateAccessToken(userId);
-        String newRefreshToken = jwtPort.generateRefreshToken(userId);
-        
-        return new TokenPair(newAccessToken, newRefreshToken);
+
+        return jwtPort.createTokenPair(userId);
     }
 }

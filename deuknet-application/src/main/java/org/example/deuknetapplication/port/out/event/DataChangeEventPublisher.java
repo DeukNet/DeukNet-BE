@@ -39,4 +39,8 @@ public interface DataChangeEventPublisher {
      * @param projection 변경 데이터를 담은 Projection 객체
      */
     void publish(String eventType, UUID aggregateId, Projection projection);
+
+    default void publish(String eventType, UUID aggregateId) {
+        publish(eventType, aggregateId, null);
+    }
 }

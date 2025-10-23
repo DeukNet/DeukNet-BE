@@ -4,13 +4,17 @@ import org.example.deuknetapplication.common.exception.OwnerMismatchException;
 import org.example.deuknetapplication.common.exception.ResourceNotFoundException;
 import org.example.deuknetapplication.port.in.post.PublishPostUseCase;
 import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
+import org.example.deuknetapplication.port.out.repository.CommentRepository;
+import org.example.deuknetapplication.port.out.repository.PostCategoryAssignmentRepository;
 import org.example.deuknetapplication.port.out.repository.PostRepository;
+import org.example.deuknetapplication.port.out.repository.ReactionRepository;
 import org.example.deuknetapplication.port.out.repository.UserRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
-import org.example.deuknetdomain.domain.post.Post;
-import org.example.deuknetdomain.domain.user.User;
 import org.example.deuknetapplication.projection.post.PostDetailProjection;
-import org.example.deuknetapplication.projection.post.PostSummaryProjection;
+import org.example.deuknetdomain.domain.post.Post;
+import org.example.deuknetdomain.domain.post.PostCategoryAssignment;
+import org.example.deuknetdomain.domain.reaction.ReactionType;
+import org.example.deuknetdomain.domain.user.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,31 +22,61 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Post 발행 서비스 (SRP 준수)
+ *
+ * 책임:
+ * - Post 발행 권한 검증
+ * - Post 상태를 PUBLISHED로 변경
+ * - 발행 이벤트 발행 (Outbox Pattern)
+ */
 @Service
 @Transactional
 public class PublishPostService implements PublishPostUseCase {
 
     private final PostRepository postRepository;
+    private final PostCategoryAssignmentRepository postCategoryAssignmentRepository;
     private final UserRepository userRepository;
+    private final CommentRepository commentRepository;
+    private final ReactionRepository reactionRepository;
     private final CurrentUserPort currentUserPort;
     private final DataChangeEventPublisher dataChangeEventPublisher;
 
     public PublishPostService(
             PostRepository postRepository,
+            PostCategoryAssignmentRepository postCategoryAssignmentRepository,
             UserRepository userRepository,
+            CommentRepository commentRepository,
+            ReactionRepository reactionRepository,
             CurrentUserPort currentUserPort,
             DataChangeEventPublisher dataChangeEventPublisher
     ) {
         this.postRepository = postRepository;
+        this.postCategoryAssignmentRepository = postCategoryAssignmentRepository;
         this.userRepository = userRepository;
+        this.commentRepository = commentRepository;
+        this.reactionRepository = reactionRepository;
         this.currentUserPort = currentUserPort;
         this.dataChangeEventPublisher = dataChangeEventPublisher;
     }
 
     @Override
     public void publishPost(UUID postId) {
-        UUID currentUserId = currentUserPort.getCurrentUserId();
+        // 1. Post 조회 및 권한 검증
+        Post post = getPostAndVerifyOwnership(postId);
 
+        // 2. Post 발행 (상태 변경)
+        publishPostAggregate(post);
+
+        // 3. 발행 이벤트 발행
+        publishPostPublishedEvent(post);
+    }
+
+    /**
+     * Post 조회 및 소유권 검증 (SRP: 권한 검증 책임 분리)
+     */
+    private Post getPostAndVerifyOwnership(UUID postId) {
+        UUID currentUserId = currentUserPort.getCurrentUserId();
         Post post = postRepository.findById(postId)
                 .orElseThrow(ResourceNotFoundException::new);
 
@@ -50,18 +84,56 @@ public class PublishPostService implements PublishPostUseCase {
             throw new OwnerMismatchException();
         }
 
+        return post;
+    }
+
+    /**
+     * Post 발행 (SRP: Post 상태 변경 책임 분리)
+     */
+    private void publishPostAggregate(Post post) {
         post.publish();
         postRepository.save(post);
+    }
 
-        // 데이터 변경 이벤트 발행 (상태만 변경되므로 status 업데이트)
+    /**
+     * PostPublished 이벤트 발행 (SRP: 이벤트 발행 책임 분리)
+     */
+    private void publishPostPublishedEvent(Post post) {
+        User author = getAuthor(post.getAuthorId());
+        List<UUID> categoryIds = getCategoryIds(post.getId());
+        publishPostDetailProjection(post, author, categoryIds);
+    }
+
+    /**
+     * 작성자 조회 (SRP: 사용자 조회 책임 분리)
+     */
+    private User getAuthor(UUID authorId) {
+        return userRepository.findById(authorId)
+                .orElseThrow(ResourceNotFoundException::new);
+    }
+
+    /**
+     * 카테고리 ID 목록 조회 (SRP: 카테고리 조회 책임 분리)
+     */
+    private List<UUID> getCategoryIds(UUID postId) {
+        return postCategoryAssignmentRepository.findByPostId(postId)
+                .stream()
+                .map(PostCategoryAssignment::getCategoryId)
+                .toList();
+    }
+
+    /**
+     * PostDetailProjection 이벤트 발행 (SRP: Detail Projection 발행 책임 분리)
+     */
+    private void publishPostDetailProjection(Post post, User author, List<UUID> categoryIds) {
         LocalDateTime now = LocalDateTime.now();
 
-        // User 정보 조회
-        User author = userRepository.findById(post.getAuthorId())
-                .orElseThrow(ResourceNotFoundException::new);
+        // 현재 통계 조회
+        long commentCount = commentRepository.countByPostId(post.getId());
+        long likeCount = reactionRepository.countByTargetIdAndReactionType(
+                post.getId(), ReactionType.LIKE);
 
-        // 1. PostDetail 업데이트 이벤트 발행
-        PostDetailProjection detailProjection = PostDetailProjection.builder()
+        PostDetailProjection projection = PostDetailProjection.builder()
                 .id(post.getId())
                 .title(post.getTitle().getValue())
                 .content(post.getContent().getValue())
@@ -73,24 +145,11 @@ public class PublishPostService implements PublishPostUseCase {
                 .viewCount(post.getViewCount())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(now)
-                .categoryIds(List.of())  // TODO: 실제 조회 필요
-                .commentCount(0L)  // TODO
-                .likeCount(0L)  // TODO
+                .categoryIds(categoryIds)
+                .commentCount(commentCount)
+                .likeCount(likeCount)
                 .build();
-        dataChangeEventPublisher.publish("PostPublished", post.getId(), detailProjection);
 
-        // 2. PostSummary 업데이트 이벤트 발행
-        PostSummaryProjection summaryProjection = PostSummaryProjection.builder()
-                .id(post.getId())
-                .title(post.getTitle().getValue())
-                .authorId(post.getAuthorId())
-                .authorDisplayName(author.getDisplayName())
-                .status(post.getStatus().name())  // PUBLISHED로 변경됨
-                .viewCount(post.getViewCount())
-                .commentCount(0L)  // TODO
-                .createdAt(post.getCreatedAt())
-                .updatedAt(now)
-                .build();
-        dataChangeEventPublisher.publish("PostPublished", post.getId(), summaryProjection);
+        dataChangeEventPublisher.publish("PostPublished", post.getId(), projection);
     }
 }

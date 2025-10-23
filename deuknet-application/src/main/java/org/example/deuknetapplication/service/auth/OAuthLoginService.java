@@ -40,29 +40,21 @@ public class OAuthLoginService implements OAuthLoginUseCase {
 
     @Override
     public TokenPair login(String authorizationCode, AuthProvider provider) {
-        // 1. OAuth Provider로부터 사용자 정보 가져오기
         OAuthUserInfo oAuthUserInfo = oAuthPort.getUserInfo(authorizationCode, provider);
         
         Email email = Email.from(oAuthUserInfo.getEmail());
         
-        // 2. AuthCredential 조회 또는 생성
         AuthCredential authCredential = authCredentialRepository
                 .findByEmailAndProvider(email, provider)
                 .orElseGet(() -> createNewUser(oAuthUserInfo, email));
         
-        // 3. User 조회
         User user = userRepository.findByAuthCredentialId(authCredential.getId())
                 .orElseThrow(UserNotFoundException::new);
-        
-        // 4. JWT 토큰 생성
-        String accessToken = jwtPort.generateAccessToken(user.getId());
-        String refreshToken = jwtPort.generateRefreshToken(user.getId());
-        
-        return new TokenPair(accessToken, refreshToken);
+
+        return jwtPort.createTokenPair(user.getId());
     }
 
     private AuthCredential createNewUser(OAuthUserInfo oAuthUserInfo, Email email) {
-        // 임시 userId로 AuthCredential 먼저 생성
         UUID tempUserId = UUID.randomUUID();
         AuthCredential authCredential = AuthCredential.create(
                 tempUserId,
@@ -71,7 +63,6 @@ public class OAuthLoginService implements OAuthLoginUseCase {
         );
         authCredential = authCredentialRepository.save(authCredential);
         
-        // User 생성
         String username = generateUniqueUsername(oAuthUserInfo.getName());
         User user = User.create(
                 authCredential.getId(),
@@ -80,7 +71,7 @@ public class OAuthLoginService implements OAuthLoginUseCase {
                 null,
                 oAuthUserInfo.getPicture()
         );
-        user = userRepository.save(user);
+        userRepository.save(user);
         
         return authCredential;
     }

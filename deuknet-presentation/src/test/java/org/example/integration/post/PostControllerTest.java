@@ -40,10 +40,10 @@ class PostControllerTest extends AbstractTest {
 
         UUID postId = UUID.fromString(result.getResponse().getContentAsString().replaceAll("\"", ""));
 
-        // Then - Outbox 이벤트 생성 검증 (Detail + Summary + Count 3개)
+        // Then - Outbox 이벤트 생성 검증 (Detail + Count 2개)
         List<OutboxEvent> outboxEvents = outboxEventRepository.findByAggregateId(postId);
 
-        assertThat(outboxEvents).hasSize(3);
+        assertThat(outboxEvents).hasSize(2);
 
         // PostDetailProjection 이벤트 검증
         OutboxEvent detailEvent = outboxEvents.stream()
@@ -56,17 +56,6 @@ class PostControllerTest extends AbstractTest {
         assertThat(detailEvent.getStatus().name()).isEqualTo("PENDING");
         assertThat(detailEvent.getPayload()).contains("\"title\":\"Test Post\"");
         assertThat(detailEvent.getPayload()).contains("\"content\":\"Test Content\"");
-
-        // PostSummaryProjection 이벤트 검증
-        OutboxEvent summaryEvent = outboxEvents.stream()
-                .filter(e -> e.getPayloadType().contains("PostSummaryProjection"))
-                .findFirst()
-                .orElseThrow();
-
-        assertThat(summaryEvent.getEventType()).isEqualTo("PostCreated");
-        assertThat(summaryEvent.getAggregateId()).isEqualTo(postId);
-        assertThat(summaryEvent.getStatus().name()).isEqualTo("PENDING");
-        assertThat(summaryEvent.getPayload()).contains("\"title\":\"Test Post\"");
 
         // PostCountProjection 이벤트 검증
         OutboxEvent countEvent = outboxEvents.stream()

@@ -11,19 +11,28 @@ import org.example.deuknetapplication.port.out.repository.PostRepository;
 import org.example.deuknetapplication.port.out.repository.ReactionRepository;
 import org.example.deuknetapplication.port.out.repository.UserRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
+import org.example.deuknetapplication.projection.post.PostCountProjection;
+import org.example.deuknetapplication.projection.post.PostDetailProjection;
+import org.example.deuknetdomain.common.vo.Content;
+import org.example.deuknetdomain.common.vo.Title;
 import org.example.deuknetdomain.domain.post.Post;
 import org.example.deuknetdomain.domain.post.PostCategoryAssignment;
 import org.example.deuknetdomain.domain.reaction.ReactionType;
 import org.example.deuknetdomain.domain.user.User;
-import org.example.deuknetapplication.projection.post.PostCountProjection;
-import org.example.deuknetapplication.projection.post.PostDetailProjection;
-import org.example.deuknetapplication.projection.post.PostSummaryProjection;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
+/**
+ * Post 수정 서비스 (SRP 준수)
+ * 책임:
+ * - Post 수정 권한 검증
+ * - Post 내용 및 카테고리 업데이트
+ * - 이벤트 발행 (Outbox Pattern)
+ */
 @Service
 @Transactional
 public class UpdatePostService implements UpdatePostUseCase {
@@ -56,46 +65,92 @@ public class UpdatePostService implements UpdatePostUseCase {
 
     @Override
     public void updatePost(UpdatePostApplcationRequest request) {
-        UUID currentUserId = currentUserPort.getCurrentUserId();
+        // 1. Post 조회 및 권한 검증
+        Post post = getPostAndVerifyOwnership(request.getPostId());
 
-        Post post = postRepository.findById(request.getPostId())
+        // 2. Post 내용 업데이트
+        updatePostContent(post, request);
+
+        // 3. 카테고리 재할당
+        reassignCategories(request.getPostId(), request.getCategoryIds());
+
+        // 4. 이벤트 발행
+        publishPostUpdatedEvents(post, request.getCategoryIds());
+    }
+
+    /**
+     * Post 조회 및 소유권 검증 (SRP: 권한 검증 책임 분리)
+     */
+    private Post getPostAndVerifyOwnership(UUID postId) {
+        UUID currentUserId = currentUserPort.getCurrentUserId();
+        Post post = postRepository.findById(postId)
                 .orElseThrow(ResourceNotFoundException::new);
 
         if (!post.getAuthorId().equals(currentUserId)) {
             throw new OwnerMismatchException();
         }
 
+        return post;
+    }
+
+    /**
+     * Post 내용 업데이트 (SRP: Post 업데이트 책임 분리)
+     */
+    private void updatePostContent(Post post, UpdatePostApplcationRequest request) {
         post.updateContent(
-                org.example.deuknetdomain.common.vo.Title.from(request.getTitle()),
-                org.example.deuknetdomain.common.vo.Content.from(request.getContent())
+                Title.from(request.getTitle()),
+                Content.from(request.getContent())
         );
         postRepository.save(post);
+    }
 
-        postCategoryAssignmentRepository.deleteByPostId(request.getPostId());
+    /**
+     * 카테고리 재할당 (SRP: 카테고리 관리 책임 분리)
+     */
+    private void reassignCategories(UUID postId, List<UUID> categoryIds) {
+        // 기존 카테고리 삭제
+        postCategoryAssignmentRepository.deleteByPostId(postId);
 
-        if (request.getCategoryIds() != null && !request.getCategoryIds().isEmpty()) {
-            for (UUID categoryId : request.getCategoryIds()) {
-                PostCategoryAssignment assignment = PostCategoryAssignment.create(
-                        request.getPostId(),
-                        categoryId
-                );
-                postCategoryAssignmentRepository.save(assignment);
-            }
+        // 새 카테고리 할당
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            return;
         }
 
-        // 데이터 변경 이벤트 발행
+        for (UUID categoryId : categoryIds) {
+            PostCategoryAssignment assignment = PostCategoryAssignment.create(postId, categoryId);
+            postCategoryAssignmentRepository.save(assignment);
+        }
+    }
+
+    /**
+     * PostUpdated 이벤트 발행 (SRP: 이벤트 발행 책임 분리)
+     */
+    private void publishPostUpdatedEvents(Post post, List<UUID> categoryIds) {
+        User author = getAuthor(post.getAuthorId());
+        publishPostDetailProjection(post, author, categoryIds);
+        publishPostCountProjection(post);
+    }
+
+    /**
+     * 작성자 조회 (SRP: 사용자 조회 책임 분리)
+     */
+    private User getAuthor(UUID authorId) {
+        return userRepository.findById(authorId)
+                .orElseThrow(ResourceNotFoundException::new);
+    }
+
+    /**
+     * PostDetailProjection 이벤트 발행 (SRP: Detail Projection 발행 책임 분리)
+     */
+    private void publishPostDetailProjection(Post post, User author, List<UUID> categoryIds) {
         LocalDateTime now = LocalDateTime.now();
 
-        // User 정보 조회
-        User author = userRepository.findById(post.getAuthorId())
-                .orElseThrow(ResourceNotFoundException::new);
-
-        // Count 정보 조회 (실제 DB에서 조회)
+        // 현재 통계 조회 (실제 DB에서)
         long commentCount = commentRepository.countByPostId(post.getId());
-        long likeCount = reactionRepository.countByTargetIdAndReactionType(post.getId(), ReactionType.LIKE);
+        long likeCount = reactionRepository.countByTargetIdAndReactionType(
+                post.getId(), ReactionType.LIKE);
 
-        // 1. PostDetail 업데이트 이벤트 발행
-        PostDetailProjection detailProjection = PostDetailProjection.builder()
+        PostDetailProjection projection = PostDetailProjection.builder()
                 .id(post.getId())
                 .title(post.getTitle().getValue())
                 .content(post.getContent().getValue())
@@ -107,33 +162,30 @@ public class UpdatePostService implements UpdatePostUseCase {
                 .viewCount(post.getViewCount())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(now)
-                .categoryIds(request.getCategoryIds())
+                .categoryIds(categoryIds)
                 .commentCount(commentCount)
                 .likeCount(likeCount)
                 .build();
-        dataChangeEventPublisher.publish("PostUpdated", post.getId(), detailProjection);
 
-        // 2. PostSummary 업데이트 이벤트 발행
-        PostSummaryProjection summaryProjection = PostSummaryProjection.builder()
-                .id(post.getId())
-                .title(post.getTitle().getValue())
-                .authorId(post.getAuthorId())
-                .authorDisplayName(author.getDisplayName())
-                .status(post.getStatus().name())
-                .viewCount(post.getViewCount())
-                .commentCount(commentCount)
-                .createdAt(post.getCreatedAt())
-                .updatedAt(now)
-                .build();
-        dataChangeEventPublisher.publish("PostUpdated", post.getId(), summaryProjection);
+        dataChangeEventPublisher.publish("PostUpdated", post.getId(), projection);
+    }
 
-        // 3. PostCount 업데이트 이벤트 발행
-        PostCountProjection countProjection = PostCountProjection.builder()
+    /**
+     * PostCountProjection 이벤트 발행 (SRP: Count Projection 발행 책임 분리)
+     */
+    private void publishPostCountProjection(Post post) {
+        // 현재 통계 조회 (실제 DB에서)
+        long commentCount = commentRepository.countByPostId(post.getId());
+        long likeCount = reactionRepository.countByTargetIdAndReactionType(
+                post.getId(), ReactionType.LIKE);
+
+        PostCountProjection projection = PostCountProjection.builder()
                 .id(post.getId())
                 .commentCount(commentCount)
                 .likeCount(likeCount)
                 .viewCount(post.getViewCount())
                 .build();
-        dataChangeEventPublisher.publish("PostUpdated", post.getId(), countProjection);
+
+        dataChangeEventPublisher.publish("PostUpdated", post.getId(), projection);
     }
 }

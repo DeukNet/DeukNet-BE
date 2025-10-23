@@ -3,6 +3,7 @@ package org.example.deuknetinfrastructure;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @SpringBootApplication(scanBasePackages = {
@@ -14,6 +15,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
     "org.example.deuknetinfrastructure.data.command",
     "org.example.deuknetinfrastructure.outbox"
 })
+@EnableElasticsearchRepositories(basePackages = "org.example.deuknetinfrastructure.data.query")
 @EnableJpaAuditing
 public class DeuknetApplication {
 

@@ -2,6 +2,7 @@ package org.example.deuknetinfrastructure.outbox;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.deuknetinfrastructure.event.handler.ReactionEventHandler;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -11,14 +12,15 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Outbox 이벤트를 폴링하여 메시지 브로커에 발행하는 스케줄러
+ * Outbox 이벤트를 폴링하여 Event Handler에 전달하는 스케줄러
  *
  * 주기적으로 outbox_events 테이블을 확인하여 PENDING 상태의 이벤트를
- * 메시지 브로커(Kafka, RabbitMQ 등)에 발행합니다.
+ * Event Handler에 전달하여 Projection을 업데이트합니다. (Event Sourcing)
  *
  * 역할 분리:
  * - OutboxEventPublisherAdapter: Application에서 호출하여 Outbox에 저장
- * - OutboxEventScheduler (이 클래스): 주기적으로 Outbox를 폴링하여 실제 발행
+ * - OutboxEventScheduler (이 클래스): 주기적으로 Outbox를 폴링하여 Handler 호출
+ * - ReactionEventHandler: 이벤트를 소비하여 ReactionCountProjection 업데이트
  */
 @Slf4j
 @Service
@@ -28,6 +30,7 @@ public class OutboxEventScheduler {
 
     private final OutboxEventRepository outboxEventRepository;
     private final OutboxEventQueryAdapter outboxEventQueryAdapter;
+    private final ReactionEventHandler reactionEventHandler;
 
     // TODO: 실제 메시지 브로커 연동 시 추가
     // private final KafkaTemplate<String, String> kafkaTemplate;
@@ -96,26 +99,29 @@ public class OutboxEventScheduler {
     }
 
     /**
-     * 이벤트를 메시지 브로커에 발행
+     * 이벤트를 Event Handler에 전달 (Event Sourcing)
      */
     private void publishEvent(OutboxEvent event) {
         event.markAsProcessing();
         outboxEventRepository.save(event);
 
         try {
-            // TODO: 실제 메시지 브로커 연동
+            // Event Handler를 통해 Projection 업데이트 (Event Sourcing)
+            reactionEventHandler.handle(event);
+
+            // TODO: 실제 메시지 브로커 연동 (다른 마이크로서비스에 전파)
             // kafkaTemplate.send(event.getEventType(), event.getPayload());
 
-            // 현재는 로그만 출력 (개발 단계)
-            log.debug("Publishing event: type={}, aggregateId={}",
+            log.debug("Processing event: type={}, aggregateId={}",
                 event.getEventType(), event.getAggregateId());
 
             event.markAsPublished();
             outboxEventRepository.save(event);
 
-            log.info("Successfully published outbox event: {}", event.getId());
+            log.info("Successfully processed outbox event: {} (type={})",
+                    event.getId(), event.getEventType());
         } catch (Exception e) {
-            throw new RuntimeException("Failed to publish event to message broker", e);
+            throw new RuntimeException("Failed to process event", e);
         }
     }
 }
