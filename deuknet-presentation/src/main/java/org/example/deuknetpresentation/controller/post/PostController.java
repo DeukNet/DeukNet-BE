@@ -15,17 +15,20 @@ public class PostController implements PostApi {
     private final UpdatePostUseCase updatePostUseCase;
     private final PublishPostUseCase publishPostUseCase;
     private final DeletePostUseCase deletePostUseCase;
+    private final IncrementViewCountUseCase incrementViewCountUseCase;
 
     public PostController(
             CreatePostUseCase createPostUseCase,
             UpdatePostUseCase updatePostUseCase,
             PublishPostUseCase publishPostUseCase,
-            DeletePostUseCase deletePostUseCase
+            DeletePostUseCase deletePostUseCase,
+            IncrementViewCountUseCase incrementViewCountUseCase
     ) {
         this.createPostUseCase = createPostUseCase;
         this.updatePostUseCase = updatePostUseCase;
         this.publishPostUseCase = publishPostUseCase;
         this.deletePostUseCase = deletePostUseCase;
+        this.incrementViewCountUseCase = incrementViewCountUseCase;
     }
 
     @Override
@@ -55,5 +58,12 @@ public class PostController implements PostApi {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deletePost(@PathVariable UUID postId) {
         deletePostUseCase.deletePost(postId);
+    }
+
+    @Override
+    @PostMapping("/{postId}/view")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void incrementViewCount(@PathVariable UUID postId) {
+        incrementViewCountUseCase.incrementViewCount(postId);
     }
 }

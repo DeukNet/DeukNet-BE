@@ -18,18 +18,11 @@ public class UserProfileProjection extends Projection {
     private final String bio;
     private final String avatarUrl;
 
-    // 통계 정보
-    private final Long postCount;
-    private final Long commentCount;
-
-    public UserProfileProjection(UUID id, String username, String displayName, String bio, String avatarUrl,
-                                 Long postCount, Long commentCount) {
+    public UserProfileProjection(UUID id, String username, String displayName, String bio, String avatarUrl) {
         super(id);
         this.username = username;
         this.displayName = displayName;
         this.bio = bio;
         this.avatarUrl = avatarUrl;
-        this.postCount = postCount;
-        this.commentCount = commentCount;
     }
 }

@@ -104,6 +104,30 @@ class PostControllerTest extends AbstractTest {
                 .andExpect(status().isNoContent());
     }
 
+    @Test
+    @WithMockUser  // 게시글 생성을 위해 필요
+    void incrementViewCount() throws Exception {
+        // Given - 게시글 생성
+        UUID postId = create();
+
+        // When - 조회수 증가 (인증 불필요)
+        mockMvc.perform(post("/api/posts/" + postId + "/view"))
+                .andExpect(status().isNoContent());
+
+        // Then - Outbox 이벤트 검증
+        List<OutboxEvent> outboxEvents = outboxEventRepository.findByAggregateId(postId);
+
+        // PostViewCountIncremented 이벤트 확인
+        OutboxEvent viewCountEvent = outboxEvents.stream()
+                .filter(e -> e.getEventType().equals("PostViewCountIncremented"))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(viewCountEvent.getAggregateId()).isEqualTo(postId);
+        assertThat(viewCountEvent.getStatus().name()).isEqualTo("PENDING");
+        assertThat(viewCountEvent.getPayload()).contains("\"viewCount\":1");
+    }
+
     private UUID create() throws Exception {
         CreatePostRequest req = new CreatePostRequest();
         req.setTitle("Test");

@@ -88,4 +88,17 @@ public interface PostApi {
             @Parameter(description = "게시글 ID", required = true)
             @PathVariable UUID postId
     );
+
+    @Operation(
+            summary = "게시글 조회수 증가",
+            description = "게시글 조회 시 조회수를 1 증가시킵니다. 인증이 필요하지 않습니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "조회수 증가 성공"),
+            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
+    })
+    void incrementViewCount(
+            @Parameter(description = "게시글 ID", required = true)
+            @PathVariable UUID postId
+    );
 }
