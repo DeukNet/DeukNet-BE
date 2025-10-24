@@ -12,10 +12,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
     "org.example.deuknetapplication"
 })
 @EntityScan(basePackages = {
-    "org.example.deuknetinfrastructure.data.command",
-    "org.example.deuknetinfrastructure.outbox"
+    "org.example.deuknetinfrastructure.data",
+    "org.example.deuknetinfrastructure.external.messaging.outbox"
 })
-@EnableElasticsearchRepositories(basePackages = "org.example.deuknetinfrastructure.data.query")
+@EnableElasticsearchRepositories(basePackages = "org.example.deuknetinfrastructure.external.search")
 @EnableJpaAuditing
 public class DeuknetApplication {
 
