@@ -23,7 +23,7 @@ spec:
       serviceAccountName: {{ .Values.filebeat.name }}
       containers:
         - name: {{ .Values.filebeat.name }}
-          image: "{{ .Values.filebeat.image.repository }}:{{ .Values.filebeat.image.tag }}"
+          image: {{ .Values.filebeat.image.repository }}:{{ .Values.filebeat.image.tag }}
           imagePullPolicy: {{ .Values.filebeat.image.pullPolicy }}
           env:
             - name: NODE_NAME

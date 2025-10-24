@@ -19,19 +19,21 @@ data:
 
           # 템플릿 설정
           templates:
-            # 기본적으로 모든 Pod 수집
+            # 설정된 namespace의 로그만 수집
             - condition:
-                # Job, Setup Job, Kubernetes 시스템 Pod 제외
-                not:
-                  or:
-                    - equals:
-                        kubernetes.namespace: "kube-system"
-                    - equals:
-                        kubernetes.namespace: "kube-public"
-                    - contains:
-                        kubernetes.pod.name: "elasticsearch-setup"
-                    - contains:
-                        kubernetes.labels.job-name: ""  # Job Pod 제외
+                and:
+                  # 설정된 namespace만 포함
+                  - equals:
+                      kubernetes.namespace: "{{ .Values.global.namespace }}"
+                  # Job Pod 제외
+                  - not:
+                      or:
+                        - contains:
+                            kubernetes.pod.name: "elasticsearch-setup"
+                        - contains:
+                            kubernetes.pod.name: "kibana-setup"
+                        - contains:
+                            kubernetes.pod.name: "elasticsearch-ca-setup"
               config:
                 - type: container
                   paths:
@@ -54,16 +56,12 @@ data:
           fields: ["agent.ephemeral_id", "agent.id", "ecs.version"]
           ignore_missing: true
 
-      # Job Pod 로그 드롭
+      # 설정된 namespace가 아닌 로그는 모두 드롭 (이중 안전장치)
       - drop_event:
           when:
-            or:
-              - contains:
-                  kubernetes.pod.name: "elasticsearch-setup"
-              - equals:
-                  kubernetes.namespace: "kube-system"
-              - equals:
-                  kubernetes.namespace: "kube-public"
+            not:
+              equals:
+                kubernetes.namespace: "{{ .Values.global.namespace }}"
 
     output.logstash:
       hosts: ["{{ .Values.logstash.name }}:{{ .Values.logstash.service.port }}"]

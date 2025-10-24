@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: logstash
-  namespace: default
+  namespace: {{ .Values.global.namespace }}
   labels:
     app: {{ .Values.logstash.name }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}
