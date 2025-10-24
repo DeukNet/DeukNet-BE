@@ -1,7 +1,7 @@
 package org.example.integration.post;
 
-import org.example.deuknetinfrastructure.outbox.OutboxEvent;
-import org.example.deuknetinfrastructure.outbox.OutboxEventRepository;
+import org.example.deuknetinfrastructure.external.messaging.outbox.OutboxEvent;
+import org.example.deuknetinfrastructure.external.messaging.outbox.OutboxEventRepository;
 import org.example.deuknetpresentation.controller.post.dto.*;
 import org.example.seedwork.AbstractTest;
 import org.junit.jupiter.api.Test;
