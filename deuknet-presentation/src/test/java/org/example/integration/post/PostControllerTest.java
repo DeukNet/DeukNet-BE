@@ -68,6 +68,9 @@ class PostControllerTest extends AbstractTest {
         assertThat(countEvent.getStatus().name()).isEqualTo("PENDING");
         assertThat(countEvent.getPayload()).contains("\"commentCount\":0");
         assertThat(countEvent.getPayload()).contains("\"likeCount\":0");
+
+        // Note: E2E CDC 테스트는 PostCdcEndToEndTest에서 수행
+        // 이 테스트는 Outbox 이벤트 생성까지만 검증
     }
 
     @Test
@@ -126,6 +129,8 @@ class PostControllerTest extends AbstractTest {
         assertThat(viewCountEvent.getAggregateId()).isEqualTo(postId);
         assertThat(viewCountEvent.getStatus().name()).isEqualTo("PENDING");
         assertThat(viewCountEvent.getPayload()).contains("\"viewCount\":1");
+
+        // Note: E2E CDC 테스트는 PostCdcEndToEndTest에서 수행
     }
 
     private UUID create() throws Exception {

@@ -23,13 +23,18 @@ class CommentControllerTest extends AbstractTest {
         UUID postId = createPost();
 
         CreateCommentRequest req = new CreateCommentRequest();
-        req.setContent("Comment");
+        req.setContent("Test Comment");
         req.setParentCommentId(null);
 
-        mockMvc.perform(post("/api/posts/" + postId + "/comments")
+        MvcResult result = mockMvc.perform(post("/api/posts/" + postId + "/comments")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        UUID commentId = UUID.fromString(result.getResponse().getContentAsString().replaceAll("\"", ""));
+
+        // Note: E2E CDC 테스트는 CommentCdcEndToEndTest에서 수행
     }
 
     @Test

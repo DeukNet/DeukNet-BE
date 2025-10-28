@@ -28,6 +28,8 @@ class ReactionControllerTest extends AbstractTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated());
+
+        // Note: E2E CDC 테스트는 ReactionCdcEndToEndTest에서 수행
     }
 
     private UUID createPost() throws Exception {

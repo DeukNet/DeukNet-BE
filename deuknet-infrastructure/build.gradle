@@ -70,6 +70,12 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     runtimeOnly 'org.postgresql:postgresql'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // HTTP Client (for KafkaConnect REST API in tests)
+    testImplementation 'org.apache.httpcomponents.client5:httpclient5:5.3'
+
+    // Kafka Client (for consuming messages in tests)
+    testImplementation 'org.apache.kafka:kafka-clients:3.6.1'
 }
 
 tasks.named('test') {

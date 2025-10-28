@@ -34,13 +34,27 @@ dependencies {
     
     // Spring Security Test
     testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-security'
     
     // TestContainers
     testImplementation 'org.testcontainers:testcontainers:1.19.3'
     testImplementation 'org.testcontainers:postgresql:1.19.3'
     testImplementation 'org.testcontainers:elasticsearch:1.19.3'
+    testImplementation 'org.testcontainers:kafka:1.19.3'
     testImplementation 'org.testcontainers:junit-jupiter:1.19.3'
-    
+
+    // Debezium Testcontainers
+    testImplementation 'io.debezium:debezium-testing-testcontainers:2.5.4.Final'
+
+    // Kafka Client (for consuming messages in tests)
+    testImplementation 'org.apache.kafka:kafka-clients:3.6.1'
+
+    // HTTP Client (for KafkaConnect REST API)
+    testImplementation 'org.apache.httpcomponents.client5:httpclient5:5.3'
+
+    // Awaitility (for async testing)
+    testImplementation 'org.awaitility:awaitility:4.2.0'
+
     // Infrastructure 의존성 (테스트에서 DB 사용)
     testImplementation project(':deuknet-infrastructure')
     
@@ -55,6 +69,10 @@ dependencies {
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+
+    // Lombok for tests
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
 tasks.named('bootJar') {

@@ -1,5 +1,6 @@
 package org.example.deuknetinfrastructure.common.seedwork;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import org.example.deuknetdomain.common.seedwork.Persistable;
 import org.springframework.data.annotation.CreatedDate;
@@ -32,6 +33,7 @@ import java.util.UUID;
  * </pre>
  */
 @Getter
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class BaseDocument implements Persistable {
 
     /**
@@ -74,6 +76,7 @@ public abstract class BaseDocument implements Persistable {
      * Domain layer와의 호환성을 위해 제공됩니다.
      */
     @Override
+    @JsonIgnore
     public UUID getId() {
         return id != null ? UUID.fromString(id) : null;
     }
@@ -82,6 +85,7 @@ public abstract class BaseDocument implements Persistable {
      * String 타입의 ID를 반환합니다.
      * Elasticsearch의 _id와 직접 매핑됩니다.
      */
+    @JsonIgnore
     public String getIdAsString() {
         return id;
     }

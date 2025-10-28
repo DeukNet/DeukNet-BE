@@ -23,6 +23,12 @@ import java.util.UUID;
 public class OutboxEvent extends BaseEntity {
 
     /**
+     * Aggregate 타입 (예: Post, Comment 등)
+     */
+    @Column(name = "aggregate_type", nullable = false, length = 255)
+    private String aggregateType;
+
+    /**
      * 이벤트 타입 (예: PostCreated, CommentAdded 등)
      */
     @Column(name = "event_type", nullable = false, length = 255)
@@ -41,6 +47,12 @@ public class OutboxEvent extends BaseEntity {
      */
     @Column(name = "aggregate_id", nullable = false, columnDefinition = "UUID")
     private UUID aggregateId;
+
+    /**
+     * 이벤트 발생 시각
+     */
+    @Column(name = "occurred_on", nullable = false, updatable = false)
+    private LocalDateTime occurredOn;
 
     /**
      * 이벤트 페이로드 (JSON 형식)
@@ -78,11 +90,13 @@ public class OutboxEvent extends BaseEntity {
         super();
     }
 
-    public OutboxEvent(UUID id, String eventType, String payloadType, UUID aggregateId, String payload) {
+    public OutboxEvent(UUID id, String aggregateType, String eventType, String payloadType, UUID aggregateId, String payload) {
         super(id);
+        this.aggregateType = aggregateType;
         this.eventType = eventType;
         this.payloadType = payloadType;
         this.aggregateId = aggregateId;
+        this.occurredOn = LocalDateTime.now();
         this.payload = payload;
         this.status = OutboxStatus.PENDING;
         this.retryCount = 0;

@@ -52,20 +52,24 @@ public class OutboxDataChangeEventPublisher implements DataChangeEventPublisher 
             // 2. Projection의 타입 정보 추출
             String payloadType = projection != null ? projection.getClass().getName() : null;
 
-            // 3. OutboxEvent 엔티티 생성
+            // 3. aggregateType 추출 (projection의 클래스명에서)
+            String aggregateType = projection != null ? projection.getClass().getSimpleName().replace("Projection", "") : "Unknown";
+
+            // 4. OutboxEvent 엔티티 생성
             OutboxEvent outboxEvent = new OutboxEvent(
                 UUID.randomUUID(),
+                aggregateType,
                 eventType,
                 payloadType,
                 aggregateId,
                 jsonPayload
             );
 
-            // 4. Outbox 테이블에 저장 (트랜잭션과 함께 커밋됨)
+            // 5. Outbox 테이블에 저장 (트랜잭션과 함께 커밋됨)
             outboxEventRepository.save(outboxEvent);
 
-            log.debug("Event saved to outbox: type={}, payloadType={}, aggregateId={}",
-                eventType, payloadType, aggregateId);
+            log.debug("Event saved to outbox: aggregateType={}, eventType={}, payloadType={}, aggregateId={}",
+                aggregateType, eventType, payloadType, aggregateId);
 
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize projection: type={}, aggregateId={}", eventType, aggregateId, e);

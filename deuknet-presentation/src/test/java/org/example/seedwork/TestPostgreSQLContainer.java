@@ -16,6 +16,13 @@ public class TestPostgreSQLContainer {
                     .withDatabaseName("testdb")
                     .withUsername("testuser")
                     .withPassword("testpass")
+                    // CDC를 위한 WAL 설정
+                    .withCommand(
+                            "postgres",
+                            "-c", "wal_level=logical",
+                            "-c", "max_wal_senders=1",
+                            "-c", "max_replication_slots=1"
+                    )
                     .withReuse(false);
             container.start();
         }
