@@ -2,6 +2,7 @@ package org.example.deuknetinfrastructure.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -26,8 +27,11 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authorizeHttpRequests(auth -> auth
-                // Public endpoints
-                .requestMatchers("/api/auth/**", "/api/health", "/").permitAll()
+                // ========== 인증 불필요 ==========
+                // Auth API
+                .requestMatchers(HttpMethod.POST, "/api/auth/oauth/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
+
                 // Swagger UI
                 .requestMatchers(
                     "/swagger-ui/**",
@@ -37,10 +41,37 @@ public class SecurityConfig {
                     "/swagger-resources/**",
                     "/webjars/**"
                 ).permitAll()
+
                 // Actuator
-                .requestMatchers("/actuator/health").permitAll()
-                // All other requests require authentication
-                .anyRequest().authenticated()
+                .requestMatchers("/actuator/health", "/api/health", "/").permitAll()
+
+                // ========== 인증 필요 ==========
+                // Post API - CUD (Create, Update, Delete)
+                .requestMatchers(HttpMethod.POST, "/api/posts").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/posts/*").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/posts/*/publish").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/posts/*").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/posts/*/view").authenticated()
+
+                // Post API - Read (조회는 인증 불필요)
+                .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+
+                // Comment API
+                .requestMatchers(HttpMethod.POST, "/api/posts/*/comments").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/posts/*/comments/*").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/posts/*/comments/*").authenticated()
+
+                // Reaction API
+                .requestMatchers(HttpMethod.POST, "/api/posts/*/reactions").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/posts/*/reactions/*").authenticated()
+
+                // Category API
+                .requestMatchers(HttpMethod.POST, "/api/categories").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/categories/*").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/categories/*").authenticated()
+
+                // 기타 모든 요청 거부
+                .anyRequest().denyAll()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

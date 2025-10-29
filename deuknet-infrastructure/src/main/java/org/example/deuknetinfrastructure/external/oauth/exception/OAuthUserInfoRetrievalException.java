@@ -11,4 +11,9 @@ public class OAuthUserInfoRetrievalException extends DeukNetException {
         super(500, "OAUTH_USER_INFO_RETRIEVAL_FAILED",
               "Failed to get user info from " + provider);
     }
+
+    public OAuthUserInfoRetrievalException(String provider, Throwable cause) {
+        super(500, "OAUTH_USER_INFO_RETRIEVAL_FAILED",
+              "Failed to get user info from " + provider + ": " + cause.getMessage());
+    }
 }

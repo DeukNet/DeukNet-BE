@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: register-connectors
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: register
+        image: curlimages/curl:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Waiting for Kafka Connect to be ready..."
+          until curl -s http://kafka-connect:{{ .Values.kafkaConnect.port }}/ > /dev/null; do
+            echo "Kafka Connect not ready yet..."
+            sleep 5
+          done
+          echo "Kafka Connect is ready!"
+
+          echo "Registering Debezium Source Connector..."
+          curl -X POST http://kafka-connect:{{ .Values.kafkaConnect.port }}/connectors \
+            -H "Content-Type: application/json" \
+            -d '{
+              "name": "{{ .Values.debezium.connector.name }}",
+              "config": {
+                "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+                "tasks.max": "1",
+                "database.hostname": "postgres",
+                "database.port": "{{ .Values.postgres.port }}",
+                "database.user": "{{ .Values.postgres.username }}",
+                "database.password": "{{ .Values.postgres.password }}",
+                "database.dbname": "{{ .Values.postgres.database }}",
+                "topic.prefix": "{{ .Values.debezium.connector.serverName }}",
+                "table.include.list": "{{ .Values.debezium.connector.tableIncludeList }}",
+                "plugin.name": "pgoutput",
+                "publication.autocreate.mode": "filtered",
+                "slot.name": "{{ .Values.debezium.connector.slotName }}",
+                "transforms": "outbox",
+                "transforms.outbox.type": "io.debezium.transforms.outbox.EventRouter",
+                "transforms.outbox.table.field.event.id": "id",
+                "transforms.outbox.table.field.event.key": "aggregate_id",
+                "transforms.outbox.table.field.event.type": "event_type",
+                "transforms.outbox.table.field.event.payload": "payload",
+                "transforms.outbox.table.field.event.timestamp": "occurred_on",
+                "transforms.outbox.route.topic.replacement": "outbox.events.${routedByValue}",
+                "transforms.outbox.route.by.field": "aggregate_type"
+              }
+            }'
+
+          echo ""
+          echo "Debezium Source Connector registered successfully!"
+          echo "Note: Elasticsearch Sink Connector requires additional plugins to be installed."

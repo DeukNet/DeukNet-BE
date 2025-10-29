@@ -160,11 +160,6 @@ deuknet-infrastructure/
     │   ├── post/
     │   ├── comment/
     │   └── reaction/
-    │
-    └── query/       (Read Model - 추후 구현)
-        ├── post/
-        ├── comment/
-        └── reaction/
-```
+    ```
 
 CQRS 패턴 적용을 위해 Query용 별도 모델 구성 예정

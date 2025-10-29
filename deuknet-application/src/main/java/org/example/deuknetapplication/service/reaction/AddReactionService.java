@@ -31,7 +31,7 @@ public class AddReactionService implements AddReactionUseCase {
     }
 
     @Override
-    public void addReaction(AddReactionCommand command) {
+    public UUID addReaction(AddReactionCommand command) {
         UUID currentUserId = currentUserPort.getCurrentUserId();
 
         Reaction reaction = Reaction.create(
@@ -45,6 +45,8 @@ public class AddReactionService implements AddReactionUseCase {
 
         // Event Sourcing: 발생한 사실(fact)을 이벤트로 기록
         publishReactionAddedEvent(reaction);
+
+        return reaction.getId();
     }
 
     private void publishReactionAddedEvent(Reaction reaction) {

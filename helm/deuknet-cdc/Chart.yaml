@@ -1,0 +1,6 @@
+apiVersion: v2
+name: deuknet-cdc
+description: DeukNet CDC Pipeline with Debezium, Kafka, and Elasticsearch
+type: application
+version: 1.0.0
+appVersion: "1.0"

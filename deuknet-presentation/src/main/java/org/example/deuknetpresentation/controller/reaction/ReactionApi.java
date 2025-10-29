@@ -2,6 +2,8 @@ package org.example.deuknetpresentation.controller.reaction;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,12 +22,16 @@ public interface ReactionApi {
                     "리액션 타입: LIKE, LOVE, HAHA, WOW, SAD, ANGRY"
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "리액션 추가 성공"),
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "리액션 추가 성공",
+                    content = @Content(schema = @Schema(implementation = UUID.class))
+            ),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 (유효하지 않은 리액션 타입)"),
             @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
     })
-    void addReaction(
+    UUID addReaction(
             @Parameter(description = "게시글 ID", required = true)
             @PathVariable UUID postId,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(

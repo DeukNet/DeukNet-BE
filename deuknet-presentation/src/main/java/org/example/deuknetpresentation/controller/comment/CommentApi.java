@@ -52,6 +52,8 @@ public interface CommentApi {
             @ApiResponse(responseCode = "404", description = "댓글을 찾을 수 없음")
     })
     void updateComment(
+            @Parameter(description = "게시글 ID", required = true)
+            @PathVariable UUID postId,
             @Parameter(description = "댓글 ID", required = true)
             @PathVariable UUID commentId,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -72,6 +74,8 @@ public interface CommentApi {
             @ApiResponse(responseCode = "404", description = "댓글을 찾을 수 없음")
     })
     void deleteComment(
+            @Parameter(description = "게시글 ID", required = true)
+            @PathVariable UUID postId,
             @Parameter(description = "댓글 ID", required = true)
             @PathVariable UUID commentId
     );

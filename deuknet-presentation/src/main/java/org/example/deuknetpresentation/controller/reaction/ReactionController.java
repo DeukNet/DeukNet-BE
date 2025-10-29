@@ -27,13 +27,13 @@ public class ReactionController implements ReactionApi {
     @Override
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public void addReaction(@PathVariable UUID postId, @RequestBody AddReactionRequest request) {
+    public UUID addReaction(@PathVariable UUID postId, @RequestBody AddReactionRequest request) {
         AddReactionUseCase.AddReactionCommand command = new AddReactionUseCase.AddReactionCommand(
                 postId,
                 ReactionType.valueOf(request.getReactionType())
         );
 
-        addReactionUseCase.addReaction(command);
+        return addReactionUseCase.addReaction(command);
     }
 
     @Override

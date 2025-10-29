@@ -7,10 +7,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.example.deuknetapplication.port.in.post.PostSearchResponse;
 import org.example.deuknetpresentation.controller.post.dto.CreatePostRequest;
 import org.example.deuknetpresentation.controller.post.dto.UpdatePostRequest;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Tag(name = "Post", description = "게시글 관리 API")
@@ -91,14 +94,70 @@ public interface PostApi {
 
     @Operation(
             summary = "게시글 조회수 증가",
-            description = "게시글 조회 시 조회수를 1 증가시킵니다. 인증이 필요하지 않습니다."
+            description = "게시글 조회 시 조회수를 1 증가시킵니다. 인증이 필요합니다."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "조회수 증가 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
     })
     void incrementViewCount(
             @Parameter(description = "게시글 ID", required = true)
             @PathVariable UUID postId
+    );
+
+    @Operation(
+            summary = "게시글 ID로 조회",
+            description = "특정 게시글을 ID로 조회합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "게시글 조회 성공",
+                    content = @Content(schema = @Schema(implementation = PostSearchResponse.class))
+            ),
+            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
+    })
+    ResponseEntity<PostSearchResponse> getPostById(
+            @Parameter(description = "게시글 ID", required = true)
+            @PathVariable UUID id
+    );
+
+    @Operation(
+            summary = "게시글 검색",
+            description = "여러 조건으로 게시글을 검색합니다. 모든 필터는 AND로 결합됩니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "검색 성공",
+                    content = @Content(schema = @Schema(implementation = PostSearchResponse.class))
+            )
+    })
+    ResponseEntity<List<PostSearchResponse>> searchPosts(
+            @Parameter(description = "검색 키워드 (제목 + 내용)") @RequestParam(required = false) String keyword,
+            @Parameter(description = "작성자 ID") @RequestParam(required = false) UUID authorId,
+            @Parameter(description = "카테고리 ID") @RequestParam(required = false) UUID categoryId,
+            @Parameter(description = "게시글 상태 (DRAFT, PUBLISHED, DELETED)") @RequestParam(required = false) String status,
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기 (최대 100)") @RequestParam(defaultValue = "20") int size,
+            @Parameter(description = "정렬 기준 (createdAt, viewCount 등)") @RequestParam(defaultValue = "createdAt") String sortBy,
+            @Parameter(description = "정렬 순서 (asc, desc)") @RequestParam(defaultValue = "desc") String sortOrder
+    );
+
+    @Operation(
+            summary = "인기 게시글 조회",
+            description = "조회수 기준으로 인기 게시글을 조회합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = PostSearchResponse.class))
+            )
+    })
+    ResponseEntity<List<PostSearchResponse>> getPopularPosts(
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기 (최대 100)") @RequestParam(defaultValue = "20") int size
     );
 }

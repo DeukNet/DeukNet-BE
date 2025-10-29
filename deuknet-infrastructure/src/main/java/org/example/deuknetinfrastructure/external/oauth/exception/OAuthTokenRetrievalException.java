@@ -11,4 +11,9 @@ public class OAuthTokenRetrievalException extends DeukNetException {
         super(500, "OAUTH_TOKEN_RETRIEVAL_FAILED",
               "Failed to get access token from " + provider);
     }
+
+    public OAuthTokenRetrievalException(String provider, Throwable cause) {
+        super(500, "OAUTH_TOKEN_RETRIEVAL_FAILED",
+              "Failed to get access token from " + provider + ": " + cause.getMessage());
+    }
 }

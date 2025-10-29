@@ -36,7 +36,7 @@ public class CommentController implements CommentApi {
     @Override
     @PutMapping("/{commentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateComment(@PathVariable UUID commentId, @RequestBody UpdateCommentRequest request) {
+    public void updateComment(@PathVariable UUID postId, @PathVariable UUID commentId, @RequestBody UpdateCommentRequest request) {
         request.setCommentId(commentId);
         updateCommentUseCase.updateComment(request);
     }
@@ -44,7 +44,7 @@ public class CommentController implements CommentApi {
     @Override
     @DeleteMapping("/{commentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteComment(@PathVariable UUID commentId) {
+    public void deleteComment(@PathVariable UUID postId, @PathVariable UUID commentId) {
         deleteCommentUseCase.deleteComment(commentId);
     }
 }

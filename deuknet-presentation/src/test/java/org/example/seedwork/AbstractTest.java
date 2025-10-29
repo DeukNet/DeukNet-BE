@@ -1,7 +1,6 @@
 package org.example.seedwork;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.awaitility.Awaitility;
 import org.example.deuknetapplication.port.out.repository.UserRepository;
 import org.example.deuknetdomain.domain.user.User;
 import org.example.seedwork.security.TestSecurityConfig;
@@ -18,9 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 
-import java.time.Duration;
 import java.util.UUID;
-import java.util.function.Supplier;
 
 @SpringBootTest(classes = DeuknetApplication.class)
 @AutoConfigureMockMvc
@@ -75,28 +72,5 @@ public abstract class AbstractTest {
                 "https://example.com/avatar.jpg"
         );
         userRepository.save(testUser);
-    }
-
-    /**
-     * Elasticsearch CDC 동기화 대기 및 검증 유틸리티
-     *
-     * Outbox -> Debezium -> Kafka -> Elasticsearch Sink Connector 흐름이
-     * 완료될 때까지 대기하며 조건을 검증합니다.
-     *
-     * @param condition 검증할 조건 (Supplier로 반복 실행 가능)
-     * @param timeoutSeconds 최대 대기 시간 (초)
-     */
-    protected void awaitElasticsearchSync(Runnable condition, int timeoutSeconds) {
-        Awaitility.await()
-                .atMost(Duration.ofSeconds(timeoutSeconds))
-                .pollInterval(Duration.ofMillis(500))
-                .untilAsserted(() -> condition.run());
-    }
-
-    /**
-     * 기본 10초 타임아웃으로 Elasticsearch 동기화 대기
-     */
-    protected void awaitElasticsearchSync(Runnable condition) {
-        awaitElasticsearchSync(condition, 10);
     }
 }

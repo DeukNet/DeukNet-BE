@@ -1,0 +1,55 @@
+{{- if .Values.app.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deuknet-app
+spec:
+  replicas: {{ .Values.app.replicas }}
+  selector:
+    matchLabels:
+      app: deuknet-app
+  template:
+    metadata:
+      labels:
+        app: deuknet-app
+    spec:
+      containers:
+      - name: app
+        image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
+        imagePullPolicy: {{ .Values.app.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.app.port }}
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:postgresql://postgres:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: {{ .Values.postgres.username | quote }}
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: {{ .Values.postgres.password | quote }}
+        - name: SPRING_ELASTICSEARCH_URIS
+          value: "http://elasticsearch:{{ .Values.elasticsearch.port }}"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: {{ .Values.app.port }}
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: {{ .Values.app.port }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: deuknet-app
+spec:
+  selector:
+    app: deuknet-app
+  ports:
+  - port: {{ .Values.app.service.port }}
+    targetPort: {{ .Values.app.port }}
+  type: {{ .Values.app.service.type }}
+{{- end }}
