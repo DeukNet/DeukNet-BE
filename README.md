@@ -2,6 +2,7 @@
 ## 아키텍쳐
 <img width="923" height="585" alt="image" src="https://github.com/user-attachments/assets/9effc7b5-3526-44b1-9e3b-bf689432be7d" />
 <img width="712" height="191" alt="image" src="https://github.com/user-attachments/assets/25ba08f2-e7ac-49dd-8e9e-7792bf5e482c" />
+
 ### Aggregate 설계 원칙
 1. **작은 Aggregate**: 각 Aggregate는 단일 책임
 2. **ID로 참조**: Aggregate 간에는 Entity 객체가 아닌 ID로 참조
