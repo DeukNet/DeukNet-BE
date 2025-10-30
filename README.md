@@ -54,10 +54,8 @@ ElasticSearch는 Query 모델(조회 성능 최적화용)로 사용합니다.
 > 의존성 방향은 항상 한쪽으로만 흐릅니다.
 presentation → usecase → domain
 (port는 domain의 일부 개념이지만, 실제 구현은 infrastructure에 존재)
-
-> port는 연결점이지, 역의존이 아닙니다.
-domain이 port를 “참조”하는 게 아니라 “정의”하고,
-실제 동작은 외부(infrastructure)가 그 포트를 “구현”합니다.
+application이 port를 참조 하는 게 아니라 정의하고,
+실제 동작은 외부(infrastructure)가 그 포트를 구현합니다.
 
 <img width="874" height="502" alt="image" src="https://github.com/user-attachments/assets/a2f3433c-5eac-40bb-beb9-c764bf981811" />
 
