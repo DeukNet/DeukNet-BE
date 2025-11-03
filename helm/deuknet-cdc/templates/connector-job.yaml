@@ -8,7 +8,7 @@ spec:
       restartPolicy: OnFailure
       containers:
       - name: register
-        image: curlimages/curl:latest
+        image: {{ .Values.kafkaConnect.image }}
         command:
         - /bin/sh
         - -c
@@ -52,4 +52,4 @@ spec:
 
           echo ""
           echo "Debezium Source Connector registered successfully!"
-          echo "Note: Elasticsearch Sink Connector requires additional plugins to be installed."
+          echo "Note: Elasticsearch Sink Connector is not registered (plugin not available)"

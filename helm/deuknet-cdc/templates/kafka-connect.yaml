@@ -12,6 +12,34 @@ spec:
       labels:
         app: kafka-connect
     spec:
+      initContainers:
+      - name: download-postgres-connector
+        image: {{ .Values.kafkaConnect.image }}
+        command:
+        - /bin/bash
+        - -c
+        - |
+          echo "Downloading Debezium PostgreSQL Connector..."
+          cd /tmp
+
+          # Try Maven Central
+          curl -L -o debezium-connector-postgres.tar.gz \
+            https://repo1.maven.org/maven2/io/debezium/debezium-connector-postgres/2.5.0.Final/debezium-connector-postgres-2.5.0.Final-plugin.tar.gz || \
+          wget -O debezium-connector-postgres.tar.gz \
+            https://repo1.maven.org/maven2/io/debezium/debezium-connector-postgres/2.5.0.Final/debezium-connector-postgres-2.5.0.Final-plugin.tar.gz || \
+          echo "Failed to download, will try to continue..."
+
+          if [ -f debezium-connector-postgres.tar.gz ]; then
+            echo "Extracting connector..."
+            tar -xzf debezium-connector-postgres.tar.gz -C /kafka/connect/
+            echo "PostgreSQL Connector installed!"
+            ls -la /kafka/connect/
+          else
+            echo "Could not download connector, continuing without it..."
+          fi
+        volumeMounts:
+        - name: kafka-connect-plugins
+          mountPath: /kafka/connect
       containers:
       - name: kafka-connect
         image: {{ .Values.kafkaConnect.image }}
@@ -36,6 +64,8 @@ spec:
           value: "false"
         - name: CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE
           value: "false"
+        - name: CONNECT_PLUGIN_PATH
+          value: "/kafka/connect,/kafka/external_libs"
         livenessProbe:
           httpGet:
             path: /
@@ -48,6 +78,12 @@ spec:
             port: {{ .Values.kafkaConnect.port }}
           initialDelaySeconds: 30
           periodSeconds: 10
+        volumeMounts:
+        - name: kafka-connect-plugins
+          mountPath: /kafka/connect
+      volumes:
+      - name: kafka-connect-plugins
+        emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

@@ -8,6 +8,7 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import lombok.RequiredArgsConstructor;
 import org.example.deuknetinfrastructure.external.search.document.ReactionCountDocument;
+import org.example.deuknetinfrastructure.external.search.exception.SearchOperationException;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -54,9 +55,9 @@ public class ReactionCountSearchAdapter {
             if (e.getMessage() != null && e.getMessage().contains("index_not_found_exception")) {
                 return Optional.empty();
             }
-            throw new RuntimeException("Failed to find reaction count by targetId: " + targetId, e);
+            throw new SearchOperationException("Failed to find reaction count by targetId: " + targetId, e);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to find reaction count by targetId: " + targetId, e);
+            throw new SearchOperationException("Failed to find reaction count by targetId: " + targetId, e);
         }
     }
 
@@ -194,7 +195,7 @@ public class ReactionCountSearchAdapter {
                 .collect(Collectors.toList());
 
         } catch (IOException e) {
-            throw new RuntimeException("Failed to execute search", e);
+            throw new SearchOperationException("Failed to execute search", e);
         }
     }
 
@@ -209,7 +210,7 @@ public class ReactionCountSearchAdapter {
             );
             return response.count();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to count documents", e);
+            throw new SearchOperationException("Failed to count documents", e);
         }
     }
 

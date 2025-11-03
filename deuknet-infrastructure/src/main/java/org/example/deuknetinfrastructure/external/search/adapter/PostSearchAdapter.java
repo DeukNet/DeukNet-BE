@@ -12,6 +12,7 @@ import org.example.deuknetapplication.port.in.post.PostSearchRequest;
 import org.example.deuknetapplication.port.in.post.PostSearchResponse;
 import org.example.deuknetapplication.port.out.post.PostSearchPort;
 import org.example.deuknetinfrastructure.external.search.document.PostDetailDocument;
+import org.example.deuknetinfrastructure.external.search.exception.SearchOperationException;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -49,9 +50,9 @@ public class PostSearchAdapter implements PostSearchPort {
             if (e.getMessage() != null && e.getMessage().contains("index_not_found_exception")) {
                 return Optional.empty();
             }
-            throw new RuntimeException("Failed to find post by id: " + id, e);
+            throw new SearchOperationException("Failed to find post by id: " + id, e);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to find post by id: " + id, e);
+            throw new SearchOperationException("Failed to find post by id: " + id, e);
         }
     }
 
@@ -146,9 +147,9 @@ public class PostSearchAdapter implements PostSearchPort {
                     || e.getMessage().contains("all shards failed"))) {
                 return List.of();
             }
-            throw new RuntimeException("Failed to execute search", e);
+            throw new SearchOperationException("Failed to execute search", e);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to execute search", e);
+            throw new SearchOperationException("Failed to execute search", e);
         }
     }
 
@@ -189,7 +190,7 @@ public class PostSearchAdapter implements PostSearchPort {
 
             elasticsearchClient.indices().refresh(r -> r.index(INDEX_NAME));
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save document: " + document.getIdAsString(), e);
+            throw new SearchOperationException("Failed to save document: " + document.getIdAsString(), e);
         }
     }
 

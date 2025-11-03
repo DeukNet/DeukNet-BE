@@ -17,14 +17,12 @@ postgres:
   password: deuknet_pass
   port: 5432
 
-zookeeper:
-  image: confluentinc/cp-zookeeper:7.6.0
-  port: 2181
-
 kafka:
   image: apache/kafka:3.8.1
   port: 9092
   brokerId: 1
+  kraftMode: true
+  clusterId: "MkU3OEVBNTcwNTJENDM2Qk"
 
 kafkaConnect:
   image: debezium/connect:2.5

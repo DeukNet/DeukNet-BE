@@ -1,0 +1,12 @@
+FROM confluentinc/cp-kafka-connect-base:7.5.0
+
+ENV CONNECT_PLUGIN_PATH="/usr/share/java,/usr/share/confluent-hub-components"
+
+# Install Debezium PostgreSQL Connector
+RUN confluent-hub install --no-prompt debezium/debezium-connector-postgresql:2.5.0
+
+# Install Elasticsearch Sink Connector
+RUN confluent-hub install --no-prompt confluentinc/kafka-connect-elasticsearch:14.0.0
+
+# Verify installations
+RUN ls -la /usr/share/confluent-hub-components/

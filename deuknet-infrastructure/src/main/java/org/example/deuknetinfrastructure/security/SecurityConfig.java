@@ -22,14 +22,16 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .cors(cors -> cors.disable())  // Use WebMvcConfigurer CORS configuration
             .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> 
+            .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authorizeHttpRequests(auth -> auth
                 // ========== 인증 불필요 ==========
                 // Auth API
-                .requestMatchers(HttpMethod.POST, "/api/auth/oauth/login").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/auth/oauth/google").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/auth/oauth/callback/google").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
 
                 // Swagger UI

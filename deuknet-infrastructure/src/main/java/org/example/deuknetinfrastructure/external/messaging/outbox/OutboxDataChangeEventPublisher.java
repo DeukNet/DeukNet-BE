@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
 import org.example.deuknetdomain.common.seedwork.Projection;
+import org.example.deuknetinfrastructure.external.messaging.exception.EventPublishException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,7 +74,7 @@ public class OutboxDataChangeEventPublisher implements DataChangeEventPublisher 
 
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize projection: type={}, aggregateId={}", eventType, aggregateId, e);
-            throw new RuntimeException("Failed to serialize projection to JSON", e);
+            throw new EventPublishException("Failed to serialize projection to JSON", e);
         }
     }
 }

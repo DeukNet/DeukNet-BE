@@ -1,7 +1,8 @@
 package org.example.deuknetapplication.service.auth;
 
-import org.example.deuknetapplication.port.in.auth.OAuthLoginUseCase;
+import org.example.deuknetapplication.port.in.auth.OAuthCallbackUseCase;
 import org.example.deuknetapplication.port.out.external.OAuthPort;
+import org.example.deuknetapplication.port.out.external.OAuthStateManagerPort;
 import org.example.deuknetapplication.port.out.repository.AuthCredentialRepository;
 import org.example.deuknetapplication.port.out.repository.UserRepository;
 import org.example.deuknetapplication.port.out.security.JwtPort;
@@ -19,35 +20,43 @@ import java.util.UUID;
 
 @Service
 @Transactional
-public class OAuthLoginService implements OAuthLoginUseCase {
+public class OAuthCallbackService implements OAuthCallbackUseCase {
 
     private final OAuthPort oAuthPort;
+    private final OAuthStateManagerPort oAuthStateManagerPort;
     private final AuthCredentialRepository authCredentialRepository;
     private final UserRepository userRepository;
     private final JwtPort jwtPort;
 
-    public OAuthLoginService(
+    public OAuthCallbackService(
             OAuthPort oAuthPort,
+            OAuthStateManagerPort oAuthStateManagerPort,
             AuthCredentialRepository authCredentialRepository,
             UserRepository userRepository,
             JwtPort jwtPort
     ) {
         this.oAuthPort = oAuthPort;
+        this.oAuthStateManagerPort = oAuthStateManagerPort;
         this.authCredentialRepository = authCredentialRepository;
         this.userRepository = userRepository;
         this.jwtPort = jwtPort;
     }
 
     @Override
-    public TokenPair login(String authorizationCode, AuthProvider provider) {
-        OAuthUserInfo oAuthUserInfo = oAuthPort.getUserInfo(authorizationCode, provider);
-        
+    public TokenPair handleCallback(String code, String state, AuthProvider provider) {
+        // Validate state token for CSRF protection
+        oAuthStateManagerPort.validateState(state);
+
+        // Get user info from OAuth provider
+        OAuthUserInfo oAuthUserInfo = oAuthPort.getUserInfo(code, provider);
+
         Email email = Email.from(oAuthUserInfo.getEmail());
-        
+
+        // Find or create user
         AuthCredential authCredential = authCredentialRepository
                 .findByEmailAndProvider(email, provider)
                 .orElseGet(() -> createNewUser(oAuthUserInfo, email));
-        
+
         User user = userRepository.findByAuthCredentialId(authCredential.getId())
                 .orElseThrow(UserNotFoundException::new);
 
@@ -62,7 +71,7 @@ public class OAuthLoginService implements OAuthLoginUseCase {
                 email
         );
         authCredential = authCredentialRepository.save(authCredential);
-        
+
         String username = generateUniqueUsername(oAuthUserInfo.getName());
         User user = User.create(
                 authCredential.getId(),
@@ -72,23 +81,23 @@ public class OAuthLoginService implements OAuthLoginUseCase {
                 oAuthUserInfo.getPicture()
         );
         userRepository.save(user);
-        
+
         return authCredential;
     }
-    
+
     private String generateUniqueUsername(String baseName) {
         String username = baseName.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
         if (username.isEmpty()) {
             username = "user";
         }
-        
+
         String finalUsername = username;
         int suffix = 1;
         while (userRepository.findByUsername(finalUsername).isPresent()) {
             finalUsername = username + suffix;
             suffix++;
         }
-        
+
         return finalUsername;
     }
 }

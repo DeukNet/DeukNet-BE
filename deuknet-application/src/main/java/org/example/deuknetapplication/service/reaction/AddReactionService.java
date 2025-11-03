@@ -1,16 +1,16 @@
 package org.example.deuknetapplication.service.reaction;
 
-import org.example.deuknetapplication.event.reaction.ReactionAddedEvent;
 import org.example.deuknetapplication.port.in.reaction.AddReactionUseCase;
 import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
 import org.example.deuknetapplication.port.out.repository.ReactionRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
+import org.example.deuknetapplication.projection.post.PostCountProjection;
 import org.example.deuknetdomain.domain.reaction.Reaction;
+import org.example.deuknetdomain.domain.reaction.ReactionType;
 import org.example.deuknetdomain.domain.reaction.TargetType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -43,23 +43,17 @@ public class AddReactionService implements AddReactionUseCase {
 
         reactionRepository.save(reaction);
 
-        // Event Sourcing: 발생한 사실(fact)을 이벤트로 기록
-        publishReactionAddedEvent(reaction);
+        // Outbox에 저장: PostCountProjection (likeCount만 업데이트)
+        long likeCount = reactionRepository.countByTargetIdAndReactionType(
+                command.targetId(), ReactionType.LIKE);
 
-        return reaction.getId();
-    }
-
-    private void publishReactionAddedEvent(Reaction reaction) {
-        // Event에는 발생한 사실만 담음 (집계 정보 없음!)
-        ReactionAddedEvent event = ReactionAddedEvent.builder()
-                .reactionId(reaction.getId())
-                .targetId(reaction.getTargetId())
-                .reactionType(reaction.getReactionType())
-                .userId(reaction.getUserId())
-                .occurredAt(LocalDateTime.now())
+        PostCountProjection projection = PostCountProjection.builder()
+                .id(command.targetId())
+                .likeCount(likeCount)
                 .build();
 
-        // Event를 Outbox에 저장하여 Event Handler가 처리하도록 함
-        dataChangeEventPublisher.publish("ReactionAdded", reaction.getTargetId(), event);
+        dataChangeEventPublisher.publish("ReactionAdded", command.targetId(), projection);
+
+        return reaction.getId();
     }
 }

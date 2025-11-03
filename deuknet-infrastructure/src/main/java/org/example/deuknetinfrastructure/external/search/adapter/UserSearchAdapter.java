@@ -9,6 +9,7 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import lombok.RequiredArgsConstructor;
 import org.example.deuknetinfrastructure.external.search.document.UserDocument;
+import org.example.deuknetinfrastructure.external.search.exception.SearchOperationException;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -52,9 +53,9 @@ public class UserSearchAdapter {
             if (e.getMessage() != null && e.getMessage().contains("index_not_found_exception")) {
                 return Optional.empty();
             }
-            throw new RuntimeException("Failed to find user by id: " + id, e);
+            throw new SearchOperationException("Failed to find user by id: " + id, e);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to find user by id: " + id, e);
+            throw new SearchOperationException("Failed to find user by id: " + id, e);
         }
     }
 
@@ -242,7 +243,7 @@ public class UserSearchAdapter {
                 .collect(Collectors.toList());
 
         } catch (IOException e) {
-            throw new RuntimeException("Failed to execute search", e);
+            throw new SearchOperationException("Failed to execute search", e);
         }
     }
 
@@ -257,7 +258,7 @@ public class UserSearchAdapter {
             );
             return response.count();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to count documents", e);
+            throw new SearchOperationException("Failed to count documents", e);
         }
     }
 }
