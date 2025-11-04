@@ -2,6 +2,7 @@ package org.example.deuknetinfrastructure.security;
 
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
 import org.example.deuknetdomain.common.exception.ForbiddenException;
+import org.example.deuknetpresentation.security.UserPrincipal;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;

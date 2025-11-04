@@ -7,14 +7,29 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.example.deuknetapplication.port.in.category.CategoryResponse;
 import org.example.deuknetpresentation.controller.category.dto.CreateCategoryRequest;
 import org.example.deuknetpresentation.controller.category.dto.UpdateCategoryRequest;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Tag(name = "Category", description = "카테고리 관리 API")
 public interface CategoryApi {
+
+    @Operation(
+            summary = "전체 카테고리 조회",
+            description = "모든 루트 카테고리를 조회합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = CategoryResponse.class))
+            )
+    })
+    List<CategoryResponse> getAllCategories();
 
     @Operation(
             summary = "카테고리 생성",

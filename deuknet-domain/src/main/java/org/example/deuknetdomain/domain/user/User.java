@@ -31,4 +31,8 @@ public class User extends Entity {
         return new User(id, authCredentialId, username, displayName, bio, avatarUrl);
     }
 
+    public User updateProfile(String displayName, String bio, String avatarUrl) {
+        return new User(this.getId(), this.authCredentialId, this.username, displayName, bio, avatarUrl);
+    }
+
 }

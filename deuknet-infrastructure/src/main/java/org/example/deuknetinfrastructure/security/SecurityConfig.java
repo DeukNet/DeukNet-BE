@@ -22,7 +22,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.disable())  // Use WebMvcConfigurer CORS configuration
+            .cors(cors -> {})  // Use WebMvcConfigurer CORS configuration
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -68,9 +68,14 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/api/posts/*/reactions/*").authenticated()
 
                 // Category API
+                .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/categories/*").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/categories").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/categories/*").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/categories/*").authenticated()
+
+                // User API
+                .requestMatchers(HttpMethod.PUT, "/api/users/me").authenticated()
 
                 // 기타 모든 요청 거부
                 .anyRequest().denyAll()

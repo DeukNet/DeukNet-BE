@@ -14,9 +14,9 @@ public class OAuthAdapter implements OAuthPort {
 
     private final Map<AuthProvider, OAuthClient> oauthClients = new HashMap<>();
 
-    public OAuthAdapter(GoogleOAuthClient googleOAuthClient, GithubOAuthClient githubOAuthClient) {
+    public OAuthAdapter(GoogleOAuthClient googleOAuthClient) {
         oauthClients.put(AuthProvider.GOOGLE, googleOAuthClient);
-        oauthClients.put(AuthProvider.GITHUB, githubOAuthClient);
+        // Map structure maintained for future OAuth provider extensibility
     }
 
     @Override

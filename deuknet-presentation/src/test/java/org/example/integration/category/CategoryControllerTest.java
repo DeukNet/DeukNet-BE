@@ -16,6 +16,28 @@ class CategoryControllerTest extends AbstractTest {
 
     @Test
     @WithMockUser
+    void getAllCategories() throws Exception {
+        // Given: Create some test categories
+        create("카테고리1");
+        create("카테고리2");
+        create("카테고리3");
+
+        // When & Then: Get all categories (authentication not required for GET)
+        mockMvc.perform(get("/api/categories")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getAllCategories_withoutAuth() throws Exception {
+        // When & Then: Get all categories without authentication should also work
+        mockMvc.perform(get("/api/categories")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser
     void createCategory() throws Exception {
         CreateCategoryRequest req = new CreateCategoryRequest();
         req.setName("Tech");

@@ -32,10 +32,6 @@ oauth:
     client-secret: ${GOOGLE_CLIENT_SECRET:your-google-client-secret}
     redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8080/api/auth/oauth/callback/google}
     scope: openid,email,profile
-  github:
-    client-id: ${GITHUB_CLIENT_ID:your-github-client-id}
-    client-secret: ${GITHUB_CLIENT_SECRET:your-github-client-secret}
-    redirect-uri: ${GITHUB_REDIRECT_URI:http://localhost:8080/api/auth/oauth/callback/github}
   frontend-success-url: ${FRONTEND_SUCCESS_URL:http://localhost:5173/auth/success}
 
 # Swagger/OpenAPI Configuration
