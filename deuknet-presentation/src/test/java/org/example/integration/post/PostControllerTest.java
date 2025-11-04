@@ -72,6 +72,26 @@ class PostControllerTest extends AbstractTest {
                 .andExpect(status().isNoContent());
     }
 
+    @Test
+    @WithMockUser
+    void getPostById() throws Exception {
+        UUID postId = create();
+
+        mockMvc.perform(get("/api/posts/" + postId)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser
+    void getPostById_notFound() throws Exception {
+        UUID nonExistentId = UUID.randomUUID();
+
+        mockMvc.perform(get("/api/posts/" + nonExistentId)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
     private UUID create() throws Exception {
         CreatePostRequest req = new CreatePostRequest();
         req.setTitle("Test");

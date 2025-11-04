@@ -20,6 +20,7 @@ public class PostController implements PostApi {
     private final PublishPostUseCase publishPostUseCase;
     private final DeletePostUseCase deletePostUseCase;
     private final IncrementViewCountUseCase incrementViewCountUseCase;
+    private final GetPostByIdUseCase getPostByIdUseCase;
     private final PostSearchService postSearchService;
 
     public PostController(
@@ -28,6 +29,7 @@ public class PostController implements PostApi {
             PublishPostUseCase publishPostUseCase,
             DeletePostUseCase deletePostUseCase,
             IncrementViewCountUseCase incrementViewCountUseCase,
+            GetPostByIdUseCase getPostByIdUseCase,
             PostSearchService postSearchService
     ) {
         this.createPostUseCase = createPostUseCase;
@@ -35,6 +37,7 @@ public class PostController implements PostApi {
         this.publishPostUseCase = publishPostUseCase;
         this.deletePostUseCase = deletePostUseCase;
         this.incrementViewCountUseCase = incrementViewCountUseCase;
+        this.getPostByIdUseCase = getPostByIdUseCase;
         this.postSearchService = postSearchService;
     }
 
@@ -78,9 +81,8 @@ public class PostController implements PostApi {
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<PostSearchResponse> getPostById(@PathVariable UUID id) {
-        Optional<PostSearchResponse> result = postSearchService.findById(id);
-        return result.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        PostSearchResponse response = getPostByIdUseCase.getPostById(id);
+        return ResponseEntity.ok(response);
     }
 
     @Override
