@@ -48,7 +48,7 @@ public abstract class AbstractTest {
 
         // Elasticsearch 설정
         registry.add("spring.elasticsearch.uris", elasticsearch::getHttpHostAddress);
-        registry.add("spring.data.elasticsearch.repositories.enabled", () -> "false");
+        registry.add("spring.data.elasticsearch.repositories.enabled", () -> "true");
     }
 
     @Autowired

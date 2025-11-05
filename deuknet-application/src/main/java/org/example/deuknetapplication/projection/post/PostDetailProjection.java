@@ -34,14 +34,16 @@ public class PostDetailProjection extends Projection {
 
     // 연관 데이터
     private final List<UUID> categoryIds;
+    private final List<String> categoryNames;
     private final Long commentCount;
     private final Long likeCount;
+    private final Long dislikeCount;
 
     @Builder
     public PostDetailProjection(UUID id, String title, String content,
                                 UUID authorId, String authorUsername, String authorDisplayName, String authorAvatarUrl,
                                 String status, Long viewCount, LocalDateTime createdAt, LocalDateTime updatedAt,
-                                List<UUID> categoryIds, Long commentCount, Long likeCount) {
+                                List<UUID> categoryIds, List<String> categoryNames, Long commentCount, Long likeCount, Long dislikeCount) {
         super(id);
         this.title = title;
         this.content = content;
@@ -54,7 +56,9 @@ public class PostDetailProjection extends Projection {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.categoryIds = categoryIds;
+        this.categoryNames = categoryNames;
         this.commentCount = commentCount;
         this.likeCount = likeCount;
+        this.dislikeCount = dislikeCount;
     }
 }

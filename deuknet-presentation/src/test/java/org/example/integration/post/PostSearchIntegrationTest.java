@@ -2,7 +2,7 @@ package org.example.integration.post;
 
 import org.example.deuknetapplication.port.in.post.PostSearchRequest;
 import org.example.deuknetapplication.port.in.post.PostSearchResponse;
-import org.example.deuknetapplication.service.post.PostSearchService;
+import org.example.deuknetapplication.port.in.post.SearchPostUseCase;
 import org.example.deuknetinfrastructure.external.search.adapter.PostSearchAdapter;
 import org.example.deuknetinfrastructure.external.search.document.PostDetailDocument;
 import org.example.seedwork.AbstractTest;
@@ -26,7 +26,7 @@ class PostSearchIntegrationTest extends AbstractTest {
     private PostSearchAdapter postSearchAdapter;
 
     @Autowired
-    private PostSearchService postSearchService;
+    private SearchPostUseCase searchPostUseCase;
 
     @Test
     void ID로_게시글_조회() {
@@ -46,6 +46,7 @@ class PostSearchIntegrationTest extends AbstractTest {
                 List.of("테스트 카테고리"),
                 0L,
                 0L,
+                0L,
                 0L
         );
 
@@ -53,7 +54,7 @@ class PostSearchIntegrationTest extends AbstractTest {
         waitForElasticsearch();
 
         // When
-        Optional<PostSearchResponse> result = postSearchService.findById(postId);
+        Optional<PostSearchResponse> result = searchPostUseCase.findById(postId);
 
         // Then
         assertThat(result).isPresent();
@@ -78,7 +79,7 @@ class PostSearchIntegrationTest extends AbstractTest {
                 .authorId(authorId1)
                 .build();
 
-        List<PostSearchResponse> results = postSearchService.search(request);
+        List<PostSearchResponse> results = searchPostUseCase.search(request);
 
         // Then
         assertThat(results).hasSize(2);
@@ -102,7 +103,7 @@ class PostSearchIntegrationTest extends AbstractTest {
                 .categoryId(categoryId1)
                 .build();
 
-        List<PostSearchResponse> results = postSearchService.search(request);
+        List<PostSearchResponse> results = searchPostUseCase.search(request);
 
         // Then
         assertThat(results).hasSize(2);
@@ -136,7 +137,7 @@ class PostSearchIntegrationTest extends AbstractTest {
                 .status("PUBLISHED")
                 .build();
 
-        List<PostSearchResponse> results = postSearchService.search(request);
+        List<PostSearchResponse> results = searchPostUseCase.search(request);
 
         // Then - 1개만 조회되어야 함
         assertThat(results).hasSize(1);
@@ -160,7 +161,7 @@ class PostSearchIntegrationTest extends AbstractTest {
         waitForElasticsearch();
 
         // When
-        List<PostSearchResponse> results = postSearchService.findPopularPosts(0, 10);
+        List<PostSearchResponse> results = searchPostUseCase.findPopularPosts(0, 10);
 
         // Then
         assertThat(results).isNotEmpty();
@@ -181,6 +182,7 @@ class PostSearchIntegrationTest extends AbstractTest {
                 List.of("Category"),
                 0L,
                 0L,
+                0L,
                 0L
         );
     }
@@ -196,6 +198,7 @@ class PostSearchIntegrationTest extends AbstractTest {
                 "PUBLISHED",
                 List.of(categoryId),
                 List.of("Category"),
+                0L,
                 0L,
                 0L,
                 0L
@@ -214,6 +217,7 @@ class PostSearchIntegrationTest extends AbstractTest {
                 status,
                 List.of(categoryId),
                 List.of("Category"),
+                0L,
                 0L,
                 0L,
                 0L
@@ -236,7 +240,7 @@ class PostSearchIntegrationTest extends AbstractTest {
                 .keyword(uniqueKeyword)
                 .build();
 
-        List<PostSearchResponse> results = postSearchService.search(request);
+        List<PostSearchResponse> results = searchPostUseCase.search(request);
 
         // Then - 해당 키워드가 포함된 2개만 검색
         assertThat(results).hasSize(2);
@@ -262,7 +266,7 @@ class PostSearchIntegrationTest extends AbstractTest {
                 .authorId(authorId1)
                 .build();
 
-        List<PostSearchResponse> results = postSearchService.search(request);
+        List<PostSearchResponse> results = searchPostUseCase.search(request);
 
         // Then - authorId1의 Java 게시글만 (2개)
         assertThat(results).hasSize(2);
@@ -287,7 +291,7 @@ class PostSearchIntegrationTest extends AbstractTest {
                 .status("PUBLISHED")
                 .build();
 
-        List<PostSearchResponse> results = postSearchService.search(request);
+        List<PostSearchResponse> results = searchPostUseCase.search(request);
 
         // Then - 해당 카테고리의 PUBLISHED만 (2개)
         assertThat(results).hasSize(2);
@@ -314,7 +318,7 @@ class PostSearchIntegrationTest extends AbstractTest {
                 .status("PUBLISHED")
                 .build();
 
-        List<PostSearchResponse> results = postSearchService.search(request);
+        List<PostSearchResponse> results = searchPostUseCase.search(request);
 
         // Then - 모든 조건 만족하는 1개만
         assertThat(results).hasSize(1);
@@ -351,7 +355,7 @@ class PostSearchIntegrationTest extends AbstractTest {
                 .status("PUBLISHED")
                 .build();
 
-        List<PostSearchResponse> results = postSearchService.search(request);
+        List<PostSearchResponse> results = searchPostUseCase.search(request);
 
         // Then - 모든 조건을 만족하는 1개만
         assertThat(results).hasSize(1);
@@ -374,6 +378,7 @@ class PostSearchIntegrationTest extends AbstractTest {
                 List.of("Category"),
                 0L,
                 0L,
+                0L,
                 0L
         );
     }
@@ -390,6 +395,7 @@ class PostSearchIntegrationTest extends AbstractTest {
                 status,
                 List.of(categoryId),
                 List.of("Category"),
+                0L,
                 0L,
                 0L,
                 0L

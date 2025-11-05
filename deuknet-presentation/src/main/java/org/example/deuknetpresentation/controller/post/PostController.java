@@ -1,7 +1,6 @@
 package org.example.deuknetpresentation.controller.post;
 
 import org.example.deuknetapplication.port.in.post.*;
-import org.example.deuknetapplication.service.post.PostSearchService;
 import org.example.deuknetpresentation.controller.post.dto.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +20,7 @@ public class PostController implements PostApi {
     private final DeletePostUseCase deletePostUseCase;
     private final IncrementViewCountUseCase incrementViewCountUseCase;
     private final GetPostByIdUseCase getPostByIdUseCase;
-    private final PostSearchService postSearchService;
+    private final SearchPostUseCase searchPostUseCase;
 
     public PostController(
             CreatePostUseCase createPostUseCase,
@@ -30,7 +29,7 @@ public class PostController implements PostApi {
             DeletePostUseCase deletePostUseCase,
             IncrementViewCountUseCase incrementViewCountUseCase,
             GetPostByIdUseCase getPostByIdUseCase,
-            PostSearchService postSearchService
+            SearchPostUseCase searchPostUseCase
     ) {
         this.createPostUseCase = createPostUseCase;
         this.updatePostUseCase = updatePostUseCase;
@@ -38,7 +37,7 @@ public class PostController implements PostApi {
         this.deletePostUseCase = deletePostUseCase;
         this.incrementViewCountUseCase = incrementViewCountUseCase;
         this.getPostByIdUseCase = getPostByIdUseCase;
-        this.postSearchService = postSearchService;
+        this.searchPostUseCase = searchPostUseCase;
     }
 
     @Override
@@ -113,7 +112,7 @@ public class PostController implements PostApi {
                 .sortOrder(sortOrder)
                 .build();
 
-        List<PostSearchResponse> results = postSearchService.search(request);
+        List<PostSearchResponse> results = searchPostUseCase.search(request);
         return ResponseEntity.ok(results);
     }
 
@@ -127,7 +126,7 @@ public class PostController implements PostApi {
         if (size > 100) {
             size = 100;
         }
-        List<PostSearchResponse> results = postSearchService.findPopularPosts(page, size);
+        List<PostSearchResponse> results = searchPostUseCase.findPopularPosts(page, size);
         return ResponseEntity.ok(results);
     }
 }

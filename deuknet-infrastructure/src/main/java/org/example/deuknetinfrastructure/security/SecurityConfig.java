@@ -53,10 +53,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/posts/*").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/posts/*/publish").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/posts/*").authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/posts/*/view").authenticated()
 
                 // Post API - Read (조회는 인증 불필요)
                 .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/posts/*/view").permitAll()
 
                 // Comment API
                 .requestMatchers(HttpMethod.POST, "/api/posts/*/comments").authenticated()

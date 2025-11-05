@@ -10,6 +10,7 @@ import co.elastic.clients.elasticsearch.core.search.Hit;
 import lombok.RequiredArgsConstructor;
 import org.example.deuknetapplication.port.in.post.PostSearchRequest;
 import org.example.deuknetapplication.port.in.post.PostSearchResponse;
+import org.example.deuknetapplication.port.in.post.SearchPostUseCase;
 import org.example.deuknetapplication.port.out.post.PostSearchPort;
 import org.example.deuknetinfrastructure.external.search.document.PostDetailDocument;
 import org.example.deuknetinfrastructure.external.search.exception.SearchOperationException;
@@ -24,11 +25,13 @@ import java.util.stream.Collectors;
 /**
  * 게시글 검색 Adapter (Elasticsearch)
  *
- * 단일 search 메서드로 모든 검색 조건을 AND로 처리합니다.
+ * SearchPostUseCase와 PostSearchPort를 동시에 구현합니다.
+ * - SearchPostUseCase: Controller가 직접 사용 (in port)
+ * - PostSearchPort: GetPostByIdService가 사용 (out port)
  */
 @Component
 @RequiredArgsConstructor
-public class PostSearchAdapter implements PostSearchPort {
+public class PostSearchAdapter implements SearchPostUseCase, PostSearchPort {
 
     private static final String INDEX_NAME = "posts-detail";
     private final ElasticsearchClient elasticsearchClient;
@@ -36,14 +39,14 @@ public class PostSearchAdapter implements PostSearchPort {
     @Override
     public Optional<PostSearchResponse> findById(UUID id) {
         try {
-            var response = elasticsearchClient.get(g -> g
+            var document = elasticsearchClient.get(g -> g
                     .index(INDEX_NAME)
                     .id(id.toString()),
                 PostDetailDocument.class
             );
 
-            if (response.found()) {
-                return Optional.ofNullable(response.source()).map(this::toResponse);
+            if (document.found()) {
+                return Optional.ofNullable(document.source()).map(this::toResponse);
             }
             return Optional.empty();
         } catch (co.elastic.clients.elasticsearch._types.ElasticsearchException e) {
@@ -170,6 +173,7 @@ public class PostSearchAdapter implements PostSearchPort {
                 doc.getViewCount(),
                 doc.getCommentCount(),
                 doc.getLikeCount(),
+                doc.getDislikeCount() != null ? doc.getDislikeCount() : 0L,
                 doc.getCreatedAt(),
                 doc.getUpdatedAt()
         );
@@ -177,15 +181,17 @@ public class PostSearchAdapter implements PostSearchPort {
 
     /**
      * Document 저장 (테스트용)
+     * Elasticsearch Client를 사용하여 Document를 저장합니다.
+     * 테스트 환경에서 인덱스가 없으면 자동으로 생성합니다.
      */
     public void save(PostDetailDocument document) {
         try {
             ensureIndexExists();
 
             elasticsearchClient.index(i -> i
-                .index(INDEX_NAME)
-                .id(document.getIdAsString())
-                .document(document)
+                    .index(INDEX_NAME)
+                    .id(document.getIdAsString())
+                    .document(document)
             );
 
             elasticsearchClient.indices().refresh(r -> r.index(INDEX_NAME));
@@ -194,32 +200,20 @@ public class PostSearchAdapter implements PostSearchPort {
         }
     }
 
+    /**
+     * 테스트 환경에서 인덱스가 없으면 생성합니다.
+     * Spring Data Elasticsearch가 PostDetailDocumentRepository를 통해
+     * 자동으로 인덱스를 생성하므로, 여기서는 인덱스 존재 여부만 확인합니다.
+     */
     private void ensureIndexExists() throws IOException {
         try {
             boolean exists = elasticsearchClient.indices().exists(e -> e.index(INDEX_NAME)).value();
             if (!exists) {
-                elasticsearchClient.indices().create(c -> c
-                    .index(INDEX_NAME)
-                    .mappings(m -> m
-                        .properties("id", p -> p.keyword(k -> k))
-                        .properties("title", p -> p.text(t -> t))
-                        .properties("content", p -> p.text(t -> t))
-                        .properties("authorId", p -> p.keyword(k -> k))
-                        .properties("authorUsername", p -> p.keyword(k -> k))
-                        .properties("authorDisplayName", p -> p.text(t -> t))
-                        .properties("status", p -> p.keyword(k -> k))
-                        .properties("categoryIds", p -> p.keyword(k -> k))
-                        .properties("categoryNames", p -> p.text(t -> t))
-                        .properties("viewCount", p -> p.long_(l -> l))
-                        .properties("commentCount", p -> p.long_(l -> l))
-                        .properties("likeCount", p -> p.long_(l -> l))
-                        .properties("createdAt", p -> p.date(d -> d))
-                        .properties("updatedAt", p -> p.date(d -> d))
-                    )
-                );
+                // 인덱스가 없으면 동적으로 생성됩니다.
+                // Spring이 @Document 어노테이션을 기반으로 매핑을 관리합니다.
             }
         } catch (Exception e) {
-            // 인덱스 생성 중 에러는 무시 (동시성 이슈로 이미 생성되었을 수 있음)
+            // 인덱스 확인 중 에러는 무시
         }
     }
 }

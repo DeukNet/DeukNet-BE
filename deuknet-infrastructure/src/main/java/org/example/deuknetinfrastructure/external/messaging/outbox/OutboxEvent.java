@@ -58,7 +58,7 @@ public class OutboxEvent extends BaseEntity {
      * 이벤트 페이로드 (JSON 형식)
      * Application에서 넘긴 객체가 JSON으로 직렬화되어 저장됩니다.
      */
-    @Column(name = "payload", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "payload", columnDefinition = "TEXT")
     private String payload;
 
     /**

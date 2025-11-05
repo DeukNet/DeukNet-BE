@@ -48,13 +48,13 @@ public class OutboxDataChangeEventPublisher implements DataChangeEventPublisher 
     public void publish(String eventType, UUID aggregateId, Projection projection) {
         try {
             // 1. Projection을 JSON으로 직렬화
-            String jsonPayload = projection != null ? objectMapper.writeValueAsString(projection) : null;
+            String jsonPayload = projection != null ? objectMapper.writeValueAsString(projection) : "";
 
             // 2. Projection의 타입 정보 추출
-            String payloadType = projection != null ? projection.getClass().getName() : null;
+            String payloadType = projection != null ? projection.getClass().getName() : "";
 
             // 3. aggregateType 추출 (projection의 클래스명에서)
-            String aggregateType = projection != null ? projection.getClass().getSimpleName().replace("Projection", "") : "Unknown";
+            String aggregateType = projection != null ? projection.getClass().getSimpleName().replace("Projection", "") : "";
 
             // 4. OutboxEvent 엔티티 생성
             OutboxEvent outboxEvent = new OutboxEvent(

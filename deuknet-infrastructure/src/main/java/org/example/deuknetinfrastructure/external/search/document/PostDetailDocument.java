@@ -34,16 +34,16 @@ public class PostDetailDocument extends BaseDocument {
 
     /**
      * 게시글 제목 (검색 대상)
-     * nori 분석기를 사용한 한글 형태소 분석
+     * 표준 분석기를 사용한 텍스트 검색
      */
-    @Field(type = FieldType.Text, analyzer = "nori")
+    @Field(type = FieldType.Text)
     private String title;
 
     /**
      * 게시글 내용 (검색 대상)
-     * nori 분석기를 사용한 한글 형태소 분석
+     * 표준 분석기를 사용한 텍스트 검색
      */
-    @Field(type = FieldType.Text, analyzer = "nori")
+    @Field(type = FieldType.Text)
     private String content;
 
     /**
@@ -61,7 +61,7 @@ public class PostDetailDocument extends BaseDocument {
     /**
      * 작성자 displayName (검색 대상)
      */
-    @Field(type = FieldType.Text, analyzer = "nori")
+    @Field(type = FieldType.Text)
     private String authorDisplayName;
 
     /**
@@ -80,7 +80,7 @@ public class PostDetailDocument extends BaseDocument {
     /**
      * 카테고리 이름 목록 (검색 및 표시용)
      */
-    @Field(type = FieldType.Text, analyzer = "nori")
+    @Field(type = FieldType.Text)
     private List<String> categoryNames;
 
     /**
@@ -101,6 +101,12 @@ public class PostDetailDocument extends BaseDocument {
     @Field(type = FieldType.Long)
     private Long likeCount;
 
+    /**
+     * 싫어요 수 (정렬 및 집계)
+     */
+    @Field(type = FieldType.Long)
+    private Long dislikeCount;
+
     protected PostDetailDocument() {
         super();
     }
@@ -112,7 +118,7 @@ public class PostDetailDocument extends BaseDocument {
     public static PostDetailDocument create(UUID id, String title, String content,
                                             UUID authorId, String authorUsername, String authorDisplayName,
                                             String status, List<UUID> categoryIds, List<String> categoryNames,
-                                            Long viewCount, Long commentCount, Long likeCount) {
+                                            Long viewCount, Long commentCount, Long likeCount, Long dislikeCount) {
         PostDetailDocument document = new PostDetailDocument(id);
         document.title = title;
         document.content = content;
@@ -125,6 +131,7 @@ public class PostDetailDocument extends BaseDocument {
         document.viewCount = viewCount;
         document.commentCount = commentCount;
         document.likeCount = likeCount;
+        document.dislikeCount = dislikeCount;
         return document;
     }
 }
