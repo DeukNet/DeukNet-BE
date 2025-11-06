@@ -48,29 +48,29 @@ public class OutboxDataChangeEventPublisher implements DataChangeEventPublisher 
     public void publish(String eventType, UUID aggregateId, Projection projection) {
         try {
             // 1. Projection을 JSON으로 직렬화
-            String jsonPayload = projection != null ? objectMapper.writeValueAsString(projection) : "";
+            String jsonPayload = projection != null ? objectMapper.writeValueAsString(projection) : "{}";
 
-            // 2. Projection의 타입 정보 추출
-            String payloadType = projection != null ? projection.getClass().getName() : "";
+            // 2. aggregateType 추출 (projection의 클래스명에서)
+            String aggregateType = projection != null
+                ? projection.getClass().getSimpleName().replace("Projection", "")
+                : "Unknown";
 
-            // 3. aggregateType 추출 (projection의 클래스명에서)
-            String aggregateType = projection != null ? projection.getClass().getSimpleName().replace("Projection", "") : "";
-
-            // 4. OutboxEvent 엔티티 생성
+            // 3. OutboxEvent 엔티티 생성 (Debezium 표준 형식)
             OutboxEvent outboxEvent = new OutboxEvent(
-                UUID.randomUUID(),
-                aggregateType,
-                eventType,
-                payloadType,
-                aggregateId,
-                jsonPayload
+                UUID.randomUUID(),              // id
+                aggregateType,                   // aggregatetype
+                aggregateId.toString(),          // aggregateid (문자열로 변환)
+                eventType,                       // type
+                jsonPayload,                     // payload
+                System.currentTimeMillis()       // timestamp (epoch millis)
             );
 
-            // 5. Outbox 테이블에 저장 (트랜잭션과 함께 커밋됨)
+            // 4. Outbox 테이블에 저장 (트랜잭션과 함께 커밋됨)
+            // Debezium이 CDC를 통해 자동으로 감지하여 Kafka로 발행
             outboxEventRepository.save(outboxEvent);
 
-            log.debug("Event saved to outbox: aggregateType={}, eventType={}, payloadType={}, aggregateId={}",
-                aggregateType, eventType, payloadType, aggregateId);
+            log.debug("Event saved to outbox: aggregateType={}, eventType={}, aggregateId={}",
+                aggregateType, eventType, aggregateId);
 
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize projection: type={}, aggregateId={}", eventType, aggregateId, e);

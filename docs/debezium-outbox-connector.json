@@ -1,0 +1,46 @@
+{
+  "name": "deuknet-outbox-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "tasks.max": "1",
+
+    "database.hostname": "postgres",
+    "database.port": "5432",
+    "database.user": "app_user",
+    "database.password": "app_pass",
+    "database.dbname": "app_db",
+    "database.server.name": "deuknet",
+
+    "schema.include.list": "public",
+    "table.include.list": "public.outbox",
+
+    "plugin.name": "pgoutput",
+    "slot.name": "deuknet_outbox_slot",
+    "publication.name": "deuknet_outbox_publication",
+
+    "tombstones.on.delete": "false",
+
+    "transforms": "outbox",
+    "transforms.outbox.type": "io.debezium.transforms.outbox.EventRouter",
+    "transforms.outbox.table.fields.additional.placement": "type:header:eventType",
+    "transforms.outbox.table.field.event.id": "id",
+    "transforms.outbox.table.field.event.key": "aggregateid",
+    "transforms.outbox.table.field.event.type": "type",
+    "transforms.outbox.table.field.event.timestamp": "timestamp",
+    "transforms.outbox.table.field.event.payload": "payload",
+    "transforms.outbox.route.topic.replacement": "${routedByValue}.events",
+
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false",
+
+    "topic.prefix": "deuknet",
+
+    "heartbeat.interval.ms": "10000",
+    "heartbeat.topics.prefix": "__debezium-heartbeat",
+
+    "snapshot.mode": "never",
+
+    "time.precision.mode": "connect"
+  }
+}

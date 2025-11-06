@@ -4,15 +4,13 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Outbox 이벤트 조회 어댑터
  *
- * QueryDSL을 사용하여 타입 안전한 복잡한 쿼리를 제공합니다.
- * Repository의 문자열 기반 JPQL 대신 컴파일 타임 검증이 가능합니다.
+ * Debezium CDC 방식에서는 이벤트 폴링이 필요 없지만,
+ * 모니터링 및 관리 목적으로 사용할 수 있는 쿼리 메서드를 제공합니다.
  */
 @Repository
 @RequiredArgsConstructor
@@ -21,81 +19,39 @@ public class OutboxEventQueryAdapter {
     private final JPAQueryFactory queryFactory;
 
     /**
-     * 발행 대기 중인 이벤트 조회
+     * 특정 Aggregate의 이벤트 조회
      *
-     * 오래된 것부터 처리하기 위해 생성 시각 기준 정렬합니다.
-     *
-     * @param limit 조회할 최대 개수
-     * @return 발행 대기 중인 이벤트 목록
+     * @param aggregateId Aggregate ID (문자열)
+     * @return 해당 Aggregate의 이벤트 목록 (timestamp 순)
      */
-    public List<OutboxEvent> findPendingEvents(int limit) {
+    public List<OutboxEvent> findByAggregateId(String aggregateId) {
         QOutboxEvent outboxEvent = QOutboxEvent.outboxEvent;
         return queryFactory
                 .selectFrom(outboxEvent)
-                .where(outboxEvent.status.eq(OutboxStatus.PENDING))
-                .orderBy(outboxEvent.createdAt.asc())
+                .where(outboxEvent.aggregateid.eq(aggregateId))
+                .orderBy(outboxEvent.timestamp.asc())
+                .fetch();
+    }
+
+    /**
+     * 특정 Aggregate 타입의 이벤트 조회
+     *
+     * @param aggregateType Aggregate 타입 (예: Post, Comment)
+     * @param limit 조회할 최대 개수
+     * @return 해당 타입의 최근 이벤트 목록
+     */
+    public List<OutboxEvent> findByAggregateType(String aggregateType, int limit) {
+        QOutboxEvent outboxEvent = QOutboxEvent.outboxEvent;
+        return queryFactory
+                .selectFrom(outboxEvent)
+                .where(outboxEvent.aggregatetype.eq(aggregateType))
+                .orderBy(outboxEvent.timestamp.desc())
                 .limit(limit)
                 .fetch();
     }
 
     /**
-     * 실패했지만 재시도 가능한 이벤트 조회
-     *
-     * 일정 시간(5분)이 지난 후 재시도합니다.
-     *
-     * @param retryAfter 재시도 기준 시각
-     * @param maxRetryCount 최대 재시도 횟수
-     * @return 재시도 가능한 이벤트 목록
-     */
-    public List<OutboxEvent> findFailedEventsForRetry(LocalDateTime retryAfter, int maxRetryCount) {
-        QOutboxEvent outboxEvent = QOutboxEvent.outboxEvent;
-        return queryFactory
-                .selectFrom(outboxEvent)
-                .where(
-                        outboxEvent.status.eq(OutboxStatus.FAILED),
-                        outboxEvent.retryCount.lt(maxRetryCount),
-                        outboxEvent.processedAt.before(retryAfter)
-                )
-                .orderBy(outboxEvent.createdAt.asc())
-                .fetch();
-    }
-
-    /**
-     * 특정 Aggregate의 이벤트 조회
-     *
-     * @param aggregateId Aggregate ID
-     * @return 해당 Aggregate의 이벤트 목록 (생성 시각 순)
-     */
-    public List<OutboxEvent> findByAggregateId(UUID aggregateId) {
-        QOutboxEvent outboxEvent = QOutboxEvent.outboxEvent;
-        return queryFactory
-                .selectFrom(outboxEvent)
-                .where(outboxEvent.aggregateId.eq(aggregateId))
-                .orderBy(outboxEvent.createdAt.asc())
-                .fetch();
-    }
-
-    /**
-     * 발행 완료된 오래된 이벤트 조회
-     *
-     * 보관 기간이 지난 이벤트를 정리하기 위해 사용합니다.
-     *
-     * @param before 기준 시각 이전의 이벤트
-     * @return 삭제 대상 이벤트 목록
-     */
-    public List<OutboxEvent> findPublishedEventsBefore(LocalDateTime before) {
-        QOutboxEvent outboxEvent = QOutboxEvent.outboxEvent;
-        return queryFactory
-                .selectFrom(outboxEvent)
-                .where(
-                        outboxEvent.status.eq(OutboxStatus.PUBLISHED),
-                        outboxEvent.processedAt.before(before)
-                )
-                .fetch();
-    }
-
-    /**
-     * 특정 이벤트 타입의 통계 조회 예시
+     * 특정 이벤트 타입의 통계 조회
      *
      * @param eventType 이벤트 타입
      * @return 해당 타입의 이벤트 수
@@ -105,24 +61,23 @@ public class OutboxEventQueryAdapter {
         Long count = queryFactory
                 .select(outboxEvent.count())
                 .from(outboxEvent)
-                .where(outboxEvent.eventType.eq(eventType))
+                .where(outboxEvent.type.eq(eventType))
                 .fetchOne();
         return count != null ? count : 0L;
     }
 
     /**
-     * 상태별 이벤트 수 조회
+     * 최근 이벤트 조회 (모니터링용)
      *
-     * @param status 상태
-     * @return 해당 상태의 이벤트 수
+     * @param limit 조회할 최대 개수
+     * @return 최근 이벤트 목록
      */
-    public long countByStatus(OutboxStatus status) {
+    public List<OutboxEvent> findRecentEvents(int limit) {
         QOutboxEvent outboxEvent = QOutboxEvent.outboxEvent;
-        Long count = queryFactory
-                .select(outboxEvent.count())
-                .from(outboxEvent)
-                .where(outboxEvent.status.eq(status))
-                .fetchOne();
-        return count != null ? count : 0L;
+        return queryFactory
+                .selectFrom(outboxEvent)
+                .orderBy(outboxEvent.timestamp.desc())
+                .limit(limit)
+                .fetch();
     }
 }

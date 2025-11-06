@@ -14,7 +14,8 @@ import java.util.UUID;
 public interface OutboxEventRepository extends JpaRepository<OutboxEvent, UUID> {
 
     /**
-     * Aggregate ID로 Outbox 이벤트 조회 (테스트용)
+     * Aggregate ID로 Outbox 이벤트 조회 (테스트 및 모니터링용)
+     * aggregateid는 String 타입입니다.
      */
-    List<OutboxEvent> findByAggregateId(UUID aggregateId);
+    List<OutboxEvent> findByAggregateid(String aggregateid);
 }

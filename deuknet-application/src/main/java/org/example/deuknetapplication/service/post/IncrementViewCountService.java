@@ -18,6 +18,8 @@ import java.util.UUID;
  * 특징:
  * - 권한 검증 없음 (누구나 조회 가능)
  * - PostCountProjection만 업데이트 (조회수만 변경)
+ *
+ * TODO: Redis polling based Like
  */
 @Service
 @Transactional

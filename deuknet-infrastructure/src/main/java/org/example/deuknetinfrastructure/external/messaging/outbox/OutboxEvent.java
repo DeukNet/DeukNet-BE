@@ -3,135 +3,91 @@ package org.example.deuknetinfrastructure.external.messaging.outbox;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.example.deuknetinfrastructure.common.seedwork.BaseEntity;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Transactional Outbox Pattern을 위한 이벤트 저장 엔티티
+ * Debezium Outbox Event Router 호환 엔티티
  *
- * 이벤트를 데이터베이스에 저장하여 최소 1회 전달(At-least-once delivery)을 보장합니다.
- * 별도의 스케줄러가 이 테이블을 폴링하여 이벤트를 메시지 브로커에 발행합니다.
+ * Debezium의 Outbox Event Router SMT를 사용하기 위한 표준 테이블 구조입니다.
  *
- * Application 레이어에서 넘긴 객체는 JSON으로 직렬화되어 payload에 저장됩니다.
+ * 필수 컬럼 (Debezium 표준):
+ * - id: 이벤트의 고유 식별자 (UUID)
+ * - aggregatetype: Aggregate 타입
+ * - aggregateid: Aggregate ID (문자열로 저장)
+ * - type: 이벤트 타입
+ * - payload: 이벤트 페이로드 (JSON)
+ * - timestamp: 이벤트 발생 시각 (epoch milliseconds)
+ *
+ * Debezium Connector 설정 예시:
+ * transforms=outbox
+ * transforms.outbox.type=io.debezium.transforms.outbox.EventRouter
+ * transforms.outbox.table.field.event.id=id
+ * transforms.outbox.table.field.event.key=aggregateid
+ * transforms.outbox.table.field.event.type=type
+ * transforms.outbox.table.field.event.timestamp=timestamp
+ * transforms.outbox.table.field.event.payload=payload
+ * transforms.outbox.route.topic.replacement=${routedByValue}.events
  */
 @Getter
 @Setter
 @Entity
-@Table(name = "outbox_events")
-public class OutboxEvent extends BaseEntity {
+@Table(name = "outbox")
+public class OutboxEvent {
+
+    /**
+     * 이벤트 고유 식별자
+     * Debezium 필수 필드
+     */
+    @Id
+    @Column(columnDefinition = "UUID")
+    private UUID id;
+
+    /**
+     * Aggregate ID (문자열)
+     * Debezium에서 메시지 키로 사용됨
+     * Kafka 파티셔닝의 기준이 됩니다.
+     */
+    @Column(name = "aggregateid", nullable = false)
+    private String aggregateid;
 
     /**
      * Aggregate 타입 (예: Post, Comment 등)
+     * Debezium에서 토픽 라우팅에 사용됨
      */
-    @Column(name = "aggregate_type", nullable = false, length = 255)
-    private String aggregateType;
+    @Column(name = "aggregatetype", nullable = false, length = 255)
+    private String aggregatetype;
 
     /**
      * 이벤트 타입 (예: PostCreated, CommentAdded 등)
+     * Debezium 필수 필드
      */
-    @Column(name = "event_type", nullable = false, length = 255)
-    private String eventType;
-
-    /**
-     * 페이로드 타입 (완전한 클래스명)
-     * 역직렬화 시 사용됩니다.
-     * 예: "org.example.deuknetdomain.model.query.post.PostDetailProjection"
-     */
-    @Column(name = "payload_type", nullable = false, length = 255)
-    private String payloadType;
-
-    /**
-     * 이벤트가 발생한 Aggregate의 ID
-     */
-    @Column(name = "aggregate_id", nullable = false, columnDefinition = "UUID")
-    private UUID aggregateId;
-
-    /**
-     * 이벤트 발생 시각
-     */
-    @Column(name = "occurred_on", nullable = false, updatable = false)
-    private LocalDateTime occurredOn;
+    @Column(name = "type", nullable = false, length = 255)
+    private String type;
 
     /**
      * 이벤트 페이로드 (JSON 형식)
-     * Application에서 넘긴 객체가 JSON으로 직렬화되어 저장됩니다.
+     * Debezium 필수 필드
      */
     @Column(name = "payload", columnDefinition = "TEXT")
     private String payload;
 
     /**
-     * 이벤트 처리 상태
+     * 이벤트 발생 시각 (epoch milliseconds)
+     * Debezium 필수 필드
      */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
-    private OutboxStatus status;
-
-    /**
-     * 재시도 횟수
-     */
-    @Column(name = "retry_count", nullable = false)
-    private Integer retryCount = 0;
-
-    /**
-     * 마지막 처리 시각
-     */
-    @Column(name = "processed_at")
-    private LocalDateTime processedAt;
-
-    /**
-     * 에러 메시지 (실패한 경우)
-     */
-    @Column(name = "error_message", columnDefinition = "TEXT")
-    private String errorMessage;
+    @Column(name = "timestamp", nullable = false)
+    private Long timestamp;
 
     protected OutboxEvent() {
-        super();
     }
 
-    public OutboxEvent(UUID id, String aggregateType, String eventType, String payloadType, UUID aggregateId, String payload) {
-        super(id);
-        this.aggregateType = aggregateType;
-        this.eventType = eventType;
-        this.payloadType = payloadType;
-        this.aggregateId = aggregateId;
-        this.occurredOn = LocalDateTime.now();
+    public OutboxEvent(UUID id, String aggregatetype, String aggregateid, String type, String payload, Long timestamp) {
+        this.id = id;
+        this.aggregatetype = aggregatetype;
+        this.aggregateid = aggregateid;
+        this.type = type;
         this.payload = payload;
-        this.status = OutboxStatus.PENDING;
-        this.retryCount = 0;
-    }
-
-    /**
-     * 이벤트 발행 처리 중으로 상태 변경
-     */
-    public void markAsProcessing() {
-        this.status = OutboxStatus.PROCESSING;
-        this.processedAt = LocalDateTime.now();
-    }
-
-    /**
-     * 이벤트 발행 성공
-     */
-    public void markAsPublished() {
-        this.status = OutboxStatus.PUBLISHED;
-        this.processedAt = LocalDateTime.now();
-    }
-
-    /**
-     * 이벤트 발행 실패
-     */
-    public void markAsFailed(String errorMessage) {
-        this.status = OutboxStatus.FAILED;
-        this.retryCount++;
-        this.processedAt = LocalDateTime.now();
-        this.errorMessage = errorMessage;
-    }
-
-    /**
-     * 재시도 가능 여부 확인 (최대 3회)
-     */
-    public boolean canRetry() {
-        return this.retryCount < 3;
+        this.timestamp = timestamp;
     }
 }
