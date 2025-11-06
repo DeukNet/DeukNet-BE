@@ -4,6 +4,9 @@ app:
     repository: localhost:5000/deuknet-app
     tag: latest
     pullPolicy: IfNotPresent
+  # IMPORTANT: Debezium Embedded Engine을 사용하므로 반드시 1개만 실행해야 합니다!
+  # 여러 인스턴스를 실행하면 중복 이벤트가 발생합니다.
+  # Scale-out이 필요하면 Kafka Connect로 전환하세요.
   replicas: 1
   port: 8080
   service:
@@ -25,6 +28,7 @@ kafka:
   clusterId: "MkU3OEVBNTcwNTJENDM2Qk"
 
 kafkaConnect:
+  enabled: false  # Debezium Embedded Engine 사용으로 비활성화
   image: debezium/connect:2.5
   port: 8083
   groupId: 1

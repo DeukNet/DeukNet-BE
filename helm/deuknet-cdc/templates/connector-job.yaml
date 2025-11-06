@@ -1,3 +1,4 @@
+{{- if .Values.kafkaConnect.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -53,3 +54,4 @@ spec:
           echo ""
           echo "Debezium Source Connector registered successfully!"
           echo "Note: Elasticsearch Sink Connector is not registered (plugin not available)"
+{{- end }}
