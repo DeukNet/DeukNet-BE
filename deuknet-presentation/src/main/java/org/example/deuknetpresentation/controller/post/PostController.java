@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -18,7 +17,7 @@ public class PostController implements PostApi {
     private final UpdatePostUseCase updatePostUseCase;
     private final PublishPostUseCase publishPostUseCase;
     private final DeletePostUseCase deletePostUseCase;
-    private final IncrementViewCountUseCase incrementViewCountUseCase;
+    // IncrementViewCountUseCase 제거 - Reaction으로 통합
     private final GetPostByIdUseCase getPostByIdUseCase;
     private final SearchPostUseCase searchPostUseCase;
 
@@ -27,7 +26,6 @@ public class PostController implements PostApi {
             UpdatePostUseCase updatePostUseCase,
             PublishPostUseCase publishPostUseCase,
             DeletePostUseCase deletePostUseCase,
-            IncrementViewCountUseCase incrementViewCountUseCase,
             GetPostByIdUseCase getPostByIdUseCase,
             SearchPostUseCase searchPostUseCase
     ) {
@@ -35,7 +33,6 @@ public class PostController implements PostApi {
         this.updatePostUseCase = updatePostUseCase;
         this.publishPostUseCase = publishPostUseCase;
         this.deletePostUseCase = deletePostUseCase;
-        this.incrementViewCountUseCase = incrementViewCountUseCase;
         this.getPostByIdUseCase = getPostByIdUseCase;
         this.searchPostUseCase = searchPostUseCase;
     }
@@ -69,12 +66,8 @@ public class PostController implements PostApi {
         deletePostUseCase.deletePost(postId);
     }
 
-    @Override
-    @PostMapping("/{postId}/view")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void incrementViewCount(@PathVariable UUID postId) {
-        incrementViewCountUseCase.incrementViewCount(postId);
-    }
+    // incrementViewCount() 엔드포인트 제거
+    // 조회수는 POST /api/posts/{postId}/reactions (ReactionType.VIEW)로 처리
 
     @Override
     @GetMapping("/{id}")

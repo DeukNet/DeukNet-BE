@@ -30,10 +30,7 @@ public class PostEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private PostStatus status;
-    
-    @Column(name = "view_count", nullable = false)
-    private Long viewCount;
-    
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
     
@@ -43,14 +40,13 @@ public class PostEntity {
     public PostEntity() {
     }
 
-    public PostEntity(UUID id, String title, String content, UUID authorId, 
-                      PostStatus status, Long viewCount, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public PostEntity(UUID id, String title, String content, UUID authorId,
+                      PostStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.title = title;
         this.content = content;
         this.authorId = authorId;
         this.status = status;
-        this.viewCount = viewCount;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }

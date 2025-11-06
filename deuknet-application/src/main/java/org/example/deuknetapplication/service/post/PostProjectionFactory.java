@@ -46,7 +46,7 @@ public class PostProjectionFactory {
                 .authorDisplayName(author.getDisplayName())
                 .authorAvatarUrl(author.getAvatarUrl())
                 .status(post.getStatus().name())
-                .viewCount(post.getViewCount())
+                .viewCount(0L)  // 초기값 0 (Reaction으로 관리)
                 .createdAt(now)
                 .updatedAt(now)
                 .categoryIds(categoryIds)
@@ -63,6 +63,7 @@ public class PostProjectionFactory {
      * @param categoryIds 카테고리 ID 목록
      * @param commentCount 댓글 수
      * @param likeCount 좋아요 수
+     * @param viewCount 조회수
      * @return PostDetailProjection
      */
     public PostDetailProjection createDetailProjectionForUpdate(
@@ -70,7 +71,8 @@ public class PostProjectionFactory {
             User author,
             List<UUID> categoryIds,
             Long commentCount,
-            Long likeCount
+            Long likeCount,
+            Long viewCount
     ) {
         return PostDetailProjection.builder()
                 .id(post.getId())
@@ -81,7 +83,7 @@ public class PostProjectionFactory {
                 .authorDisplayName(author.getDisplayName())
                 .authorAvatarUrl(author.getAvatarUrl())
                 .status(post.getStatus().name())
-                .viewCount(post.getViewCount())
+                .viewCount(viewCount)  // Reaction에서 집계된 값
                 .createdAt(post.getCreatedAt())
                 .updatedAt(LocalDateTime.now())
                 .categoryIds(categoryIds)
@@ -93,53 +95,18 @@ public class PostProjectionFactory {
     /**
      * Post 생성 시 PostCountProjection 생성
      *
-     * @param post Post 엔티티
-     * @return PostCountProjection
-     */
-    public PostCountProjection createCountProjectionForCreation(Post post) {
-        return PostCountProjection.builder()
-                .id(post.getId())
-                .commentCount(0L)
-                .likeCount(0L)
-                .viewCount(post.getViewCount())
-                .build();
-    }
-
-    /**
-     * Post 수정 시 PostCountProjection 생성
-     *
-     * @param post Post 엔티티
-     * @param commentCount 댓글 수
-     * @param likeCount 좋아요 수
-     * @return PostCountProjection
-     */
-    public PostCountProjection createCountProjection(
-            Post post,
-            Long commentCount,
-            Long likeCount
-    ) {
-        return PostCountProjection.builder()
-                .id(post.getId())
-                .commentCount(commentCount)
-                .likeCount(likeCount)
-                .viewCount(post.getViewCount())
-                .build();
-    }
-
-    /**
-     * 조회수 증가 시 PostCountProjection 생성
-     *
      * @param postId Post ID
-     * @param newViewCount 새로운 조회수
-     * @return PostCountProjection
+     * @return PostCountProjection (초기값 0)
      */
-    public PostCountProjection createCountProjectionForViewCount(
-            UUID postId,
-            Long newViewCount
-    ) {
+    public PostCountProjection createCountProjectionForCreation(UUID postId) {
         return PostCountProjection.builder()
                 .id(postId)
-                .viewCount(newViewCount)
+                .commentCount(0L)
+                .likeCount(0L)
+                .dislikeCount(0L)
+                .viewCount(0L)
                 .build();
     }
+
+    // createCountProjection() 제거 - ReactionProjectionFactory로 이동
 }

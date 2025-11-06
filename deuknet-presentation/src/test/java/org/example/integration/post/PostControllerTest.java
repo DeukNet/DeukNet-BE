@@ -63,14 +63,8 @@ class PostControllerTest extends AbstractTest {
                 .andExpect(status().isNoContent());
     }
 
-    @Test
-    @WithMockUser
-    void incrementViewCount() throws Exception {
-        UUID postId = create();
-
-        mockMvc.perform(post("/api/posts/" + postId + "/view"))
-                .andExpect(status().isNoContent());
-    }
+    // incrementViewCount() 테스트 제거
+    // 조회수는 POST /api/posts/{postId}/reactions (ReactionType.VIEW)로 처리
 
     @Test
     @WithMockUser

@@ -3,6 +3,7 @@ package org.example.deuknetapplication.service.post;
 import org.example.deuknetapplication.common.exception.ResourceNotFoundException;
 import org.example.deuknetapplication.port.in.post.CreatePostApplicationRequest;
 import org.example.deuknetapplication.port.in.post.CreatePostUseCase;
+import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
 import org.example.deuknetapplication.port.out.repository.PostRepository;
 import org.example.deuknetapplication.port.out.repository.UserRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
@@ -26,7 +27,6 @@ import java.util.UUID;
  * - 나머지 책임은 각 전문 서비스에 위임
  *   - PostCategoryAssignmentService: 카테고리 할당
  *   - PostProjectionFactory: Projection 객체 생성
- *   - PostEventPublisher: 이벤트 발행
  */
 @Service
 @Transactional
@@ -37,7 +37,7 @@ public class CreatePostService implements CreatePostUseCase {
     private final CurrentUserPort currentUserPort;
     private final PostCategoryAssignmentService categoryAssignmentService;
     private final PostProjectionFactory projectionFactory;
-    private final PostEventPublisher eventPublisher;
+    private final DataChangeEventPublisher dataChangeEventPublisher;
 
     public CreatePostService(
             PostRepository postRepository,
@@ -45,14 +45,14 @@ public class CreatePostService implements CreatePostUseCase {
             CurrentUserPort currentUserPort,
             PostCategoryAssignmentService categoryAssignmentService,
             PostProjectionFactory projectionFactory,
-            PostEventPublisher eventPublisher
+            DataChangeEventPublisher dataChangeEventPublisher
     ) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.currentUserPort = currentUserPort;
         this.categoryAssignmentService = categoryAssignmentService;
         this.projectionFactory = projectionFactory;
-        this.eventPublisher = eventPublisher;
+        this.dataChangeEventPublisher = dataChangeEventPublisher;
     }
 
     @Override
@@ -66,9 +66,10 @@ public class CreatePostService implements CreatePostUseCase {
         PostDetailProjection detailProjection = projectionFactory.createDetailProjectionForCreation(
                 post, author, request.getCategoryIds()
         );
-        PostCountProjection countProjection = projectionFactory.createCountProjectionForCreation(post);
+        PostCountProjection countProjection = projectionFactory.createCountProjectionForCreation(post.getId());
 
-        eventPublisher.publishPostCreated(post.getId(), detailProjection, countProjection);
+        dataChangeEventPublisher.publish("PostCreated", post.getId(), detailProjection);
+        dataChangeEventPublisher.publish("PostCreated", post.getId(), countProjection);
 
         return post.getId();
     }

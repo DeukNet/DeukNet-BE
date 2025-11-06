@@ -14,6 +14,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+/**
+ * Reaction 삭제 서비스
+ *
+ * 책임:
+ * - Reaction 삭제 (LIKE, DISLIKE, VIEW)
+ * - PostCountProjection 업데이트 이벤트 발행
+ */
 @Service
 @Transactional
 public class RemoveReactionService implements RemoveReactionUseCase {
@@ -21,14 +28,17 @@ public class RemoveReactionService implements RemoveReactionUseCase {
     private final ReactionRepository reactionRepository;
     private final CurrentUserPort currentUserPort;
     private final DataChangeEventPublisher dataChangeEventPublisher;
+    private final ReactionProjectionFactory projectionFactory;
 
     public RemoveReactionService(
             ReactionRepository reactionRepository,
             CurrentUserPort currentUserPort,
-            DataChangeEventPublisher dataChangeEventPublisher) {
+            DataChangeEventPublisher dataChangeEventPublisher,
+            ReactionProjectionFactory projectionFactory) {
         this.reactionRepository = reactionRepository;
         this.currentUserPort = currentUserPort;
         this.dataChangeEventPublisher = dataChangeEventPublisher;
+        this.projectionFactory = projectionFactory;
     }
 
     @Override
@@ -40,19 +50,34 @@ public class RemoveReactionService implements RemoveReactionUseCase {
             throw new OwnerMismatchException();
         }
 
-        // 삭제 전에 targetId 보관 (삭제 후에는 조회 불가)
+        // 삭제 전에 정보 보관 (삭제 후에는 조회 불가)
         UUID targetId = reaction.getTargetId();
+        ReactionType reactionType = reaction.getReactionType();
 
         reactionRepository.delete(reaction);
 
-        // Outbox에 저장: PostCountProjection (likeCount만 업데이트)rmsep
-        long likeCount = reactionRepository.countByTargetIdAndReactionType(
-                targetId, ReactionType.LIKE);
+        // Reaction 타입별로 적절한 Projection 생성 및 이벤트 발행
+        publishReactionEvent(targetId, reactionType);
+    }
 
-        PostCountProjection projection = PostCountProjection.builder()
-                .id(targetId)
-                .likeCount(likeCount)
-                .build();
+    /**
+     * Reaction 타입에 따라 적절한 PostCountProjection 생성 및 이벤트 발행
+     */
+    private void publishReactionEvent(UUID targetId, ReactionType reactionType) {
+        PostCountProjection projection = switch (reactionType) {
+            case VIEW -> {
+                long viewCount = reactionRepository.countByTargetIdAndReactionType(targetId, ReactionType.VIEW);
+                yield projectionFactory.createCountProjectionForView(targetId, viewCount);
+            }
+            case LIKE -> {
+                long likeCount = reactionRepository.countByTargetIdAndReactionType(targetId, ReactionType.LIKE);
+                yield projectionFactory.createCountProjectionForLike(targetId, likeCount);
+            }
+            case DISLIKE -> {
+                long dislikeCount = reactionRepository.countByTargetIdAndReactionType(targetId, ReactionType.DISLIKE);
+                yield projectionFactory.createCountProjectionForDislike(targetId, dislikeCount);
+            }
+        };
 
         dataChangeEventPublisher.publish("ReactionRemoved", targetId, projection);
     }

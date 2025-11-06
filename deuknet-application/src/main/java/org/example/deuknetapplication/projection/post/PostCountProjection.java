@@ -17,13 +17,15 @@ public class PostCountProjection extends Projection {
 
     private final Long commentCount;
     private final Long likeCount;
+    private final Long dislikeCount;
     private final Long viewCount;
 
     @Builder
-    public PostCountProjection(UUID id, Long commentCount, Long likeCount, Long viewCount) {
+    public PostCountProjection(UUID id, Long commentCount, Long likeCount, Long dislikeCount, Long viewCount) {
         super(id);
         this.commentCount = commentCount;
         this.likeCount = likeCount;
+        this.dislikeCount = dislikeCount;
         this.viewCount = viewCount;
     }
 }

@@ -10,14 +10,13 @@ public class PostMapper {
     
     public Post toDomain(PostEntity entity) {
         if (entity == null) return null;
-        
+
         return Post.restore(
                 entity.getId(),
                 Title.from(entity.getTitle()),
                 Content.from(entity.getContent()),
                 entity.getAuthorId(),
                 entity.getStatus(),
-                entity.getViewCount(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );
@@ -25,14 +24,13 @@ public class PostMapper {
     
     public PostEntity toEntity(Post domain) {
         if (domain == null) return null;
-        
+
         return new PostEntity(
                 domain.getId(),
                 domain.getTitle().getValue(),
                 domain.getContent().getValue(),
                 domain.getAuthorId(),
                 domain.getStatus(),
-                domain.getViewCount(),
                 domain.getCreatedAt(),
                 domain.getUpdatedAt()
         );

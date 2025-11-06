@@ -79,6 +79,12 @@ public class PostRepositoryAdapter implements PostRepository {
                                 .where(
                                         reactionEntity.targetId.eq(id),
                                         reactionEntity.reactionType.eq(ReactionType.DISLIKE)
+                                ),
+                        JPAExpressions.select(reactionEntity.count())
+                                .from(reactionEntity)
+                                .where(
+                                        reactionEntity.targetId.eq(id),
+                                        reactionEntity.reactionType.eq(ReactionType.VIEW)
                                 )
                 )
                 .from(postEntity)
@@ -95,6 +101,7 @@ public class PostRepositoryAdapter implements PostRepository {
         Long commentCount = postAndCounts.get(2, Long.class);
         Long likeCount = postAndCounts.get(3, Long.class);
         Long dislikeCount = postAndCounts.get(4, Long.class);
+        Long viewCount = postAndCounts.get(5, Long.class);
 
         // 2. Category Assignment + Category join으로 조회
         List<Tuple> categoryResults = queryFactory
@@ -122,7 +129,7 @@ public class PostRepositoryAdapter implements PostRepository {
                 .authorDisplayName(user != null ? user.getDisplayName() : null)
                 .authorAvatarUrl(user != null ? user.getAvatarUrl() : null)
                 .status(post.getStatus().name())
-                .viewCount(post.getViewCount())
+                .viewCount(viewCount != null ? viewCount : 0L)
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .categoryIds(categoryIds)

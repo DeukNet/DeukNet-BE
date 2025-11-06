@@ -92,19 +92,8 @@ public interface PostApi {
             @PathVariable UUID postId
     );
 
-    @Operation(
-            summary = "게시글 조회수 증가",
-            description = "게시글 조회 시 조회수를 1 증가시킵니다. 인증이 필요합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "조회수 증가 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 실패"),
-            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
-    })
-    void incrementViewCount(
-            @Parameter(description = "게시글 ID", required = true)
-            @PathVariable UUID postId
-    );
+    // incrementViewCount() 메서드 제거
+    // 조회수는 POST /api/posts/{postId}/reactions (ReactionType.VIEW)로 처리
 
     @Operation(
             summary = "게시글 ID로 조회",

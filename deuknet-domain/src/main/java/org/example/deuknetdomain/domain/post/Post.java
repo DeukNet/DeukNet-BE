@@ -16,18 +16,17 @@ public class Post extends AggregateRoot {
     private Content content;
     private final UUID authorId;
     private PostStatus status;
-    private Long viewCount;
+    // viewCount 제거 - Reaction 테이블에서 집계
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     private Post(UUID id, Title title, Content content, UUID authorId,
-                 PostStatus status, Long viewCount, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                 PostStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
         super(id);
         this.title = title;
         this.content = content;
         this.authorId = authorId;
         this.status = status;
-        this.viewCount = viewCount;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -39,15 +38,14 @@ public class Post extends AggregateRoot {
                 content,
                 authorId,
                 PostStatus.DRAFT,
-                0L,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
     }
 
     public static Post restore(UUID id, Title title, Content content, UUID authorId,
-                               PostStatus status, Long viewCount, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        return new Post(id, title, content, authorId, status, viewCount, createdAt, updatedAt);
+                               PostStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        return new Post(id, title, content, authorId, status, createdAt, updatedAt);
     }
 
     public void updateContent(Title title, Content content) {
@@ -74,8 +72,6 @@ public class Post extends AggregateRoot {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void incrementViewCount() {
-        this.viewCount++;
-    }
+    // incrementViewCount() 제거 - Reaction으로 처리
 
 }

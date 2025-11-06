@@ -4,6 +4,7 @@ import org.example.deuknetapplication.common.exception.OwnerMismatchException;
 import org.example.deuknetapplication.common.exception.ResourceNotFoundException;
 import org.example.deuknetapplication.port.in.post.UpdatePostApplcationRequest;
 import org.example.deuknetapplication.port.in.post.UpdatePostUseCase;
+import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
 import org.example.deuknetapplication.port.out.repository.CommentRepository;
 import org.example.deuknetapplication.port.out.repository.PostRepository;
 import org.example.deuknetapplication.port.out.repository.ReactionRepository;
@@ -11,6 +12,7 @@ import org.example.deuknetapplication.port.out.repository.UserRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
 import org.example.deuknetapplication.projection.post.PostCountProjection;
 import org.example.deuknetapplication.projection.post.PostDetailProjection;
+import org.example.deuknetapplication.service.reaction.ReactionProjectionFactory;
 import org.example.deuknetdomain.common.vo.Content;
 import org.example.deuknetdomain.common.vo.Title;
 import org.example.deuknetdomain.domain.post.Post;
@@ -19,7 +21,6 @@ import org.example.deuknetdomain.domain.user.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -40,8 +41,9 @@ public class UpdatePostService implements UpdatePostUseCase {
     private final ReactionRepository reactionRepository;
     private final CurrentUserPort currentUserPort;
     private final PostCategoryAssignmentService categoryAssignmentService;
-    private final PostProjectionFactory projectionFactory;
-    private final PostEventPublisher eventPublisher;
+    private final PostProjectionFactory postProjectionFactory;
+    private final ReactionProjectionFactory reactionProjectionFactory;
+    private final DataChangeEventPublisher dataChangeEventPublisher;
 
     public UpdatePostService(
             PostRepository postRepository,
@@ -50,8 +52,9 @@ public class UpdatePostService implements UpdatePostUseCase {
             ReactionRepository reactionRepository,
             CurrentUserPort currentUserPort,
             PostCategoryAssignmentService categoryAssignmentService,
-            PostProjectionFactory projectionFactory,
-            PostEventPublisher eventPublisher
+            PostProjectionFactory postProjectionFactory,
+            ReactionProjectionFactory reactionProjectionFactory,
+            DataChangeEventPublisher dataChangeEventPublisher
     ) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
@@ -59,8 +62,9 @@ public class UpdatePostService implements UpdatePostUseCase {
         this.reactionRepository = reactionRepository;
         this.currentUserPort = currentUserPort;
         this.categoryAssignmentService = categoryAssignmentService;
-        this.projectionFactory = projectionFactory;
-        this.eventPublisher = eventPublisher;
+        this.postProjectionFactory = postProjectionFactory;
+        this.reactionProjectionFactory = reactionProjectionFactory;
+        this.dataChangeEventPublisher = dataChangeEventPublisher;
     }
 
     @Override
@@ -79,17 +83,22 @@ public class UpdatePostService implements UpdatePostUseCase {
         long commentCount = commentRepository.countByPostId(post.getId());
         long likeCount = reactionRepository.countByTargetIdAndReactionType(
                 post.getId(), ReactionType.LIKE);
+        long dislikeCount = reactionRepository.countByTargetIdAndReactionType(
+                post.getId(), ReactionType.DISLIKE);
+        long viewCount = reactionRepository.countByTargetIdAndReactionType(
+                post.getId(), ReactionType.VIEW);
 
         // 5. Projection 생성 (전문 팩토리에 위임)
-        PostDetailProjection detailProjection = projectionFactory.createDetailProjectionForUpdate(
-                post, author, request.getCategoryIds(), commentCount, likeCount
+        PostDetailProjection detailProjection = postProjectionFactory.createDetailProjectionForUpdate(
+                post, author, request.getCategoryIds(), commentCount, likeCount, viewCount
         );
-        PostCountProjection countProjection = projectionFactory.createCountProjection(
-                post, commentCount, likeCount
+        PostCountProjection countProjection = reactionProjectionFactory.createCountProjection(
+                post.getId(), commentCount, likeCount, dislikeCount, viewCount
         );
 
-        // 6. 이벤트 발행 (전문 서비스에 위임)
-        eventPublisher.publishPostUpdated(post.getId(), detailProjection, countProjection);
+        // 6. 이벤트 발행
+        dataChangeEventPublisher.publish("PostUpdated", post.getId(), detailProjection);
+        dataChangeEventPublisher.publish("PostUpdated", post.getId(), countProjection);
     }
 
     /**

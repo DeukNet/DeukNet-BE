@@ -13,6 +13,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+/**
+ * Reaction 추가 서비스
+ *
+ * 책임:
+ * - Reaction 생성 (LIKE, DISLIKE, VIEW)
+ * - PostCountProjection 업데이트 이벤트 발행
+ *
+ * VIEW(조회수)도 Reaction으로 통일하여 처리합니다.
+ */
 @Service
 @Transactional
 public class AddReactionService implements AddReactionUseCase {
@@ -20,14 +29,17 @@ public class AddReactionService implements AddReactionUseCase {
     private final ReactionRepository reactionRepository;
     private final CurrentUserPort currentUserPort;
     private final DataChangeEventPublisher dataChangeEventPublisher;
+    private final ReactionProjectionFactory projectionFactory;
 
     public AddReactionService(
             ReactionRepository reactionRepository,
             CurrentUserPort currentUserPort,
-            DataChangeEventPublisher dataChangeEventPublisher) {
+            DataChangeEventPublisher dataChangeEventPublisher,
+            ReactionProjectionFactory projectionFactory) {
         this.reactionRepository = reactionRepository;
         this.currentUserPort = currentUserPort;
         this.dataChangeEventPublisher = dataChangeEventPublisher;
+        this.projectionFactory = projectionFactory;
     }
 
     @Override
@@ -43,17 +55,31 @@ public class AddReactionService implements AddReactionUseCase {
 
         reactionRepository.save(reaction);
 
-        // Outbox에 저장: PostCountProjection (likeCount만 업데이트)
-        long likeCount = reactionRepository.countByTargetIdAndReactionType(
-                command.targetId(), ReactionType.LIKE);
-
-        PostCountProjection projection = PostCountProjection.builder()
-                .id(command.targetId())
-                .likeCount(likeCount)
-                .build();
-
-        dataChangeEventPublisher.publish("ReactionAdded", command.targetId(), projection);
+        // Reaction 타입별로 적절한 Projection 생성 및 이벤트 발행
+        publishReactionEvent(command.targetId(), command.reactionType());
 
         return reaction.getId();
+    }
+
+    /**
+     * Reaction 타입에 따라 적절한 PostCountProjection 생성 및 이벤트 발행
+     */
+    private void publishReactionEvent(UUID targetId, ReactionType reactionType) {
+        PostCountProjection projection = switch (reactionType) {
+            case VIEW -> {
+                long viewCount = reactionRepository.countByTargetIdAndReactionType(targetId, ReactionType.VIEW);
+                yield projectionFactory.createCountProjectionForView(targetId, viewCount);
+            }
+            case LIKE -> {
+                long likeCount = reactionRepository.countByTargetIdAndReactionType(targetId, ReactionType.LIKE);
+                yield projectionFactory.createCountProjectionForLike(targetId, likeCount);
+            }
+            case DISLIKE -> {
+                long dislikeCount = reactionRepository.countByTargetIdAndReactionType(targetId, ReactionType.DISLIKE);
+                yield projectionFactory.createCountProjectionForDislike(targetId, dislikeCount);
+            }
+        };
+
+        dataChangeEventPublisher.publish("ReactionAdded", targetId, projection);
     }
 }
