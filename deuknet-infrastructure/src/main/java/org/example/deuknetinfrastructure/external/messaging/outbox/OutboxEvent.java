@@ -32,7 +32,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
-@Table(name = "outbox")
+@Table(name = "outbox_events")
 public class OutboxEvent {
 
     /**

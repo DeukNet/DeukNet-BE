@@ -27,6 +27,14 @@ subprojects {
         imports {
             mavenBom 'org.springframework.boot:spring-boot-dependencies:3.3.5'
         }
+        dependencies {
+            // Debezium 2.7.3이 요구하는 Kafka 3.7.0 버전 강제
+            dependency 'org.apache.kafka:kafka-clients:3.7.0'
+            dependency 'org.apache.kafka:connect-api:3.7.0'
+            dependency 'org.apache.kafka:connect-runtime:3.7.0'
+            dependency 'org.apache.kafka:connect-transforms:3.7.0'
+            dependency 'org.apache.kafka:connect-json:3.7.0'
+        }
     }
 }
 

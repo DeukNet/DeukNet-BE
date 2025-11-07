@@ -12,6 +12,8 @@ spring:
     properties:
       hibernate.format_sql: true
       hibernate.hbm2ddl.auto: update
+  elasticsearch:
+    uris: http://elasticsearch:9200
       
 # 로깅 설정
 logging:
@@ -48,3 +50,18 @@ springdoc:
     doc-expansion: none
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
+
+# Debezium Embedded Engine Configuration
+debezium:
+  enabled: ${DEBEZIUM_ENABLED:true}  # 환경 변수로 제어 가능, 기본값 true
+  connector-name: deuknet-outbox-connector
+  offset-storage-file-name: /tmp/debezium-offsets.dat
+  database:
+    hostname: postgres
+    port: 5432
+    name: app_db
+    username: app_user
+    password: app_pass
+    server-name: deuknet  # topic.prefix
+    schema-include-list: public
+    table-include-list: public.outbox_events

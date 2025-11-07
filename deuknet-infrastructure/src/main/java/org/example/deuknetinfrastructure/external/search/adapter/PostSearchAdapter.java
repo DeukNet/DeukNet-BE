@@ -216,4 +216,99 @@ public class PostSearchAdapter implements SearchPostUseCase, PostSearchPort {
             // 인덱스 확인 중 에러는 무시
         }
     }
+
+    /**
+     * PostDetailProjection을 Elasticsearch에 인덱싱
+     * Debezium에서 호출됩니다.
+     */
+    public void indexPostDetail(String payloadJson) {
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            PostDetailDocument document = mapper.readValue(payloadJson, PostDetailDocument.class);
+            save(document);
+        } catch (Exception e) {
+            throw new SearchOperationException("Failed to index PostDetail", e);
+        }
+    }
+
+    /**
+     * PostCountProjection으로 Elasticsearch 업데이트
+     * Debezium에서 호출됩니다.
+     */
+    public void updatePostCounts(String payloadJson) {
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode payload = mapper.readTree(payloadJson);
+
+            String postId = payload.get("id").asText();
+
+            // Partial update를 위한 스크립트 구성
+            StringBuilder scriptBuilder = new StringBuilder();
+            com.fasterxml.jackson.databind.node.ObjectNode params = mapper.createObjectNode();
+
+            if (payload.has("viewCount")) {
+                scriptBuilder.append("ctx._source.viewCount = params.viewCount; ");
+                params.put("viewCount", payload.get("viewCount").asLong());
+            }
+            if (payload.has("likeCount")) {
+                scriptBuilder.append("ctx._source.likeCount = params.likeCount; ");
+                params.put("likeCount", payload.get("likeCount").asLong());
+            }
+            if (payload.has("dislikeCount")) {
+                scriptBuilder.append("ctx._source.dislikeCount = params.dislikeCount; ");
+                params.put("dislikeCount", payload.get("dislikeCount").asLong());
+            }
+            if (payload.has("commentCount")) {
+                scriptBuilder.append("ctx._source.commentCount = params.commentCount; ");
+                params.put("commentCount", payload.get("commentCount").asLong());
+            }
+
+            if (scriptBuilder.length() > 0) {
+                String script = scriptBuilder.toString();
+                java.util.Map<String, co.elastic.clients.json.JsonData> paramsMap = new java.util.HashMap<>();
+
+                if (payload.has("viewCount")) {
+                    paramsMap.put("viewCount", co.elastic.clients.json.JsonData.of(payload.get("viewCount").asLong()));
+                }
+                if (payload.has("likeCount")) {
+                    paramsMap.put("likeCount", co.elastic.clients.json.JsonData.of(payload.get("likeCount").asLong()));
+                }
+                if (payload.has("dislikeCount")) {
+                    paramsMap.put("dislikeCount", co.elastic.clients.json.JsonData.of(payload.get("dislikeCount").asLong()));
+                }
+                if (payload.has("commentCount")) {
+                    paramsMap.put("commentCount", co.elastic.clients.json.JsonData.of(payload.get("commentCount").asLong()));
+                }
+
+                elasticsearchClient.update(u -> u
+                        .index(INDEX_NAME)
+                        .id(postId)
+                        .script(s -> s
+                                .inline(i -> i
+                                        .source(script)
+                                        .params(paramsMap)
+                                )
+                        ),
+                        PostDetailDocument.class
+                );
+            }
+        } catch (Exception e) {
+            throw new SearchOperationException("Failed to update post counts", e);
+        }
+    }
+
+    /**
+     * Post 삭제
+     * Debezium에서 호출됩니다.
+     */
+    public void deletePost(String postId) {
+        try {
+            elasticsearchClient.delete(d -> d
+                    .index(INDEX_NAME)
+                    .id(postId)
+            );
+        } catch (Exception e) {
+            throw new SearchOperationException("Failed to delete post: " + postId, e);
+        }
+    }
 }

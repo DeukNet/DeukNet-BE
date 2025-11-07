@@ -47,6 +47,10 @@ dependencies {
     // Debezium Testcontainers
     testImplementation 'io.debezium:debezium-testing-testcontainers:2.5.4.Final'
 
+    // Debezium Embedded Engine (for CDC integration tests)
+    testImplementation 'io.debezium:debezium-embedded:2.7.3.Final'
+    testImplementation 'io.debezium:debezium-connector-postgres:2.7.3.Final'
+
     // Kafka Client (for consuming messages in tests)
     testImplementation 'org.apache.kafka:kafka-clients:3.6.1'
 
