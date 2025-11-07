@@ -17,6 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.util.UUID;
 
 @SpringBootTest(classes = DeuknetApplication.class)
@@ -49,6 +52,9 @@ public abstract class AbstractTest {
         // Elasticsearch 설정
         registry.add("spring.elasticsearch.uris", elasticsearch::getHttpHostAddress);
         registry.add("spring.data.elasticsearch.repositories.enabled", () -> "true");
+
+        // Debezium 기본 비활성화 (CDC 테스트에서만 활성화)
+        registry.add("debezium.enabled", () -> "false");
     }
 
     @Autowired
@@ -59,6 +65,9 @@ public abstract class AbstractTest {
 
     @Autowired
     protected UserRepository userRepository;
+
+    @Autowired
+    protected DataSource dataSource;
 
     @BeforeEach
     void setUpTestUser() {
@@ -72,5 +81,33 @@ public abstract class AbstractTest {
                 "https://example.com/avatar.jpg"
         );
         userRepository.save(testUser);
+    }
+
+    /**
+     * Debezium Publication 생성 헬퍼 메서드
+     *
+     * CDC 테스트를 위해 PostgreSQL Publication을 생성합니다.
+     * outbox_events 테이블이 생성된 후에 호출해야 합니다.
+     */
+    protected void createDebeziumPublication() {
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+
+            // Publication 생성 (이미 존재하면 무시)
+            stmt.execute(
+                "DO $$ " +
+                "BEGIN " +
+                "   IF NOT EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'deuknet_outbox_publication') THEN " +
+                "       CREATE PUBLICATION deuknet_outbox_publication FOR TABLE outbox_events; " +
+                "   END IF; " +
+                "END $$;"
+            );
+
+            System.out.println("✅ PostgreSQL Publication 'deuknet_outbox_publication' created");
+
+        } catch (Exception e) {
+            System.err.println("⚠️  Failed to create publication: " + e.getMessage());
+            throw new RuntimeException("Failed to create Debezium publication", e);
+        }
     }
 }
