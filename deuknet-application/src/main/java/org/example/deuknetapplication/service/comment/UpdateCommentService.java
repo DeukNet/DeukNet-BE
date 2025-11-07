@@ -2,6 +2,7 @@ package org.example.deuknetapplication.service.comment;
 
 import org.example.deuknetapplication.common.exception.OwnerMismatchException;
 import org.example.deuknetapplication.common.exception.ResourceNotFoundException;
+import org.example.deuknetapplication.messaging.EventType;
 import org.example.deuknetapplication.port.in.comment.UpdateCommentApplicationRequest;
 import org.example.deuknetapplication.port.in.comment.UpdateCommentUseCase;
 import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
@@ -102,7 +103,7 @@ public class UpdateCommentService implements UpdateCommentUseCase {
                 now
         );
 
-        dataChangeEventPublisher.publish("CommentUpdated", comment.getId(), projection);
+        dataChangeEventPublisher.publish(EventType.COMMENT_UPDATED, comment.getId(), projection);
     }
 
     /**

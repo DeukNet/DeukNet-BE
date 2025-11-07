@@ -2,6 +2,7 @@ package org.example.deuknetapplication.service.post;
 
 import org.example.deuknetapplication.common.exception.OwnerMismatchException;
 import org.example.deuknetapplication.common.exception.ResourceNotFoundException;
+import org.example.deuknetapplication.messaging.EventType;
 import org.example.deuknetapplication.port.in.post.DeletePostUseCase;
 import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
 import org.example.deuknetapplication.port.out.repository.PostRepository;
@@ -81,6 +82,6 @@ public class DeletePostService implements DeletePostUseCase {
      * Projection을 삭제하도록 이벤트를 발행합니다.
      */
     private void publishPostDeletedEvent(UUID postId) {
-        dataChangeEventPublisher.publish("PostDeleted", postId);
+        dataChangeEventPublisher.publish(EventType.POST_DELETED, postId);
     }
 }

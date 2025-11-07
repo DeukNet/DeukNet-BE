@@ -2,6 +2,7 @@ package org.example.deuknetapplication.service.comment;
 
 import org.example.deuknetapplication.common.exception.OwnerMismatchException;
 import org.example.deuknetapplication.common.exception.ResourceNotFoundException;
+import org.example.deuknetapplication.messaging.EventType;
 import org.example.deuknetapplication.port.in.comment.DeleteCommentUseCase;
 import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
 import org.example.deuknetapplication.port.out.repository.CommentRepository;
@@ -77,6 +78,6 @@ public class DeleteCommentService implements DeleteCommentUseCase {
      * Projection을 삭제하도록 이벤트를 발행합니다.
      */
     private void publishCommentDeletedEvent(UUID commentId) {
-        dataChangeEventPublisher.publish("CommentDeleted", commentId);
+        dataChangeEventPublisher.publish(EventType.COMMENT_DELETED, commentId);
     }
 }

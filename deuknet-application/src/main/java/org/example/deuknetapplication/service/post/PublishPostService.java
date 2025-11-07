@@ -2,6 +2,7 @@ package org.example.deuknetapplication.service.post;
 
 import org.example.deuknetapplication.common.exception.OwnerMismatchException;
 import org.example.deuknetapplication.common.exception.ResourceNotFoundException;
+import org.example.deuknetapplication.messaging.EventType;
 import org.example.deuknetapplication.port.in.post.PublishPostUseCase;
 import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
 import org.example.deuknetapplication.port.out.repository.CommentRepository;
@@ -163,7 +164,7 @@ public class PublishPostService implements PublishPostUseCase {
                 post.getId(), commentCount, likeCount, dislikeCount, viewCount
         );
 
-        dataChangeEventPublisher.publish("PostPublished", post.getId(), detailProjection);
-        dataChangeEventPublisher.publish("PostPublished", post.getId(), countProjection);
+        dataChangeEventPublisher.publish(EventType.POST_PUBLISHED, post.getId(), detailProjection);
+        dataChangeEventPublisher.publish(EventType.POST_PUBLISHED, post.getId(), countProjection);
     }
 }

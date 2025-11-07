@@ -1,6 +1,7 @@
 package org.example.deuknetapplication.service.comment;
 
 import org.example.deuknetapplication.common.exception.ResourceNotFoundException;
+import org.example.deuknetapplication.messaging.EventType;
 import org.example.deuknetapplication.port.in.comment.CreateCommentAppliationRequest;
 import org.example.deuknetapplication.port.in.comment.CreateCommentUseCase;
 import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
@@ -100,6 +101,6 @@ public class CreateCommentService implements CreateCommentUseCase {
                 now
         );
 
-        dataChangeEventPublisher.publish("CommentCreated", comment.getId(), projection);
+        dataChangeEventPublisher.publish(EventType.COMMENT_CREATED, comment.getId(), projection);
     }
 }

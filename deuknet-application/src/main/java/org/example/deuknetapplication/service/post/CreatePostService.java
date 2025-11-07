@@ -1,6 +1,7 @@
 package org.example.deuknetapplication.service.post;
 
 import org.example.deuknetapplication.common.exception.ResourceNotFoundException;
+import org.example.deuknetapplication.messaging.EventType;
 import org.example.deuknetapplication.port.in.post.CreatePostApplicationRequest;
 import org.example.deuknetapplication.port.in.post.CreatePostUseCase;
 import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
@@ -68,8 +69,8 @@ public class CreatePostService implements CreatePostUseCase {
         );
         PostCountProjection countProjection = projectionFactory.createCountProjectionForCreation(post.getId());
 
-        dataChangeEventPublisher.publish("PostCreated", post.getId(), detailProjection);
-        dataChangeEventPublisher.publish("PostCreated", post.getId(), countProjection);
+        dataChangeEventPublisher.publish(EventType.POST_CREATED, post.getId(), detailProjection);
+        dataChangeEventPublisher.publish(EventType.POST_CREATED, post.getId(), countProjection);
 
         return post.getId();
     }

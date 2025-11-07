@@ -2,6 +2,7 @@ package org.example.deuknetapplication.service.reaction;
 
 import org.example.deuknetapplication.common.exception.OwnerMismatchException;
 import org.example.deuknetapplication.common.exception.ResourceNotFoundException;
+import org.example.deuknetapplication.messaging.EventType;
 import org.example.deuknetapplication.port.in.reaction.RemoveReactionUseCase;
 import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
 import org.example.deuknetapplication.port.out.repository.ReactionRepository;
@@ -79,6 +80,6 @@ public class RemoveReactionService implements RemoveReactionUseCase {
             }
         };
 
-        dataChangeEventPublisher.publish("ReactionRemoved", targetId, projection);
+        dataChangeEventPublisher.publish(EventType.REACTION_REMOVED, targetId, projection);
     }
 }

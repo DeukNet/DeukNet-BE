@@ -1,5 +1,6 @@
 package org.example.deuknetapplication.service.reaction;
 
+import org.example.deuknetapplication.messaging.EventType;
 import org.example.deuknetapplication.port.in.reaction.AddReactionUseCase;
 import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
 import org.example.deuknetapplication.port.out.repository.ReactionRepository;
@@ -80,6 +81,6 @@ public class AddReactionService implements AddReactionUseCase {
             }
         };
 
-        dataChangeEventPublisher.publish("ReactionAdded", targetId, projection);
+        dataChangeEventPublisher.publish(EventType.REACTION_ADDED, targetId, projection);
     }
 }

@@ -2,6 +2,7 @@ package org.example.deuknetapplication.service.post;
 
 import org.example.deuknetapplication.common.exception.OwnerMismatchException;
 import org.example.deuknetapplication.common.exception.ResourceNotFoundException;
+import org.example.deuknetapplication.messaging.EventType;
 import org.example.deuknetapplication.port.in.post.UpdatePostApplcationRequest;
 import org.example.deuknetapplication.port.in.post.UpdatePostUseCase;
 import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
@@ -97,8 +98,8 @@ public class UpdatePostService implements UpdatePostUseCase {
         );
 
         // 6. 이벤트 발행
-        dataChangeEventPublisher.publish("PostUpdated", post.getId(), detailProjection);
-        dataChangeEventPublisher.publish("PostUpdated", post.getId(), countProjection);
+        dataChangeEventPublisher.publish(EventType.POST_UPDATED, post.getId(), detailProjection);
+        dataChangeEventPublisher.publish(EventType.POST_UPDATED, post.getId(), countProjection);
     }
 
     /**
