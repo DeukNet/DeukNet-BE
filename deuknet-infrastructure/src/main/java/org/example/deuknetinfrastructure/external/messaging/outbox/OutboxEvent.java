@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -79,6 +80,40 @@ public class OutboxEvent {
     @Column(name = "timestamp", nullable = false)
     private Long timestamp;
 
+    // 기존 Outbox 패턴 필드들 (하위 호환성 유지)
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    @Column(name = "aggregate_id", nullable = false, columnDefinition = "UUID")
+    private UUID aggregateId;
+
+    @Column(name = "aggregate_type", nullable = false, length = 255)
+    private String aggregateType;
+
+    @Column(name = "event_type", nullable = false, length = 255)
+    private String eventType;
+
+    @Column(name = "occurred_on", nullable = false)
+    private LocalDateTime occurredOn;
+
+    @Column(name = "payload_type", nullable = false, length = 255)
+    private String payloadType;
+
+    @Column(name = "processed_at")
+    private LocalDateTime processedAt;
+
+    @Column(name = "retry_count", nullable = false)
+    private Integer retryCount = 0;
+
+    @Column(name = "status", nullable = false, length = 20)
+    private String status = "PENDING";
+
+    @Column(name = "error_message", columnDefinition = "TEXT")
+    private String errorMessage;
+
     protected OutboxEvent() {
     }
 
@@ -89,5 +124,17 @@ public class OutboxEvent {
         this.type = type;
         this.payload = payload;
         this.timestamp = timestamp;
+
+        // 기존 필드들 기본값 설정
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+        this.occurredOn = now;
+        this.aggregateId = UUID.fromString(aggregateid);
+        this.aggregateType = aggregatetype;
+        this.eventType = type;
+        this.payloadType = aggregatetype;  // aggregatetype을 payloadType으로 사용
+        this.retryCount = 0;
+        this.status = "PENDING";
     }
 }

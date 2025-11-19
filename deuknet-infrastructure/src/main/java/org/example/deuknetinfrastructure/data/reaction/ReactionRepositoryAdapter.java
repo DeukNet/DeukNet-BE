@@ -42,4 +42,15 @@ public class ReactionRepositoryAdapter implements ReactionRepository {
     public long countByTargetIdAndReactionType(UUID targetId, ReactionType reactionType) {
         return jpaReactionRepository.countByTargetIdAndReactionType(targetId, reactionType);
     }
+
+    @Override
+    public Optional<Reaction> findByTargetIdAndUserIdAndReactionType(UUID targetId, UUID userId, ReactionType reactionType) {
+        return jpaReactionRepository.findByTargetIdAndUserIdAndReactionType(targetId, userId, reactionType)
+                .map(mapper::toDomain);
+    }
+
+    @Override
+    public boolean existsByTargetIdAndUserIdAndReactionType(UUID targetId, UUID userId, ReactionType reactionType) {
+        return jpaReactionRepository.existsByTargetIdAndUserIdAndReactionType(targetId, userId, reactionType);
+    }
 }

@@ -1,11 +1,12 @@
 {{- if .Values.app.enabled }}
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: deuknet-app
   annotations:
-    description: "Debezium Embedded Engine을 사용하므로 replicas는 반드시 1이어야 합니다"
+    description: "Debezium Embedded Engine을 사용하므로 replicas는 반드시 1이어야 합니다. StatefulSet을 사용하여 offset 파일을 영구 저장합니다."
 spec:
+  serviceName: deuknet-app
   replicas: {{ .Values.app.replicas }}
   selector:
     matchLabels:
@@ -21,7 +22,12 @@ spec:
         imagePullPolicy: {{ .Values.app.image.pullPolicy }}
         ports:
         - containerPort: {{ .Values.app.port }}
+        volumeMounts:
+        - name: debezium-data
+          mountPath: /data/debezium
         env:
+        - name: DEBEZIUM_OFFSET_STORAGE_FILE_NAME
+          value: "/data/debezium/offsets.dat"
         - name: SPRING_DATASOURCE_URL
           value: "jdbc:postgresql://postgres:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}"
         - name: SPRING_DATASOURCE_USERNAME
@@ -30,6 +36,26 @@ spec:
           value: {{ .Values.postgres.password | quote }}
         - name: SPRING_ELASTICSEARCH_URIS
           value: "http://elasticsearch:{{ .Values.elasticsearch.port }}"
+        - name: GOOGLE_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: google-oauth-secret
+              key: GOOGLE_CLIENT_ID
+        - name: GOOGLE_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: google-oauth-secret
+              key: GOOGLE_CLIENT_SECRET
+        - name: DEBEZIUM_DATABASE_HOSTNAME
+          value: "postgres"
+        - name: DEBEZIUM_DATABASE_PORT
+          value: "{{ .Values.postgres.port }}"
+        - name: DEBEZIUM_DATABASE_NAME
+          value: "{{ .Values.postgres.database }}"
+        - name: DEBEZIUM_DATABASE_USERNAME
+          value: {{ .Values.postgres.username | quote }}
+        - name: DEBEZIUM_DATABASE_PASSWORD
+          value: {{ .Values.postgres.password | quote }}
         livenessProbe:
           httpGet:
             path: /actuator/health
@@ -42,6 +68,14 @@ spec:
             port: {{ .Values.app.port }}
           initialDelaySeconds: 30
           periodSeconds: 10
+  volumeClaimTemplates:
+  - metadata:
+      name: debezium-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi
 ---
 apiVersion: v1
 kind: Service

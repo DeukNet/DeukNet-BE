@@ -72,6 +72,7 @@ public class DebeziumEngineConfig {
                 .with("transforms.outbox.table.field.event.key", "aggregateid")
                 .with("transforms.outbox.table.field.event.type", "type")
                 .with("transforms.outbox.table.field.event.payload", "payload")
+                .with("transforms.outbox.table.fields.additional.placement", "type:envelope:eventType,aggregateid:envelope:aggregateId")
                 .with("transforms.outbox.route.topic.replacement", "outbox.event.${routedByValue}")
 
                 // Snapshot 설정 (초기 로드)

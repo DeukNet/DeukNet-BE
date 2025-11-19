@@ -37,6 +37,9 @@ public class PostEntity {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "view_count", nullable = false)
+    private Long viewCount = 0L;  // 기본값 0 (Reaction 테이블에서 집계)
+
     public PostEntity() {
     }
 
@@ -49,6 +52,7 @@ public class PostEntity {
         this.status = status;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.viewCount = 0L;  // 기본값
     }
 
 }

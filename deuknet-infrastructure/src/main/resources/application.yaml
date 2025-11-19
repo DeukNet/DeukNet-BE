@@ -55,13 +55,13 @@ springdoc:
 debezium:
   enabled: ${DEBEZIUM_ENABLED:true}  # 환경 변수로 제어 가능, 기본값 true
   connector-name: deuknet-outbox-connector
-  offset-storage-file-name: /tmp/debezium-offsets.dat
+  offset-storage-file-name: ${DEBEZIUM_OFFSET_STORAGE_FILE_NAME:/tmp/debezium-offsets.dat}
   database:
-    hostname: postgres
-    port: 5432
-    name: app_db
-    username: app_user
-    password: app_pass
+    hostname: ${DEBEZIUM_DATABASE_HOSTNAME:postgres}
+    port: ${DEBEZIUM_DATABASE_PORT:5432}
+    name: ${DEBEZIUM_DATABASE_NAME:app_db}
+    username: ${DEBEZIUM_DATABASE_USERNAME:app_user}
+    password: ${DEBEZIUM_DATABASE_PASSWORD:app_pass}
     server-name: deuknet  # topic.prefix
     schema-include-list: public
     table-include-list: public.outbox_events

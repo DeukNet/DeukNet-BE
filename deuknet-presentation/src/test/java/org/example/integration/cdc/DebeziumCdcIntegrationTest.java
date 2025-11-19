@@ -390,6 +390,10 @@ class DebeziumCdcIntegrationTest extends AbstractDebeziumIntegrationTest {
     @Test
     @WithMockUser
     void multiplePosts_shouldCaptureAllCdcEvents() throws Exception {
+        // Given: 이전 테스트의 잔여 이벤트가 모두 처리될 때까지 잠시 대기
+        Thread.sleep(1000);
+        testEventHandler.clear();
+
         // Given: 여러 Post 생성
         int postCount = 3;
         String[] postIds = new String[postCount];

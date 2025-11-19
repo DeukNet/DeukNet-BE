@@ -47,6 +47,17 @@ public class AddReactionService implements AddReactionUseCase {
     public UUID addReaction(AddReactionCommand command) {
         UUID currentUserId = currentUserPort.getCurrentUserId();
 
+        // 중복 체크: 이미 같은 반응을 했는지 확인
+        boolean alreadyReacted = reactionRepository.existsByTargetIdAndUserIdAndReactionType(
+                command.targetId(),
+                currentUserId,
+                command.reactionType()
+        );
+
+        if (alreadyReacted) {
+            throw new org.example.deuknetdomain.domain.reaction.exception.DuplicateReactionException();
+        }
+
         Reaction reaction = Reaction.create(
                 command.reactionType(),
                 TargetType.POST,
