@@ -34,7 +34,7 @@ public class UserEntity {
     public UserEntity() {
     }
 
-    public UserEntity(UUID id, UUID authCredentialId, String username, 
+    public UserEntity(UUID id, UUID authCredentialId, String username,
                       String displayName, String bio, String avatarUrl) {
         this.id = id;
         this.authCredentialId = authCredentialId;

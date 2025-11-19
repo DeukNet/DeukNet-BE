@@ -8,7 +8,7 @@ public class UserMapper {
     
     public User toDomain(UserEntity entity) {
         if (entity == null) return null;
-        
+
         return User.restore(
                 entity.getId(),
                 entity.getAuthCredentialId(),
@@ -18,10 +18,10 @@ public class UserMapper {
                 entity.getAvatarUrl()
         );
     }
-    
+
     public UserEntity toEntity(User domain) {
         if (domain == null) return null;
-        
+
         return new UserEntity(
                 domain.getId(),
                 domain.getAuthCredentialId(),
