@@ -1,6 +1,13 @@
 package org.example.seedwork;
 
+import org.example.deuknetapplication.port.in.post.CreatePostUseCase;
+import org.example.deuknetapplication.port.in.post.DeletePostUseCase;
+import org.example.deuknetapplication.port.in.post.PublishPostUseCase;
+import org.example.deuknetapplication.port.in.post.UpdatePostUseCase;
+import org.example.deuknetinfrastructure.external.messaging.debezium.DebeziumEventHandler;
 import org.example.seedwork.cdc.DebeziumTestConfig;
+import org.example.seedwork.cdc.TestDebeziumEventHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -18,6 +25,40 @@ import org.springframework.transaction.annotation.Transactional;
 @Import(DebeziumTestConfig.class)
 @Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
 public abstract class AbstractDebeziumIntegrationTest extends AbstractTest {
+
+    @Autowired
+    protected CreatePostUseCase createPostUseCase;
+
+    @Autowired
+    protected UpdatePostUseCase updatePostUseCase;
+
+    @Autowired
+    protected PublishPostUseCase publishPostUseCase;
+
+    @Autowired
+    protected DeletePostUseCase deletePostUseCase;
+
+    @Autowired
+    private DebeziumEventHandler debeziumEventHandler;
+
+    /**
+     * 캡처된 CDC 이벤트 개수 조회
+     */
+    protected int getCapturedEventCount() {
+        if (debeziumEventHandler instanceof TestDebeziumEventHandler testHandler) {
+            return testHandler.getCapturedEvents().size();
+        }
+        return 0;
+    }
+
+    /**
+     * 캡처된 이벤트 초기화
+     */
+    protected void clearCapturedEvents() {
+        if (debeziumEventHandler instanceof TestDebeziumEventHandler testHandler) {
+            testHandler.clear();
+        }
+    }
 
     @DynamicPropertySource
     static void configureDebeziumProperties(DynamicPropertyRegistry registry) {

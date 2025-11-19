@@ -65,7 +65,7 @@ public class CreatePostService implements CreatePostUseCase {
         categoryAssignmentService.assignCategories(post.getId(), request.getCategoryIds());
 
         PostDetailProjection detailProjection = projectionFactory.createDetailProjectionForCreation(
-                post, author, request.getCategoryIds()
+                post, author, request.getCategoryIds(), java.util.List.of()  // 빈 카테고리 이름 목록
         );
         PostCountProjection countProjection = projectionFactory.createCountProjectionForCreation(post.getId());
 

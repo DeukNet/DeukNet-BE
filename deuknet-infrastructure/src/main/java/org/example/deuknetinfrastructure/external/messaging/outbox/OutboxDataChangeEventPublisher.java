@@ -51,6 +51,12 @@ public class OutboxDataChangeEventPublisher implements DataChangeEventPublisher 
             // 1. Projection을 JSON으로 직렬화
             String jsonPayload = projection != null ? objectMapper.writeValueAsString(projection) : "{}";
 
+            System.out.println("===== Publishing Event to Outbox =====");
+            System.out.println("EventType: " + eventType.getTypeName());
+            System.out.println("AggregateId: " + aggregateId);
+            System.out.println("Projection Class: " + (projection != null ? projection.getClass().getSimpleName() : "null"));
+            System.out.println("JSON Payload: " + jsonPayload);
+
             // 2. aggregateType 추출 (projection의 클래스명에서)
             String aggregateType = projection != null
                 ? projection.getClass().getSimpleName().replace("Projection", "")

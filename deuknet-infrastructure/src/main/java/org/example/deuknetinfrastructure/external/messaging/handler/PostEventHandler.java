@@ -39,6 +39,9 @@ public class PostEventHandler implements EventHandler {
 
     @Override
     public void handle(EventType eventType, String aggregateId, String payloadJson) throws Exception {
+        log.info("Handling event: type={}, aggregateId={}", eventType, aggregateId);
+        log.debug("Payload JSON: {}", payloadJson);
+
         if (eventType == EventType.POST_DELETED) {
             postSearchAdapter.deletePost(aggregateId);
             log.info("Post deleted from Elasticsearch: id={}", aggregateId);

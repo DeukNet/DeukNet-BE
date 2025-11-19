@@ -6,13 +6,14 @@ import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.format.Json;
 import lombok.extern.slf4j.Slf4j;
 import org.example.deuknetinfrastructure.external.messaging.debezium.DebeziumEventHandler;
-import org.example.deuknetinfrastructure.external.search.adapter.PostSearchAdapter;
+import org.example.deuknetinfrastructure.external.messaging.handler.EventHandler;
 import org.example.seedwork.TestPostgreSQLContainer;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.testcontainers.containers.PostgreSQLContainer;
 
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -31,10 +32,10 @@ public class DebeziumTestConfig {
     @Bean
     @Primary  // 실제 DebeziumEventHandler를 Override
     public DebeziumEventHandler testDebeziumEventHandler(
-            PostSearchAdapter postSearchAdapter,
+            List<EventHandler> eventHandlers,
             ObjectMapper objectMapper
     ) {
-        return new TestDebeziumEventHandler(postSearchAdapter, objectMapper);
+        return new TestDebeziumEventHandler(eventHandlers, objectMapper);
     }
 
     @Bean
@@ -69,12 +70,16 @@ public class DebeziumTestConfig {
                 // Outbox Event Router 설정
                 .with("transforms", "outbox")
                 .with("transforms.outbox.type", "io.debezium.transforms.outbox.EventRouter")
-                .with("transforms.outbox.table.expand.json.payload", "true")
+                .with("transforms.outbox.table.expand.json.payload", "true")  // JSON 확장 - projection 데이터 직접 접근
                 .with("transforms.outbox.table.field.event.id", "id")
                 .with("transforms.outbox.table.field.event.key", "aggregateid")
                 .with("transforms.outbox.table.field.event.type", "type")
                 .with("transforms.outbox.table.field.event.payload", "payload")
+                // timestamp 필드 매핑 제거 - INT64 타입 지원 안됨
+                .with("transforms.outbox.route.by.field", "aggregatetype")  // aggregatetype으로 라우팅
                 .with("transforms.outbox.route.topic.replacement", "outbox.event.${routedByValue}")
+                // 이벤트 타입과 aggregateId를 envelope에 추가
+                .with("transforms.outbox.table.fields.additional.placement", "type:envelope:eventType,aggregateid:envelope:aggregateId")
 
                 // Snapshot 설정 (초기 로드)
                 .with("snapshot.mode", "initial")

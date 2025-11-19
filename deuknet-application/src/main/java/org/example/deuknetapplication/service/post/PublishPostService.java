@@ -156,8 +156,10 @@ public class PublishPostService implements PublishPostUseCase {
                 .createdAt(post.getCreatedAt())
                 .updatedAt(now)
                 .categoryIds(categoryIds)
+                .categoryNames(java.util.List.of())  // 빈 카테고리 이름 목록
                 .commentCount(commentCount)
                 .likeCount(likeCount)
+                .dislikeCount(dislikeCount)
                 .build();
 
         PostCountProjection countProjection = reactionProjectionFactory.createCountProjection(

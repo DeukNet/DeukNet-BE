@@ -33,7 +33,8 @@ public class PostProjectionFactory {
     public PostDetailProjection createDetailProjectionForCreation(
             Post post,
             User author,
-            List<UUID> categoryIds
+            List<UUID> categoryIds,
+            List<String> categoryNames
     ) {
         LocalDateTime now = LocalDateTime.now();
 
@@ -50,8 +51,10 @@ public class PostProjectionFactory {
                 .createdAt(now)
                 .updatedAt(now)
                 .categoryIds(categoryIds)
+                .categoryNames(categoryNames)
                 .commentCount(0L)
                 .likeCount(0L)
+                .dislikeCount(0L)
                 .build();
     }
 
@@ -70,8 +73,10 @@ public class PostProjectionFactory {
             Post post,
             User author,
             List<UUID> categoryIds,
+            List<String> categoryNames,
             Long commentCount,
             Long likeCount,
+            Long dislikeCount,
             Long viewCount
     ) {
         return PostDetailProjection.builder()
@@ -87,8 +92,10 @@ public class PostProjectionFactory {
                 .createdAt(post.getCreatedAt())
                 .updatedAt(LocalDateTime.now())
                 .categoryIds(categoryIds)
+                .categoryNames(categoryNames)
                 .commentCount(commentCount)
                 .likeCount(likeCount)
+                .dislikeCount(dislikeCount)
                 .build();
     }
 

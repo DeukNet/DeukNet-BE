@@ -168,8 +168,8 @@ public class PostSearchAdapter implements SearchPostUseCase, PostSearchPort {
                 doc.getAuthorUsername(),
                 doc.getAuthorDisplayName(),
                 doc.getStatus(),
-                doc.getCategoryIds().stream().map(UUID::fromString).toList(),
-                doc.getCategoryNames(),
+                doc.getCategoryIds() != null ? doc.getCategoryIds().stream().map(UUID::fromString).toList() : List.of(),
+                doc.getCategoryNames() != null ? doc.getCategoryNames() : List.of(),
                 doc.getViewCount(),
                 doc.getCommentCount(),
                 doc.getLikeCount(),
@@ -183,21 +183,49 @@ public class PostSearchAdapter implements SearchPostUseCase, PostSearchPort {
      * Document 저장 (테스트용)
      * Elasticsearch Client를 사용하여 Document를 저장합니다.
      * 테스트 환경에서 인덱스가 없으면 자동으로 생성합니다.
+     *
+     * Connection is closed 에러를 처리하기 위해 재시도 로직 포함
      */
     public void save(PostDetailDocument document) {
-        try {
-            ensureIndexExists();
+        int maxRetries = 3;
+        int retryCount = 0;
+        Exception lastException = null;
 
-            elasticsearchClient.index(i -> i
-                    .index(INDEX_NAME)
-                    .id(document.getIdAsString())
-                    .document(document)
-            );
+        while (retryCount < maxRetries) {
+            try {
+                saveInternal(document);
+                return;  // 성공 시 즉시 반환
+            } catch (Exception e) {
+                lastException = e;
+                retryCount++;
 
-            elasticsearchClient.indices().refresh(r -> r.index(INDEX_NAME));
-        } catch (IOException e) {
-            throw new SearchOperationException("Failed to save document: " + document.getIdAsString(), e);
+                if (isRetriableException(e) && retryCount < maxRetries) {
+                    System.out.println("Elasticsearch 연결 오류 발생 (save), 재시도 " + retryCount + "/" + maxRetries);
+                    try {
+                        Thread.sleep(100 * retryCount);  // Exponential backoff
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
         }
+
+        throw new SearchOperationException("Failed to save document: " + document.getIdAsString() + " after " + maxRetries + " retries", lastException);
+    }
+
+    private void saveInternal(PostDetailDocument document) throws IOException {
+        ensureIndexExists();
+
+        elasticsearchClient.index(i -> i
+                .index(INDEX_NAME)
+                .id(document.getIdAsString())
+                .document(document)
+        );
+
+        elasticsearchClient.indices().refresh(r -> r.index(INDEX_NAME));
     }
 
     /**
@@ -223,10 +251,20 @@ public class PostSearchAdapter implements SearchPostUseCase, PostSearchPort {
      */
     public void indexPostDetail(String payloadJson) {
         try {
+            System.out.println("===== Indexing PostDetail =====");
+            System.out.println("Payload JSON: " + payloadJson);
+
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            mapper.findAndRegisterModules(); // LocalDateTime 등을 위해 필요
+
             PostDetailDocument document = mapper.readValue(payloadJson, PostDetailDocument.class);
+            System.out.println("Document deserialized successfully: id=" + document.getIdAsString());
+
             save(document);
+            System.out.println("Document saved successfully to Elasticsearch");
         } catch (Exception e) {
+            System.err.println("Failed to index PostDetail: " + e.getMessage());
+            e.printStackTrace();
             throw new SearchOperationException("Failed to index PostDetail", e);
         }
     }
@@ -234,67 +272,108 @@ public class PostSearchAdapter implements SearchPostUseCase, PostSearchPort {
     /**
      * PostCountProjection으로 Elasticsearch 업데이트
      * Debezium에서 호출됩니다.
+     *
+     * Connection is closed 에러를 처리하기 위해 재시도 로직 포함
      */
     public void updatePostCounts(String payloadJson) {
-        try {
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            com.fasterxml.jackson.databind.JsonNode payload = mapper.readTree(payloadJson);
+        int maxRetries = 3;
+        int retryCount = 0;
+        Exception lastException = null;
 
-            String postId = payload.get("id").asText();
+        while (retryCount < maxRetries) {
+            try {
+                updatePostCountsInternal(payloadJson);
+                return;  // 성공 시 즉시 반환
+            } catch (Exception e) {
+                lastException = e;
+                retryCount++;
 
-            // Partial update를 위한 스크립트 구성
-            StringBuilder scriptBuilder = new StringBuilder();
-            com.fasterxml.jackson.databind.node.ObjectNode params = mapper.createObjectNode();
+                if (isRetriableException(e) && retryCount < maxRetries) {
+                    System.out.println("Elasticsearch 연결 오류 발생, 재시도 " + retryCount + "/" + maxRetries);
+                    try {
+                        Thread.sleep(100 * retryCount);  // Exponential backoff
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+        }
+
+        throw new SearchOperationException("Failed to update post counts after " + maxRetries + " retries", lastException);
+    }
+
+    private void updatePostCountsInternal(String payloadJson) throws Exception {
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        com.fasterxml.jackson.databind.JsonNode payload = mapper.readTree(payloadJson);
+
+        String postId = payload.get("id").asText();
+
+        // Partial update를 위한 스크립트 구성
+        StringBuilder scriptBuilder = new StringBuilder();
+        com.fasterxml.jackson.databind.node.ObjectNode params = mapper.createObjectNode();
+
+        if (payload.has("viewCount")) {
+            scriptBuilder.append("ctx._source.viewCount = params.viewCount; ");
+            params.put("viewCount", payload.get("viewCount").asLong());
+        }
+        if (payload.has("likeCount")) {
+            scriptBuilder.append("ctx._source.likeCount = params.likeCount; ");
+            params.put("likeCount", payload.get("likeCount").asLong());
+        }
+        if (payload.has("dislikeCount")) {
+            scriptBuilder.append("ctx._source.dislikeCount = params.dislikeCount; ");
+            params.put("dislikeCount", payload.get("dislikeCount").asLong());
+        }
+        if (payload.has("commentCount")) {
+            scriptBuilder.append("ctx._source.commentCount = params.commentCount; ");
+            params.put("commentCount", payload.get("commentCount").asLong());
+        }
+
+        if (scriptBuilder.length() > 0) {
+            String script = scriptBuilder.toString();
+            java.util.Map<String, co.elastic.clients.json.JsonData> paramsMap = new java.util.HashMap<>();
 
             if (payload.has("viewCount")) {
-                scriptBuilder.append("ctx._source.viewCount = params.viewCount; ");
-                params.put("viewCount", payload.get("viewCount").asLong());
+                paramsMap.put("viewCount", co.elastic.clients.json.JsonData.of(payload.get("viewCount").asLong()));
             }
             if (payload.has("likeCount")) {
-                scriptBuilder.append("ctx._source.likeCount = params.likeCount; ");
-                params.put("likeCount", payload.get("likeCount").asLong());
+                paramsMap.put("likeCount", co.elastic.clients.json.JsonData.of(payload.get("likeCount").asLong()));
             }
             if (payload.has("dislikeCount")) {
-                scriptBuilder.append("ctx._source.dislikeCount = params.dislikeCount; ");
-                params.put("dislikeCount", payload.get("dislikeCount").asLong());
+                paramsMap.put("dislikeCount", co.elastic.clients.json.JsonData.of(payload.get("dislikeCount").asLong()));
             }
             if (payload.has("commentCount")) {
-                scriptBuilder.append("ctx._source.commentCount = params.commentCount; ");
-                params.put("commentCount", payload.get("commentCount").asLong());
+                paramsMap.put("commentCount", co.elastic.clients.json.JsonData.of(payload.get("commentCount").asLong()));
             }
 
-            if (scriptBuilder.length() > 0) {
-                String script = scriptBuilder.toString();
-                java.util.Map<String, co.elastic.clients.json.JsonData> paramsMap = new java.util.HashMap<>();
-
-                if (payload.has("viewCount")) {
-                    paramsMap.put("viewCount", co.elastic.clients.json.JsonData.of(payload.get("viewCount").asLong()));
-                }
-                if (payload.has("likeCount")) {
-                    paramsMap.put("likeCount", co.elastic.clients.json.JsonData.of(payload.get("likeCount").asLong()));
-                }
-                if (payload.has("dislikeCount")) {
-                    paramsMap.put("dislikeCount", co.elastic.clients.json.JsonData.of(payload.get("dislikeCount").asLong()));
-                }
-                if (payload.has("commentCount")) {
-                    paramsMap.put("commentCount", co.elastic.clients.json.JsonData.of(payload.get("commentCount").asLong()));
-                }
-
-                elasticsearchClient.update(u -> u
-                        .index(INDEX_NAME)
-                        .id(postId)
-                        .script(s -> s
-                                .inline(i -> i
-                                        .source(script)
-                                        .params(paramsMap)
-                                )
-                        ),
-                        PostDetailDocument.class
-                );
-            }
-        } catch (Exception e) {
-            throw new SearchOperationException("Failed to update post counts", e);
+            elasticsearchClient.update(u -> u
+                    .index(INDEX_NAME)
+                    .id(postId)
+                    .script(s -> s
+                            .inline(i -> i
+                                    .source(script)
+                                    .params(paramsMap)
+                            )
+                    ),
+                    PostDetailDocument.class
+            );
         }
+    }
+
+    /**
+     * 재시도 가능한 예외인지 확인
+     */
+    private boolean isRetriableException(Exception e) {
+        String message = e.getMessage();
+        return message != null && (
+                message.contains("Connection is closed") ||
+                message.contains("Connection reset") ||
+                message.contains("Broken pipe") ||
+                message.contains("Connection refused")
+        );
     }
 
     /**

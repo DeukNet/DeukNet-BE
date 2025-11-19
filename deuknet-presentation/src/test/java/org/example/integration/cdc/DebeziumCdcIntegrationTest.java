@@ -276,7 +276,15 @@ class DebeziumCdcIntegrationTest extends AbstractDebeziumIntegrationTest {
 
         // Kafka Connect JSON 형식: {schema: {...}, payload: {...}}
         assertThat(eventJson.has("payload")).isTrue();
-        JsonNode payload = eventJson.get("payload");
+        JsonNode envelope = eventJson.get("payload");
+
+        // Outbox Event Router가 expand.json.payload=true로 설정되어
+        // envelope.payload 안에 실제 Post 데이터가 있고, eventType과 aggregateId가 envelope 레벨에 추가됨
+        assertThat(envelope.has("eventType")).isTrue();
+        assertThat(envelope.has("aggregateId")).isTrue();
+        assertThat(envelope.has("payload")).isTrue();
+
+        JsonNode payload = envelope.get("payload");
 
         // Payload 안에 실제 Post 데이터 확인
         assertThat(payload.get("id").asText()).isEqualTo(postId);
@@ -305,9 +313,9 @@ class DebeziumCdcIntegrationTest extends AbstractDebeziumIntegrationTest {
 
         String postId = createResult.getResponse().getContentAsString().replaceAll("\"", "");
 
-        // 생성 이벤트가 처리될 때까지 대기
+        // 생성 이벤트가 모두 처리될 때까지 대기 (PostDetail + PostCount = 최소 2개)
         await().atMost(10, TimeUnit.SECONDS)
-                .until(() -> !testEventHandler.getCapturedEvents().isEmpty());
+                .until(() -> testEventHandler.getCapturedEvents().size() >= 2);
 
         // 생성 이벤트 클리어
         testEventHandler.clear();
@@ -324,6 +332,7 @@ class DebeziumCdcIntegrationTest extends AbstractDebeziumIntegrationTest {
         });
 
         // Then: PostPublished 이벤트가 CDC를 통해 처리되었는지 확인
+        // 해당 Post ID에 대한 PostPublished 이벤트가 도착할 때까지 대기
         await().atMost(10, TimeUnit.SECONDS)
                 .pollInterval(500, TimeUnit.MILLISECONDS)
                 .untilAsserted(() -> {
@@ -333,18 +342,28 @@ class DebeziumCdcIntegrationTest extends AbstractDebeziumIntegrationTest {
                         System.out.println("   - Key: " + e.getKey());
                         System.out.println("   - Value (첫 300자): " + e.getValue().substring(0, Math.min(300, e.getValue().length())));
                     });
-                    assertThat(events).isNotEmpty();
+                    // 특정 Post ID에 대한 PostPublished 이벤트가 있는지 확인
+                    boolean hasPublishedEvent = events.stream()
+                            .anyMatch(e -> e.getValue().contains(postId) &&
+                                    (e.getValue().contains("PostPublished") || e.getValue().contains("PUBLISHED")));
+                    assertThat(hasPublishedEvent)
+                            .withFailMessage("PostPublished 이벤트가 도착하지 않았습니다. Post ID: " + postId)
+                            .isTrue();
                 });
 
         List<TestDebeziumEventHandler.CapturedEvent> publishEvents = testEventHandler.getCapturedEvents();
 
         // Debezium Outbox Event Router 변환 후 이벤트 검증
         // 변환 후에는 Kafka Connect JSON 형식으로 payload가 직접 들어옴
-        // PostPublished는 status 정보를 담고 있으므로 "status" 필드를 확인
+        // PostPublished는 status 정보를 담고 있으므로 "PUBLISHED" 또는 "PostPublished"를 확인
+        // 해당 Post ID에 대한 이벤트만 필터링하여 테스트 간 격리 보장
         TestDebeziumEventHandler.CapturedEvent publishedEvent = publishEvents.stream()
-                .filter(e -> e.getValue().contains("status") || e.getValue().contains("PostPublished"))
+                .filter(e -> e.getValue().contains(postId) &&
+                            (e.getValue().contains("PUBLISHED") ||
+                            e.getValue().contains("PostPublished") ||
+                            e.getValue().contains("\"eventType\":\"PostPublished\"")))
                 .findFirst()
-                .orElseThrow(() -> new AssertionError("PostPublished 이벤트를 찾을 수 없습니다"));
+                .orElseThrow(() -> new AssertionError("PostPublished 이벤트를 찾을 수 없습니다. Post ID: " + postId + ", 캡처된 이벤트 수: " + publishEvents.size()));
 
         JsonNode eventJson = objectMapper.readTree(publishedEvent.getValue());
 
@@ -391,12 +410,13 @@ class DebeziumCdcIntegrationTest extends AbstractDebeziumIntegrationTest {
         }
 
         // Then: 모든 Post의 CDC 이벤트가 캡처되었는지 확인
+        // 각 Post는 2개의 이벤트 생성 (PostDetailProjection + PostCountProjection)
+        int expectedMinEvents = postCount * 2;
         await().atMost(15, TimeUnit.SECONDS)
                 .pollInterval(500, TimeUnit.MILLISECONDS)
                 .untilAsserted(() -> {
                     List<TestDebeziumEventHandler.CapturedEvent> events = testEventHandler.getCapturedEvents();
-                    // 각 Post는 최소 1개 이상의 이벤트 생성 (PostDetailProjection + PostCountProjection)
-                    assertThat(events.size()).isGreaterThanOrEqualTo(postCount);
+                    assertThat(events.size()).isGreaterThanOrEqualTo(expectedMinEvents);
                 });
 
         List<TestDebeziumEventHandler.CapturedEvent> allEvents = testEventHandler.getCapturedEvents();

@@ -1,5 +1,6 @@
 package org.example.deuknetapplication.projection.post;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import lombok.Builder;
 import lombok.Getter;
 import org.example.deuknetdomain.common.seedwork.Projection;
@@ -13,6 +14,7 @@ import java.util.UUID;
  * 이 정보는 자주 변경되므로 별도로 관리하여 효율적으로 업데이트합니다.
  */
 @Getter
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class PostCountProjection extends Projection {
 
     private final Long commentCount;

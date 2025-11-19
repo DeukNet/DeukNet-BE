@@ -1,5 +1,6 @@
 package org.example.deuknetapplication.projection.post;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import lombok.Builder;
 import lombok.Getter;
 import org.example.deuknetdomain.common.seedwork.Projection;
@@ -15,6 +16,7 @@ import java.util.UUID;
  * 작성자 정보, 카테고리, 반응 등을 함께 조회합니다.
  */
 @Getter
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class PostDetailProjection extends Projection {
 
     private final String title;

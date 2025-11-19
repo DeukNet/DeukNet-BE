@@ -40,18 +40,30 @@ public class DebeziumEventHandler {
      */
     public void handleEvent(String key, String value) {
         try {
-            JsonNode payload = objectMapper.readTree(value);
-            JsonNode after = payload.get("after");
+            JsonNode root = objectMapper.readTree(value);
 
-            if (after == null) {
-                log.debug("DELETE event detected, skipping. key={}", key);
+            // Outbox Event Router가 변환한 CDC 이벤트 처리
+            // expand.json.payload=true이고 additional.placement로 envelope 필드 추가:
+            // {
+            //   "payload": {
+            //     "payload": { ...expanded projection data... },
+            //     "eventType": "PostCreated",
+            //     "aggregateId": "..."
+            //   }
+            // }
+
+            JsonNode envelope = root.get("payload");
+            if (envelope == null || envelope.isNull()) {
+                log.debug("Empty envelope, skipping. key={}", key);
                 return;
             }
 
-            // Outbox 필드 추출
-            String eventTypeName = after.get("type").asText();
-            String aggregateId = after.get("aggregateid").asText();
-            String payloadJson = after.get("payload").asText();
+            String eventTypeName = envelope.get("eventType").asText();
+            String aggregateId = envelope.get("aggregateId").asText();
+
+            // Payload는 이미 JSON 객체로 확장되어 있으므로 다시 문자열로 변환
+            JsonNode payloadNode = envelope.get("payload");
+            String payloadJson = objectMapper.writeValueAsString(payloadNode);
 
             // EventType enum으로 변환 (타입 안정성 보장)
             if (!EventType.isValid(eventTypeName)) {

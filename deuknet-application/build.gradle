@@ -30,6 +30,9 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter'
 
+    // Jackson for JSON serialization (Outbox Pattern)
+    implementation 'com.fasterxml.jackson.core:jackson-annotations'
+
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 

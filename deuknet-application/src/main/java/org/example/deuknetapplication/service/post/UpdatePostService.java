@@ -91,7 +91,7 @@ public class UpdatePostService implements UpdatePostUseCase {
 
         // 5. Projection 생성 (전문 팩토리에 위임)
         PostDetailProjection detailProjection = postProjectionFactory.createDetailProjectionForUpdate(
-                post, author, request.getCategoryIds(), commentCount, likeCount, viewCount
+                post, author, request.getCategoryIds(), java.util.List.of(), commentCount, likeCount, dislikeCount, viewCount
         );
         PostCountProjection countProjection = reactionProjectionFactory.createCountProjection(
                 post.getId(), commentCount, likeCount, dislikeCount, viewCount
