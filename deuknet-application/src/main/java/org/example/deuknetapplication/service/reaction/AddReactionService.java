@@ -19,9 +19,11 @@ import java.util.UUID;
  *
  * 책임:
  * - Reaction 생성 (LIKE, DISLIKE, VIEW)
+ * - LIKE/DISLIKE 배타적 처리 (둘 중 하나만 가능)
  * - PostCountProjection 업데이트 이벤트 발행
  *
  * VIEW(조회수)도 Reaction으로 통일하여 처리합니다.
+ * LIKE와 DISLIKE는 배타적이므로, 하나를 누르면 반대쪽이 자동으로 삭제됩니다.
  */
 @Service
 @Transactional
@@ -45,9 +47,10 @@ public class AddReactionService implements AddReactionUseCase {
 
     @Override
     public UUID addReaction(AddReactionCommand command) {
+        // 항상 현재 인증된 사용자의 ID 사용 (보안)
         UUID currentUserId = currentUserPort.getCurrentUserId();
 
-        // 중복 체크: 이미 같은 반응을 했는지 확인
+        // 모든 Reaction 타입에 대해 중복 체크
         boolean alreadyReacted = reactionRepository.existsByTargetIdAndUserIdAndReactionType(
                 command.targetId(),
                 currentUserId,
@@ -56,6 +59,23 @@ public class AddReactionService implements AddReactionUseCase {
 
         if (alreadyReacted) {
             throw new org.example.deuknetdomain.domain.reaction.exception.DuplicateReactionException();
+        }
+
+        // LIKE/DISLIKE는 배타적: 반대 반응이 있으면 먼저 삭제 (VIEW는 해당 없음)
+        if (command.reactionType() == ReactionType.LIKE || command.reactionType() == ReactionType.DISLIKE) {
+            ReactionType oppositeType = command.reactionType() == ReactionType.LIKE
+                ? ReactionType.DISLIKE
+                : ReactionType.LIKE;
+
+            reactionRepository.findByTargetIdAndUserIdAndReactionType(
+                    command.targetId(),
+                    currentUserId,
+                    oppositeType
+            ).ifPresent(existingReaction -> {
+                reactionRepository.delete(existingReaction);
+                // 반대 반응 삭제 이벤트 발행
+                publishReactionEvent(command.targetId(), oppositeType);
+            });
         }
 
         Reaction reaction = Reaction.create(

@@ -4,8 +4,12 @@ import org.example.deuknetapplication.port.in.post.GetPostByIdUseCase;
 import org.example.deuknetapplication.port.in.post.PostSearchResponse;
 import org.example.deuknetapplication.port.out.post.PostSearchPort;
 import org.example.deuknetapplication.port.out.repository.PostRepository;
+import org.example.deuknetapplication.port.out.repository.ReactionRepository;
+import org.example.deuknetapplication.port.out.security.CurrentUserPort;
 import org.example.deuknetapplication.projection.post.PostDetailProjection;
 import org.example.deuknetdomain.domain.post.exception.PostNotFoundException;
+import org.example.deuknetdomain.domain.reaction.Reaction;
+import org.example.deuknetdomain.domain.reaction.ReactionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -30,13 +34,19 @@ public class GetPostByIdService implements GetPostByIdUseCase {
 
     private final PostSearchPort postSearchPort;
     private final PostRepository postRepository;
+    private final ReactionRepository reactionRepository;
+    private final CurrentUserPort currentUserPort;
 
     public GetPostByIdService(
             PostSearchPort postSearchPort,
-            PostRepository postRepository
+            PostRepository postRepository,
+            ReactionRepository reactionRepository,
+            CurrentUserPort currentUserPort
     ) {
         this.postSearchPort = postSearchPort;
         this.postRepository = postRepository;
+        this.reactionRepository = reactionRepository;
+        this.currentUserPort = currentUserPort;
     }
 
     @Override
@@ -46,14 +56,20 @@ public class GetPostByIdService implements GetPostByIdUseCase {
         // 1. Elasticsearch에서 조회 시도
         Optional<PostSearchResponse> elasticsearchResult = postSearchPort.findById(postId);
 
+        PostSearchResponse response;
         if (elasticsearchResult.isPresent()) {
             log.debug("Post found in Elasticsearch: postId={}", postId);
-            return elasticsearchResult.get();
+            response = elasticsearchResult.get();
+        } else {
+            // 2. PostgreSQL에서 조회 (폴백)
+            log.debug("Fetching post from PostgreSQL: postId={}", postId);
+            response = fetchFromCommandModel(postId);
         }
 
-        // 2. PostgreSQL에서 조회 (폴백)
-        log.debug("Fetching post from PostgreSQL: postId={}", postId);
-        return fetchFromCommandModel(postId);
+        // 3. 현재 사용자의 reaction 조회 및 설정
+        enrichWithUserReaction(response, postId);
+
+        return response;
     }
 
     /**
@@ -69,5 +85,52 @@ public class GetPostByIdService implements GetPostByIdUseCase {
                 .orElseThrow(PostNotFoundException::new);
 
         return new PostSearchResponse(projection);
+    }
+
+    /**
+     * 현재 사용자의 reaction 정보를 응답에 추가
+     * 인증되지 않은 사용자의 경우 false로 설정
+     *
+     * @param response 응답 객체
+     * @param postId 게시글 ID
+     */
+    private void enrichWithUserReaction(PostSearchResponse response, UUID postId) {
+        try {
+            UUID currentUserId = currentUserPort.getCurrentUserId();
+
+            // LIKE 확인
+            reactionRepository.findByTargetIdAndUserIdAndReactionType(
+                    postId, currentUserId, ReactionType.LIKE
+            ).ifPresentOrElse(
+                    likeReaction -> {
+                        response.setHasUserLiked(true);
+                        response.setUserLikeReactionId(likeReaction.getId());
+                    },
+                    () -> {
+                        response.setHasUserLiked(false);
+                        response.setUserLikeReactionId(null);
+                    }
+            );
+
+            // DISLIKE 확인
+            reactionRepository.findByTargetIdAndUserIdAndReactionType(
+                    postId, currentUserId, ReactionType.DISLIKE
+            ).ifPresentOrElse(
+                    dislikeReaction -> {
+                        response.setHasUserDisliked(true);
+                        response.setUserDislikeReactionId(dislikeReaction.getId());
+                    },
+                    () -> {
+                        response.setHasUserDisliked(false);
+                        response.setUserDislikeReactionId(null);
+                    }
+            );
+        } catch (Exception e) {
+            // 인증되지 않은 사용자 (ForbiddenException 등)
+            response.setHasUserLiked(false);
+            response.setHasUserDisliked(false);
+            response.setUserLikeReactionId(null);
+            response.setUserDislikeReactionId(null);
+        }
     }
 }

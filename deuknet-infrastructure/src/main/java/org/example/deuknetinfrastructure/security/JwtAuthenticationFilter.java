@@ -38,10 +38,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String requestURI = request.getRequestURI();
         String authHeader = request.getHeader("Authorization");
 
-        log.debug("JWT Filter - URI: {}, Auth header present: {}", requestURI, authHeader != null);
+        log.info("JWT Filter - URI: {}, Auth header present: {}", requestURI, authHeader != null);
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.debug("No valid Authorization header found");
+            log.info("No valid Authorization header found for URI: {}", requestURI);
             filterChain.doFilter(request, response);
             return;
         }
@@ -51,17 +51,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             UUID userId = jwtPort.validateToken(token);
 
             if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                log.debug("JWT validation successful, userId: {}", userId);
+                log.info("JWT validation successful, userId: {}", userId);
                 UserPrincipal principal = new UserPrincipal(userId);
                 UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(principal, null, new ArrayList<>());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } else {
-                log.debug("JWT validation failed or authentication already set");
+                log.info("JWT validation failed or authentication already set");
             }
         } catch (Exception e) {
-            log.warn("JWT validation error: {}", e.getMessage());
+            log.error("JWT validation error for URI: {}, Error: {}", requestURI, e.getMessage(), e);
             // 토큰 검증 실패 시 인증 정보 설정하지 않음
         }
 

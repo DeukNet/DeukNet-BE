@@ -56,7 +56,6 @@ public class SecurityConfig {
 
                 // Post API - Read (조회는 인증 불필요)
                 .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/posts/*/view").permitAll()
 
                 // Comment API
                 .requestMatchers(HttpMethod.POST, "/api/posts/*/comments").authenticated()

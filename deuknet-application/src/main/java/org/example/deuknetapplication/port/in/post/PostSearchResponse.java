@@ -3,6 +3,7 @@ package org.example.deuknetapplication.port.in.post;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.example.deuknetapplication.projection.post.PostDetailProjection;
 
 import java.time.LocalDateTime;
@@ -13,6 +14,7 @@ import java.util.UUID;
  * 게시글 검색 응답
  */
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class PostSearchResponse {
@@ -30,6 +32,10 @@ public class PostSearchResponse {
     private Long commentCount;
     private Long likeCount;
     private Long dislikeCount;
+    private Boolean hasUserLiked;
+    private Boolean hasUserDisliked;
+    private UUID userLikeReactionId;      // 사용자가 누른 LIKE reaction ID (취소용)
+    private UUID userDislikeReactionId;   // 사용자가 누른 DISLIKE reaction ID (취소용)
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

@@ -17,7 +17,6 @@ public class PostController implements PostApi {
     private final UpdatePostUseCase updatePostUseCase;
     private final PublishPostUseCase publishPostUseCase;
     private final DeletePostUseCase deletePostUseCase;
-    // IncrementViewCountUseCase 제거 - Reaction으로 통합
     private final GetPostByIdUseCase getPostByIdUseCase;
     private final SearchPostUseCase searchPostUseCase;
 
@@ -65,9 +64,6 @@ public class PostController implements PostApi {
     public void deletePost(@PathVariable UUID postId) {
         deletePostUseCase.deletePost(postId);
     }
-
-    // incrementViewCount() 엔드포인트 제거
-    // 조회수는 POST /api/posts/{postId}/reactions (ReactionType.VIEW)로 처리
 
     @Override
     @GetMapping("/{id}")
