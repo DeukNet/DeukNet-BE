@@ -1,10 +1,12 @@
 package org.example.deuknetpresentation.controller.comment;
 
 import org.example.deuknetapplication.port.in.comment.*;
+import org.example.deuknetapplication.projection.comment.CommentProjection;
 import org.example.deuknetpresentation.controller.comment.dto.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -14,15 +16,23 @@ public class CommentController implements CommentApi {
     private final CreateCommentUseCase createCommentUseCase;
     private final UpdateCommentUseCase updateCommentUseCase;
     private final DeleteCommentUseCase deleteCommentUseCase;
+    private final GetCommentsUseCase getCommentsUseCase;
 
     public CommentController(
             CreateCommentUseCase createCommentUseCase,
             UpdateCommentUseCase updateCommentUseCase,
-            DeleteCommentUseCase deleteCommentUseCase
+            DeleteCommentUseCase deleteCommentUseCase,
+            GetCommentsUseCase getCommentsUseCase
     ) {
         this.createCommentUseCase = createCommentUseCase;
         this.updateCommentUseCase = updateCommentUseCase;
         this.deleteCommentUseCase = deleteCommentUseCase;
+        this.getCommentsUseCase = getCommentsUseCase;
+    }
+
+    @GetMapping
+    public List<CommentProjection> getComments(@PathVariable UUID postId) {
+        return getCommentsUseCase.getCommentsByPostId(postId);
     }
 
     @Override

@@ -47,21 +47,21 @@ public abstract class BaseDocument implements Persistable {
     /**
      * Document가 생성된 시각
      * ISO 8601 형식으로 저장됩니다.
-     * Elasticsearch auditing이 자동으로 설정합니다.
+     * JSON 역직렬화를 통해 값을 받거나, Elasticsearch auditing이 자동으로 설정합니다.
      */
     @CreatedDate
     @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_millis)
-    @JsonIgnore  // JSON 역직렬화 시 무시 (Elasticsearch auditing이 관리)
+    @com.fasterxml.jackson.annotation.JsonProperty("createdAt")  // JSON 역직렬화 허용
     private LocalDateTime createdAt;
 
     /**
      * Document가 마지막으로 수정된 시각
      * ISO 8601 형식으로 저장됩니다.
-     * Elasticsearch auditing이 자동으로 설정합니다.
+     * JSON 역직렬화를 통해 값을 받거나, Elasticsearch auditing이 자동으로 설정합니다.
      */
     @LastModifiedDate
     @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_millis)
-    @JsonIgnore  // JSON 역직렬화 시 무시 (Elasticsearch auditing이 관리)
+    @com.fasterxml.jackson.annotation.JsonProperty("updatedAt")  // JSON 역직렬화 허용
     private LocalDateTime updatedAt;
 
     protected BaseDocument() {
