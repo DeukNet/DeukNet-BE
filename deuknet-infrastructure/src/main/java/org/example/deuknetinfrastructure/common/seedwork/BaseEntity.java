@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.example.deuknetdomain.common.seedwork.Persistable;
 
 import java.util.Objects;
@@ -21,6 +22,7 @@ import java.util.UUID;
  */
 @Getter
 @MappedSuperclass
+@NoArgsConstructor
 public abstract class BaseEntity extends BaseTimeEntity implements Persistable {
 
     /**
@@ -30,10 +32,6 @@ public abstract class BaseEntity extends BaseTimeEntity implements Persistable {
     @Id
     @Column(name = "id", columnDefinition = "UUID")
     private UUID id;
-
-    protected BaseEntity() {
-        // JPA를 위한 기본 생성자
-    }
 
     protected BaseEntity(UUID id) {
         this.id = id;

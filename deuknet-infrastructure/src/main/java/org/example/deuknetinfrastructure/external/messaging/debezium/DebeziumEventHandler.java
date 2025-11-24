@@ -42,16 +42,6 @@ public class DebeziumEventHandler {
         try {
             JsonNode root = objectMapper.readTree(value);
 
-            // Outbox Event Router가 변환한 CDC 이벤트 처리
-            // expand.json.payload=true이고 additional.placement로 envelope 필드 추가:
-            // {
-            //   "payload": {
-            //     "payload": { ...expanded projection data... },
-            //     "eventType": "PostCreated",
-            //     "aggregateId": "..."
-            //   }
-            // }
-
             JsonNode envelope = root.get("payload");
             if (envelope == null || envelope.isNull()) {
                 log.debug("Empty envelope, skipping. key={}", key);

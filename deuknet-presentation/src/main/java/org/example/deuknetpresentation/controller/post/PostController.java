@@ -76,7 +76,7 @@ public class PostController implements PostApi {
     @Override
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<List<PostSearchResponse>> searchPosts(
+    public ResponseEntity<PageResponse<PostSearchResponse>> searchPosts(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) UUID authorId,
             @RequestParam(required = false) UUID categoryId,
@@ -101,21 +101,22 @@ public class PostController implements PostApi {
                 .sortOrder(sortOrder)
                 .build();
 
-        List<PostSearchResponse> results = searchPostUseCase.search(request);
+        PageResponse<PostSearchResponse> results = searchPostUseCase.search(request);
         return ResponseEntity.ok(results);
     }
 
     @Override
     @GetMapping("/popular")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<List<PostSearchResponse>> getPopularPosts(
+    public ResponseEntity<PageResponse<PostSearchResponse>> getPopularPosts(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) UUID categoryId
     ) {
         if (size > 100) {
             size = 100;
         }
-        List<PostSearchResponse> results = searchPostUseCase.findPopularPosts(page, size);
+        PageResponse<PostSearchResponse> results = searchPostUseCase.findPopularPosts(page, size, categoryId);
         return ResponseEntity.ok(results);
     }
 }

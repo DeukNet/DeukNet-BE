@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.example.deuknetapplication.port.in.post.PageResponse;
 import org.example.deuknetapplication.port.in.post.PostSearchResponse;
 import org.example.deuknetpresentation.controller.post.dto.CreatePostRequest;
 import org.example.deuknetpresentation.controller.post.dto.UpdatePostRequest;
@@ -114,16 +115,16 @@ public interface PostApi {
 
     @Operation(
             summary = "게시글 검색",
-            description = "여러 조건으로 게시글을 검색합니다. 모든 필터는 AND로 결합됩니다."
+            description = "여러 조건으로 게시글을 검색합니다. 모든 필터는 AND로 결합됩니다. 페이지네이션 정보를 포함하여 반환합니다."
     )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
                     description = "검색 성공",
-                    content = @Content(schema = @Schema(implementation = PostSearchResponse.class))
+                    content = @Content(schema = @Schema(implementation = PageResponse.class))
             )
     })
-    ResponseEntity<List<PostSearchResponse>> searchPosts(
+    ResponseEntity<PageResponse<PostSearchResponse>> searchPosts(
             @Parameter(description = "검색 키워드 (제목 + 내용)") @RequestParam(required = false) String keyword,
             @Parameter(description = "작성자 ID") @RequestParam(required = false) UUID authorId,
             @Parameter(description = "카테고리 ID") @RequestParam(required = false) UUID categoryId,
@@ -136,17 +137,18 @@ public interface PostApi {
 
     @Operation(
             summary = "인기 게시글 조회",
-            description = "조회수 기준으로 인기 게시글을 조회합니다."
+            description = "추천수 기준으로 인기 게시글을 조회합니다. 카테고리를 지정하면 해당 카테고리의 인기 게시글만 조회합니다. 페이지네이션 정보를 포함하여 반환합니다."
     )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
                     description = "조회 성공",
-                    content = @Content(schema = @Schema(implementation = PostSearchResponse.class))
+                    content = @Content(schema = @Schema(implementation = PageResponse.class))
             )
     })
-    ResponseEntity<List<PostSearchResponse>> getPopularPosts(
+    ResponseEntity<PageResponse<PostSearchResponse>> getPopularPosts(
             @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "페이지 크기 (최대 100)") @RequestParam(defaultValue = "20") int size
+            @Parameter(description = "페이지 크기 (최대 100)") @RequestParam(defaultValue = "20") int size,
+            @Parameter(description = "카테고리 ID (선택사항)") @RequestParam(required = false) UUID categoryId
     );
 }

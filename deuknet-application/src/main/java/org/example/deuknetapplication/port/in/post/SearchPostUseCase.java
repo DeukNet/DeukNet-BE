@@ -17,10 +17,10 @@ public interface SearchPostUseCase {
     /**
      * 통합 검색 (모든 조건 AND)
      */
-    List<PostSearchResponse> search(PostSearchRequest request);
+    PageResponse<PostSearchResponse> search(PostSearchRequest request);
 
     /**
      * 인기 게시글 조회
      */
-    List<PostSearchResponse> findPopularPosts(int page, int size);
+    PageResponse<PostSearchResponse> findPopularPosts(int page, int size, UUID categoryId);
 }

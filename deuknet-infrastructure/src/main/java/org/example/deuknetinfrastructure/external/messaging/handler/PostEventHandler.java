@@ -64,8 +64,9 @@ public class PostEventHandler implements EventHandler {
             // PostDetailProjection
             postSearchAdapter.indexPostDetail(payloadJson);
             log.info("{} - PostDetailProjection indexed", eventType);
-        } else if (payload.has("viewCount")) {
-            // PostCountProjection
+        } else if (payload.has("viewCount") || payload.has("commentCount") ||
+                   payload.has("likeCount") || payload.has("dislikeCount")) {
+            // PostCountProjection (count 필드 중 하나라도 있으면 PostCountProjection)
             postSearchAdapter.updatePostCounts(payloadJson);
             log.info("{} - PostCountProjection updated", eventType);
         }

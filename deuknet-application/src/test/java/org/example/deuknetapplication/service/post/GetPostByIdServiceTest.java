@@ -149,6 +149,43 @@ class GetPostByIdServiceTest {
         // Then
         assertThat(result.getHasUserLiked()).isTrue();
         assertThat(result.getHasUserDisliked()).isFalse();
+        assertThat(result.getIsAuthor()).isFalse(); // authorId != testUserId
+    }
+
+    @Test
+    @DisplayName("현재 사용자가 작성자인 경우: isAuthor=true")
+    void whenCurrentUserIsAuthor_thenIsAuthorIsTrue() {
+        // Given
+        PostDetailProjection authorProjection = PostDetailProjection.builder()
+                .id(testPostId)
+                .title("Test Post")
+                .content("Test Content")
+                .authorId(testUserId) // 현재 사용자가 작성자
+                .authorUsername("testuser")
+                .authorDisplayName("Test User")
+                .status(PostStatus.PUBLISHED.name())
+                .categoryIds(List.of())
+                .categoryNames(List.of())
+                .viewCount(0L)
+                .commentCount(0L)
+                .likeCount(0L)
+                .dislikeCount(0L)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        PostSearchResponse elasticsearchResponse = new PostSearchResponse(authorProjection);
+        when(postSearchPort.findById(testPostId)).thenReturn(Optional.of(elasticsearchResponse));
+        when(currentUserPort.getCurrentUserId()).thenReturn(testUserId);
+        when(reactionRepository.findByTargetIdAndUserIdAndReactionType(any(), any(), any()))
+                .thenReturn(Optional.empty());
+
+        // When
+        PostSearchResponse result = getPostByIdService.getPostById(testPostId);
+
+        // Then
+        assertThat(result.getIsAuthor()).isTrue();
+        assertThat(result.getAuthorId()).isEqualTo(testUserId);
     }
 
     @Test
@@ -207,6 +244,7 @@ class GetPostByIdServiceTest {
         // Then
         assertThat(result.getHasUserLiked()).isFalse();
         assertThat(result.getHasUserDisliked()).isFalse();
+        assertThat(result.getIsAuthor()).isFalse(); // 비인증 사용자는 작성자가 아님
         verify(reactionRepository, never()).findByTargetIdAndUserIdAndReactionType(any(), any(), any());
     }
 

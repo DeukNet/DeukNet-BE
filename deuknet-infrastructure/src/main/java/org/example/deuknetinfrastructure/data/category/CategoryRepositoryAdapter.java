@@ -34,6 +34,13 @@ public class CategoryRepositoryAdapter implements CategoryRepository {
     }
 
     @Override
+    public List<Category> findAll() {
+        return jpaCategoryRepository.findAll().stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<Category> findByParentCategoryId(UUID parentCategoryId) {
         return jpaCategoryRepository.findByParentCategoryId(parentCategoryId).stream()
                 .map(mapper::toDomain)

@@ -88,7 +88,7 @@ public class GetPostByIdService implements GetPostByIdUseCase {
     }
 
     /**
-     * 현재 사용자의 reaction 정보를 응답에 추가
+     * 현재 사용자의 reaction 정보 및 작성자 여부를 응답에 추가
      * 인증되지 않은 사용자의 경우 false로 설정
      *
      * @param response 응답 객체
@@ -97,6 +97,9 @@ public class GetPostByIdService implements GetPostByIdUseCase {
     private void enrichWithUserReaction(PostSearchResponse response, UUID postId) {
         try {
             UUID currentUserId = currentUserPort.getCurrentUserId();
+
+            // 작성자 여부 확인
+            response.setIsAuthor(response.getAuthorId().equals(currentUserId));
 
             // LIKE 확인
             reactionRepository.findByTargetIdAndUserIdAndReactionType(
@@ -127,6 +130,7 @@ public class GetPostByIdService implements GetPostByIdUseCase {
             );
         } catch (Exception e) {
             // 인증되지 않은 사용자 (ForbiddenException 등)
+            response.setIsAuthor(false);
             response.setHasUserLiked(false);
             response.setHasUserDisliked(false);
             response.setUserLikeReactionId(null);

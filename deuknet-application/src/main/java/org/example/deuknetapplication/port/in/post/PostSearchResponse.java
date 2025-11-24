@@ -36,6 +36,7 @@ public class PostSearchResponse {
     private Boolean hasUserDisliked;
     private UUID userLikeReactionId;      // 사용자가 누른 LIKE reaction ID (취소용)
     private UUID userDislikeReactionId;   // 사용자가 누른 DISLIKE reaction ID (취소용)
+    private Boolean isAuthor;             // 현재 사용자가 작성자인지 여부
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

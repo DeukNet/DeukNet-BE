@@ -1,7 +1,6 @@
 package org.example.deuknetpresentation.controller.comment;
 
 import org.example.deuknetapplication.port.in.comment.*;
-import org.example.deuknetapplication.projection.comment.CommentProjection;
 import org.example.deuknetpresentation.controller.comment.dto.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +30,7 @@ public class CommentController implements CommentApi {
     }
 
     @GetMapping
-    public List<CommentProjection> getComments(@PathVariable UUID postId) {
+    public List<CommentResponse> getComments(@PathVariable UUID postId) {
         return getCommentsUseCase.getCommentsByPostId(postId);
     }
 

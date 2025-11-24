@@ -9,6 +9,7 @@ import org.example.deuknetapplication.port.out.repository.CommentRepository;
 import org.example.deuknetapplication.port.out.repository.UserRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
 import org.example.deuknetapplication.projection.comment.CommentProjection;
+import org.example.deuknetapplication.projection.post.PostCountProjection;
 import org.example.deuknetdomain.common.vo.Content;
 import org.example.deuknetdomain.domain.comment.Comment;
 import org.example.deuknetdomain.domain.user.User;
@@ -87,6 +88,7 @@ public class CreateCommentService implements CreateCommentUseCase {
     private void publishCommentCreatedEvent(Comment comment, User author) {
         LocalDateTime now = LocalDateTime.now();
 
+        // 1. CommentProjection 발행
         CommentProjection projection = new CommentProjection(
                 comment.getId(),
                 comment.getPostId(),
@@ -100,7 +102,17 @@ public class CreateCommentService implements CreateCommentUseCase {
                 now,
                 now
         );
-
         dataChangeEventPublisher.publish(EventType.COMMENT_CREATED, comment.getId(), projection);
+
+        // 2. PostCountProjection 발행 (commentCount 업데이트)
+        Long commentCount = commentRepository.countByPostId(comment.getPostId());
+        PostCountProjection countProjection = PostCountProjection.builder()
+                .id(comment.getPostId())
+                .commentCount(commentCount)
+                .viewCount(null)      // null은 변경하지 않음
+                .likeCount(null)      // null은 변경하지 않음
+                .dislikeCount(null)   // null은 변경하지 않음
+                .build();
+        dataChangeEventPublisher.publish(EventType.POST_UPDATED, comment.getPostId(), countProjection);
     }
 }

@@ -22,7 +22,7 @@ public class GetAllCategoriesService implements GetAllCategoriesUseCase {
 
     @Override
     public List<CategoryResponse> getAllCategories() {
-        List<Category> categories = categoryRepository.findRootCategories();
+        List<Category> categories = categoryRepository.findAll();
 
         return categories.stream()
                 .map(this::toResponse)

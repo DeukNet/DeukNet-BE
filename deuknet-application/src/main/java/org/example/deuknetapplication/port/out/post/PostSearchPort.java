@@ -1,5 +1,6 @@
 package org.example.deuknetapplication.port.out.post;
 
+import org.example.deuknetapplication.port.in.post.PageResponse;
 import org.example.deuknetapplication.port.in.post.PostSearchRequest;
 import org.example.deuknetapplication.port.in.post.PostSearchResponse;
 
@@ -21,12 +22,12 @@ public interface PostSearchPort {
      * 통합 검색 (모든 조건 AND)
      *
      * @param request 검색 조건 (keyword, authorId, categoryId, status 등)
-     * @return 검색 결과 리스트
+     * @return 페이지네이션된 검색 결과
      */
-    List<PostSearchResponse> search(PostSearchRequest request);
+    PageResponse<PostSearchResponse> search(PostSearchRequest request);
 
     /**
      * 인기 게시글 조회
      */
-    List<PostSearchResponse> findPopularPosts(int page, int size);
+    PageResponse<PostSearchResponse> findPopularPosts(int page, int size, UUID categoryId);
 }

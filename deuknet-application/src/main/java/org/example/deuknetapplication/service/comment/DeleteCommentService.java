@@ -7,6 +7,7 @@ import org.example.deuknetapplication.port.in.comment.DeleteCommentUseCase;
 import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
 import org.example.deuknetapplication.port.out.repository.CommentRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
+import org.example.deuknetapplication.projection.post.PostCountProjection;
 import org.example.deuknetdomain.domain.comment.Comment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,11 +45,14 @@ public class DeleteCommentService implements DeleteCommentUseCase {
         // 1. Comment 조회 및 권한 검증
         Comment comment = getCommentAndVerifyOwnership(commentId);
 
-        // 2. Comment 삭제
+        // 2. postId 저장 (삭제 후 이벤트 발행에 사용)
+        UUID postId = comment.getPostId();
+
+        // 3. Comment 삭제
         deleteCommentAggregate(comment);
 
-        // 3. 삭제 이벤트 발행
-        publishCommentDeletedEvent(comment.getId());
+        // 4. 삭제 이벤트 발행
+        publishCommentDeletedEvent(comment.getId(), postId);
     }
 
     /**
@@ -77,7 +81,19 @@ public class DeleteCommentService implements DeleteCommentUseCase {
      *
      * Projection을 삭제하도록 이벤트를 발행합니다.
      */
-    private void publishCommentDeletedEvent(UUID commentId) {
+    private void publishCommentDeletedEvent(UUID commentId, UUID postId) {
+        // 1. CommentDeleted 이벤트 발행
         dataChangeEventPublisher.publish(EventType.COMMENT_DELETED, commentId);
+
+        // 2. PostCountProjection 발행 (commentCount 업데이트)
+        Long commentCount = commentRepository.countByPostId(postId);
+        PostCountProjection countProjection = PostCountProjection.builder()
+                .id(postId)
+                .commentCount(commentCount)
+                .viewCount(null)      // null은 변경하지 않음
+                .likeCount(null)      // null은 변경하지 않음
+                .dislikeCount(null)   // null은 변경하지 않음
+                .build();
+        dataChangeEventPublisher.publish(EventType.POST_UPDATED, postId, countProjection);
     }
 }
