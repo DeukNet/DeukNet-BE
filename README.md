@@ -108,10 +108,3 @@ CQRS의 핵심은 명령(Command) 과 조회(Query) 를 분리함으로써,
 | **DB 설계** | 정규화, 트랜잭션, 일관성 중시             | 비정규화, 조회 성능 중시         |
 | **확장성**   | 쓰기 확장 (비즈니스 로직)               | 읽기 확장 (캐시, 검색엔진)       |
 | **트랜잭션**  | ACID 보장                       | Eventually Consistent  |
-
-### Kafka → Sink Connector → Query Side
-
-SinkConnector는 Kafka 토픽에서 메시지를 구독하여 Query Side DB로 투영(projection)합니다.
-예를 들어 ElasticSearch Sink Connector를 사용한다면, 위 payload를 변환하여 인덱스에 저장합니다.
-
-이 단계에서 Projection을 자유롭게 설계할 수 있습니다
