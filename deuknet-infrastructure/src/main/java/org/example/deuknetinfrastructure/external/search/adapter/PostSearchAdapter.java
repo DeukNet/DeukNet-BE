@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.example.deuknetapplication.port.in.post.PageResponse;
 import org.example.deuknetapplication.port.in.post.PostSearchRequest;
 import org.example.deuknetapplication.port.in.post.PostSearchResponse;
-import org.example.deuknetapplication.port.in.post.SearchPostUseCase;
 import org.example.deuknetapplication.port.out.post.PostSearchPort;
 import org.example.deuknetapplication.port.out.repository.ReactionRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
@@ -29,13 +28,12 @@ import java.util.stream.Collectors;
 /**
  * 게시글 검색 Adapter (Elasticsearch)
  *
- * SearchPostUseCase와 PostSearchPort를 동시에 구현합니다.
- * - SearchPostUseCase: Controller가 직접 사용 (in port)
- * - PostSearchPort: GetPostByIdService가 사용 (out port)
+ * PostSearchPort 구현 (out port)
+ * - SearchPostService, GetPostByIdService가 사용
  */
 @Component
 @RequiredArgsConstructor
-public class PostSearchAdapter implements SearchPostUseCase, PostSearchPort {
+public class PostSearchAdapter implements PostSearchPort {
 
     private static final String INDEX_NAME = "posts-detail";
     private final ElasticsearchClient elasticsearchClient;
