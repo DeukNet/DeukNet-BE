@@ -1,7 +1,7 @@
 package org.example.integration.cdc;
 
 import org.example.deuknetapplication.port.in.post.PostSearchResponse;
-import org.example.deuknetinfrastructure.external.search.adapter.PostSearchAdapter;
+import org.example.deuknetapplication.port.out.external.search.PostSearchPort;
 import org.example.deuknetpresentation.controller.post.dto.CreatePostRequest;
 import org.example.deuknetpresentation.controller.post.dto.UpdatePostRequest;
 import org.example.seedwork.AbstractDebeziumIntegrationTest;
@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class PostEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTest {
 
     @Autowired
-    private PostSearchAdapter postSearchAdapter;
+    private PostSearchPort postSearchPort;
 
     @BeforeEach
     void setUp() {
@@ -70,7 +70,7 @@ class PostEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTest {
         await().atMost(30, java.util.concurrent.TimeUnit.SECONDS)
                 .pollInterval(500, java.util.concurrent.TimeUnit.MILLISECONDS)
                 .untilAsserted(() -> {
-                    Optional<PostSearchResponse> found = postSearchAdapter.findById(postId);
+                    Optional<PostSearchResponse> found = postSearchPort.findById(postId);
                     assertThat(found).isPresent();
                     assertThat(found.get().getTitle()).isEqualTo("Test Post Title");
                     assertThat(found.get().getContent()).isEqualTo("Test Post Content");
@@ -103,7 +103,7 @@ class PostEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTest {
         // 초기 인덱싱 대기
         await().atMost(30, java.util.concurrent.TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    Optional<PostSearchResponse> found = postSearchAdapter.findById(postId);
+                    Optional<PostSearchResponse> found = postSearchPort.findById(postId);
                     assertThat(found).isPresent();
                 });
 
@@ -129,7 +129,7 @@ class PostEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTest {
         // And: Elasticsearch에서 업데이트된 내용을 조회할 수 있어야 함
         await().atMost(30, java.util.concurrent.TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    Optional<PostSearchResponse> found = postSearchAdapter.findById(postId);
+                    Optional<PostSearchResponse> found = postSearchPort.findById(postId);
                     assertThat(found).isPresent();
                     assertThat(found.get().getTitle()).isEqualTo("Updated Title");
                     assertThat(found.get().getContent()).isEqualTo("Updated Content");
@@ -158,7 +158,7 @@ class PostEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTest {
         // 초기 인덱싱 대기
         await().atMost(30, java.util.concurrent.TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    Optional<PostSearchResponse> found = postSearchAdapter.findById(postId);
+                    Optional<PostSearchResponse> found = postSearchPort.findById(postId);
                     assertThat(found).isPresent();
                     assertThat(found.get().getStatus()).isEqualTo("DRAFT");
                 });
@@ -178,7 +178,7 @@ class PostEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTest {
         // And: Elasticsearch에서 상태가 PUBLISHED로 변경되어야 함
         await().atMost(30, java.util.concurrent.TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    Optional<PostSearchResponse> found = postSearchAdapter.findById(postId);
+                    Optional<PostSearchResponse> found = postSearchPort.findById(postId);
                     assertThat(found).isPresent();
                     assertThat(found.get().getStatus()).isEqualTo("PUBLISHED");
                 });
@@ -206,7 +206,7 @@ class PostEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTest {
         // 초기 인덱싱 대기
         await().atMost(30, java.util.concurrent.TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    Optional<PostSearchResponse> found = postSearchAdapter.findById(postId);
+                    Optional<PostSearchResponse> found = postSearchPort.findById(postId);
                     assertThat(found).isPresent();
                 });
 
@@ -225,7 +225,7 @@ class PostEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTest {
         // And: Elasticsearch에서 Post가 삭제되어야 함
         await().atMost(30, java.util.concurrent.TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    Optional<PostSearchResponse> found = postSearchAdapter.findById(postId);
+                    Optional<PostSearchResponse> found = postSearchPort.findById(postId);
                     assertThat(found).isEmpty();
                 });
     }
@@ -259,7 +259,7 @@ class PostEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTest {
         // And: Elasticsearch에서 카운트 필드들이 0으로 초기화되어야 함
         await().atMost(30, java.util.concurrent.TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    Optional<PostSearchResponse> found = postSearchAdapter.findById(postId);
+                    Optional<PostSearchResponse> found = postSearchPort.findById(postId);
                     assertThat(found).isPresent();
                     assertThat(found.get().getViewCount()).isEqualTo(0L);
                     assertThat(found.get().getLikeCount()).isEqualTo(0L);

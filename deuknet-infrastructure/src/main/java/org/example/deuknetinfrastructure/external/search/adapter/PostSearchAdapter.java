@@ -18,6 +18,7 @@ import org.example.deuknetapplication.port.out.security.CurrentUserPort;
 import org.example.deuknetdomain.domain.reaction.ReactionType;
 import org.example.deuknetinfrastructure.external.search.document.PostDetailDocument;
 import org.example.deuknetinfrastructure.external.search.exception.SearchOperationException;
+import org.example.deuknetinfrastructure.external.search.mapper.PostDetailDocumentMapper;
 import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.List;
@@ -45,6 +46,7 @@ public class PostSearchAdapter implements PostSearchPort {
     private final ElasticsearchClient elasticsearchClient;
     private final CurrentUserPort currentUserPort;
     private final ReactionRepository reactionRepository;
+    private final PostDetailDocumentMapper mapper;
 
     @Override
     public Optional<PostSearchResponse> findById(UUID id) {
@@ -56,7 +58,9 @@ public class PostSearchAdapter implements PostSearchPort {
             );
 
             if (document.found()) {
-                return Optional.ofNullable(document.source()).map(this::toResponse);
+                return Optional.ofNullable(document.source())
+                        .map(mapper::toProjection)
+                        .map(PostSearchResponse::new);
             }
             return Optional.empty();
         } catch (ElasticsearchException e) {
@@ -163,7 +167,8 @@ public class PostSearchAdapter implements PostSearchPort {
 
             List<PostSearchResponse> results = response.hits().hits().stream()
                 .map(Hit::source)
-                .map(this::toResponse)
+                .map(mapper::toProjection)
+                .map(PostSearchResponse::new)
                 .collect(Collectors.toList());
 
             // 각 결과에 사용자 정보 추가
@@ -215,7 +220,8 @@ public class PostSearchAdapter implements PostSearchPort {
 
             List<PostSearchResponse> results = response.hits().hits().stream()
                 .map(Hit::source)
-                .map(this::toResponse)
+                .map(mapper::toProjection)
+                .map(PostSearchResponse::new)
                 .collect(Collectors.toList());
 
             // 각 결과에 사용자 정보 추가
@@ -234,34 +240,6 @@ public class PostSearchAdapter implements PostSearchPort {
         } catch (IOException e) {
             throw new SearchOperationException("Failed to execute search", e);
         }
-    }
-
-    /**
-     * Document를 Response로 변환
-     */
-    private PostSearchResponse toResponse(PostDetailDocument doc) {
-        return new PostSearchResponse(
-                doc.getId(),
-                doc.getTitle(),
-                doc.getContent(),
-                UUID.fromString(doc.getAuthorId()),
-                doc.getAuthorUsername(),
-                doc.getAuthorDisplayName(),
-                doc.getStatus(),
-                doc.getCategoryIds() != null ? doc.getCategoryIds().stream().map(UUID::fromString).toList() : List.of(),
-                doc.getCategoryNames() != null ? doc.getCategoryNames() : List.of(),
-                doc.getViewCount(),
-                doc.getCommentCount(),
-                doc.getLikeCount(),
-                doc.getDislikeCount() != null ? doc.getDislikeCount() : 0L,
-                false,  // hasUserLiked (will be set by enrichWithUserInfo)
-                false,  // hasUserDisliked (will be set by enrichWithUserInfo)
-                null,   // userLikeReactionId (will be set by enrichWithUserInfo)
-                null,   // userDislikeReactionId (will be set by enrichWithUserInfo)
-                false,  // isAuthor (will be set by enrichWithUserInfo)
-                doc.getCreatedAt(),
-                doc.getUpdatedAt()
-        );
     }
 
     /**

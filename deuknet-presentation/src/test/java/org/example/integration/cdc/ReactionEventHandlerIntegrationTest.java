@@ -1,7 +1,7 @@
 package org.example.integration.cdc;
 
 import org.example.deuknetapplication.port.in.post.PostSearchResponse;
-import org.example.deuknetinfrastructure.external.search.adapter.PostSearchAdapter;
+import org.example.deuknetapplication.port.out.external.search.PostSearchPort;
 import org.example.deuknetpresentation.controller.post.dto.CreatePostRequest;
 import org.example.deuknetpresentation.controller.reaction.dto.AddReactionRequest;
 import org.example.seedwork.AbstractDebeziumIntegrationTest;
@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ReactionEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTest {
 
     @Autowired
-    private PostSearchAdapter postSearchAdapter;
+    private PostSearchPort postSearchPort;
 
     @BeforeEach
     void setUp() {
@@ -50,7 +50,7 @@ class ReactionEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTes
         // 초기 인덱싱 대기 및 초기 카운트 확인
         await().atMost(90, java.util.concurrent.TimeUnit.SECONDS).pollInterval(2, java.util.concurrent.TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    Optional<PostSearchResponse> found = postSearchAdapter.findById(postId);
+                    Optional<PostSearchResponse> found = postSearchPort.findById(postId);
                     assertThat(found).isPresent();
                     assertThat(found.get().getLikeCount()).isEqualTo(0L);
                 });
@@ -73,7 +73,7 @@ class ReactionEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTes
         // And: Elasticsearch에서 likeCount가 1로 증가해야 함
         await().atMost(90, java.util.concurrent.TimeUnit.SECONDS).pollInterval(2, java.util.concurrent.TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    Optional<PostSearchResponse> found = postSearchAdapter.findById(postId);
+                    Optional<PostSearchResponse> found = postSearchPort.findById(postId);
                     assertThat(found).isPresent();
                     assertThat(found.get().getLikeCount()).isEqualTo(1L);
                 });
@@ -89,7 +89,7 @@ class ReactionEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTes
         // 초기 인덱싱 대기
         await().atMost(90, java.util.concurrent.TimeUnit.SECONDS).pollInterval(2, java.util.concurrent.TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    Optional<PostSearchResponse> found = postSearchAdapter.findById(postId);
+                    Optional<PostSearchResponse> found = postSearchPort.findById(postId);
                     assertThat(found).isPresent();
                     assertThat(found.get().getDislikeCount()).isEqualTo(0L);
                 });
@@ -112,7 +112,7 @@ class ReactionEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTes
         // And: Elasticsearch에서 dislikeCount가 1로 증가해야 함
         await().atMost(90, java.util.concurrent.TimeUnit.SECONDS).pollInterval(2, java.util.concurrent.TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    Optional<PostSearchResponse> found = postSearchAdapter.findById(postId);
+                    Optional<PostSearchResponse> found = postSearchPort.findById(postId);
                     assertThat(found).isPresent();
                     assertThat(found.get().getDislikeCount()).isEqualTo(1L);
                 });
@@ -128,7 +128,7 @@ class ReactionEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTes
         // 초기 인덱싱 대기
         await().atMost(90, java.util.concurrent.TimeUnit.SECONDS).pollInterval(2, java.util.concurrent.TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    Optional<PostSearchResponse> found = postSearchAdapter.findById(postId);
+                    Optional<PostSearchResponse> found = postSearchPort.findById(postId);
                     assertThat(found).isPresent();
                     assertThat(found.get().getViewCount()).isEqualTo(0L);
                 });
@@ -151,7 +151,7 @@ class ReactionEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTes
         // And: Elasticsearch에서 viewCount가 1로 증가해야 함
         await().atMost(90, java.util.concurrent.TimeUnit.SECONDS).pollInterval(2, java.util.concurrent.TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    Optional<PostSearchResponse> found = postSearchAdapter.findById(postId);
+                    Optional<PostSearchResponse> found = postSearchPort.findById(postId);
                     assertThat(found).isPresent();
                     assertThat(found.get().getViewCount()).isEqualTo(1L);
                 });
@@ -166,7 +166,7 @@ class ReactionEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTes
 
         await().atMost(90, java.util.concurrent.TimeUnit.SECONDS).pollInterval(2, java.util.concurrent.TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    Optional<PostSearchResponse> found = postSearchAdapter.findById(postId);
+                    Optional<PostSearchResponse> found = postSearchPort.findById(postId);
                     assertThat(found).isPresent();
                 });
 
@@ -184,7 +184,7 @@ class ReactionEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTes
         // likeCount가 1이 될 때까지 대기
         await().atMost(90, java.util.concurrent.TimeUnit.SECONDS).pollInterval(2, java.util.concurrent.TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    Optional<PostSearchResponse> found = postSearchAdapter.findById(postId);
+                    Optional<PostSearchResponse> found = postSearchPort.findById(postId);
                     assertThat(found).isPresent();
                     assertThat(found.get().getLikeCount()).isEqualTo(1L);
                 });
@@ -204,7 +204,7 @@ class ReactionEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTes
         // And: Elasticsearch에서 likeCount가 0으로 감소해야 함
         await().atMost(90, java.util.concurrent.TimeUnit.SECONDS).pollInterval(2, java.util.concurrent.TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    Optional<PostSearchResponse> found = postSearchAdapter.findById(postId);
+                    Optional<PostSearchResponse> found = postSearchPort.findById(postId);
                     assertThat(found).isPresent();
                     assertThat(found.get().getLikeCount()).isEqualTo(0L);
                 });
@@ -220,7 +220,7 @@ class ReactionEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTes
 
         await().atMost(90, java.util.concurrent.TimeUnit.SECONDS).pollInterval(2, java.util.concurrent.TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    Optional<PostSearchResponse> found = postSearchAdapter.findById(postId);
+                    Optional<PostSearchResponse> found = postSearchPort.findById(postId);
                     assertThat(found).isPresent();
                 });
 
@@ -253,7 +253,7 @@ class ReactionEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTes
         await().atMost(90, java.util.concurrent.TimeUnit.SECONDS)
                 .pollInterval(2, java.util.concurrent.TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    Optional<PostSearchResponse> found = postSearchAdapter.findById(postId);
+                    Optional<PostSearchResponse> found = postSearchPort.findById(postId);
                     assertThat(found).isPresent();
                     assertThat(found.get().getLikeCount()).isEqualTo(1L);
                     assertThat(found.get().getDislikeCount()).isEqualTo(1L);
