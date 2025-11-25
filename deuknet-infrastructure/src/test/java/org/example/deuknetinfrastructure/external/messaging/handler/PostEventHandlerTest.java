@@ -2,7 +2,7 @@ package org.example.deuknetinfrastructure.external.messaging.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.deuknetapplication.messaging.EventType;
-import org.example.deuknetinfrastructure.external.search.adapter.PostSearchAdapter;
+import org.example.deuknetapplication.port.out.external.search.PostProjectionCommandPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,7 +26,7 @@ import static org.mockito.Mockito.*;
 class PostEventHandlerTest {
 
     @Mock
-    private PostSearchAdapter mockPostSearchAdapter;
+    private PostProjectionCommandPort mockPostProjectionCommandPort;
 
     private PostEventHandler postEventHandler;
     private ObjectMapper objectMapper;
@@ -34,7 +34,7 @@ class PostEventHandlerTest {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        postEventHandler = new PostEventHandler(mockPostSearchAdapter, objectMapper);
+        postEventHandler = new PostEventHandler(mockPostProjectionCommandPort, objectMapper);
     }
 
     @Test
@@ -80,8 +80,8 @@ class PostEventHandlerTest {
 
         // Then: indexPostDetail이 호출되어야 함
         ArgumentCaptor<String> payloadCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockPostSearchAdapter).indexPostDetail(payloadCaptor.capture());
-        verify(mockPostSearchAdapter, never()).updatePostCounts(any());
+        verify(mockPostProjectionCommandPort).indexPostDetail(payloadCaptor.capture());
+        verify(mockPostProjectionCommandPort, never()).updatePostCounts(any());
 
         assertThat(payloadCaptor.getValue()).contains("Test Post");
     }
@@ -108,8 +108,8 @@ class PostEventHandlerTest {
         );
 
         // Then: updatePostCounts가 호출되어야 함
-        verify(mockPostSearchAdapter).updatePostCounts(postCountPayload);
-        verify(mockPostSearchAdapter, never()).indexPostDetail(any());
+        verify(mockPostProjectionCommandPort).updatePostCounts(postCountPayload);
+        verify(mockPostProjectionCommandPort, never()).indexPostDetail(any());
     }
 
     @Test
@@ -126,9 +126,9 @@ class PostEventHandlerTest {
         );
 
         // Then: deletePost가 호출되어야 함
-        verify(mockPostSearchAdapter).deletePost(aggregateId);
-        verify(mockPostSearchAdapter, never()).indexPostDetail(any());
-        verify(mockPostSearchAdapter, never()).updatePostCounts(any());
+        verify(mockPostProjectionCommandPort).deletePost(aggregateId);
+        verify(mockPostProjectionCommandPort, never()).indexPostDetail(any());
+        verify(mockPostProjectionCommandPort, never()).updatePostCounts(any());
     }
 
     @Test
@@ -153,8 +153,8 @@ class PostEventHandlerTest {
         );
 
         // Then: indexPostDetail이 호출되어야 함
-        verify(mockPostSearchAdapter).indexPostDetail(any());
-        verify(mockPostSearchAdapter, never()).updatePostCounts(any());
+        verify(mockPostProjectionCommandPort).indexPostDetail(any());
+        verify(mockPostProjectionCommandPort, never()).updatePostCounts(any());
     }
 
     @Test
@@ -179,8 +179,8 @@ class PostEventHandlerTest {
         );
 
         // Then: updatePostCounts가 호출되어야 함
-        verify(mockPostSearchAdapter).updatePostCounts(any());
-        verify(mockPostSearchAdapter, never()).indexPostDetail(any());
+        verify(mockPostProjectionCommandPort).updatePostCounts(any());
+        verify(mockPostProjectionCommandPort, never()).indexPostDetail(any());
     }
 
     @Test
@@ -205,8 +205,8 @@ class PostEventHandlerTest {
         );
 
         // Then: title이 우선되어 indexPostDetail이 호출되어야 함
-        verify(mockPostSearchAdapter).indexPostDetail(any());
-        verify(mockPostSearchAdapter, never()).updatePostCounts(any());
+        verify(mockPostProjectionCommandPort).indexPostDetail(any());
+        verify(mockPostProjectionCommandPort, never()).updatePostCounts(any());
     }
 
     @Test
@@ -228,8 +228,8 @@ class PostEventHandlerTest {
         );
 
         // Then: 아무 메서드도 호출되지 않아야 함
-        verify(mockPostSearchAdapter, never()).indexPostDetail(any());
-        verify(mockPostSearchAdapter, never()).updatePostCounts(any());
+        verify(mockPostProjectionCommandPort, never()).indexPostDetail(any());
+        verify(mockPostProjectionCommandPort, never()).updatePostCounts(any());
     }
 
     @Test
@@ -254,7 +254,7 @@ class PostEventHandlerTest {
 
         // Then: indexPostDetail이 호출되어야 함
         ArgumentCaptor<String> payloadCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockPostSearchAdapter).indexPostDetail(payloadCaptor.capture());
+        verify(mockPostProjectionCommandPort).indexPostDetail(payloadCaptor.capture());
 
         assertThat(payloadCaptor.getValue()).contains("Updated Title");
     }

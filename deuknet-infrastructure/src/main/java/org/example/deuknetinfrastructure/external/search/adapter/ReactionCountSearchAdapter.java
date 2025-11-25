@@ -220,7 +220,6 @@ public class ReactionCountSearchAdapter {
      * @return 모든 컨텐츠의 전체 리액션 수 합계
      */
     public long getTotalReactionCount() {
-        // TODO: Elasticsearch aggregation을 사용하여 구현
         // 현재는 간단히 count 반환
         Query matchAllQuery = Query.of(q -> q.matchAll(m -> m));
         return count(matchAllQuery);

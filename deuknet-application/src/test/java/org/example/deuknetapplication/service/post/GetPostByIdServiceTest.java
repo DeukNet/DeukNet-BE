@@ -1,7 +1,7 @@
 package org.example.deuknetapplication.service.post;
 
 import org.example.deuknetapplication.port.in.post.PostSearchResponse;
-import org.example.deuknetapplication.port.out.post.PostSearchPort;
+import org.example.deuknetapplication.port.out.external.search.PostSearchPort;
 import org.example.deuknetapplication.port.out.repository.PostRepository;
 import org.example.deuknetapplication.port.out.repository.ReactionRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;

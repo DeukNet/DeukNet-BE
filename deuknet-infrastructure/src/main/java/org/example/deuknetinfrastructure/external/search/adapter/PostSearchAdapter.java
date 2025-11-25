@@ -1,6 +1,7 @@
 package org.example.deuknetinfrastructure.external.search.adapter;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
@@ -11,14 +12,13 @@ import lombok.RequiredArgsConstructor;
 import org.example.deuknetapplication.port.in.post.PageResponse;
 import org.example.deuknetapplication.port.in.post.PostSearchRequest;
 import org.example.deuknetapplication.port.in.post.PostSearchResponse;
-import org.example.deuknetapplication.port.out.post.PostSearchPort;
+import org.example.deuknetapplication.port.out.external.search.PostSearchPort;
 import org.example.deuknetapplication.port.out.repository.ReactionRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
 import org.example.deuknetdomain.domain.reaction.ReactionType;
 import org.example.deuknetinfrastructure.external.search.document.PostDetailDocument;
 import org.example.deuknetinfrastructure.external.search.exception.SearchOperationException;
 import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -27,9 +27,15 @@ import java.util.stream.Collectors;
 
 /**
  * 게시글 검색 Adapter (Elasticsearch)
- *
+ * <br>
  * PostSearchPort 구현 (out port)
  * - SearchPostService, GetPostByIdService가 사용
+ *
+ * todo 문제가 상당히 많은 코드
+ * 1. debezium과 search의 책임 분리
+ * 2. 너무 최적화 덜된코드
+ * 3. ReactionRepository(다른 Aggregate)를 직접 참조????
+ * 4. 심지어 Reaction가져오는 부분이 상상이상으로 능딸임(느림)
  */
 @Component
 @RequiredArgsConstructor
@@ -53,7 +59,7 @@ public class PostSearchAdapter implements PostSearchPort {
                 return Optional.ofNullable(document.source()).map(this::toResponse);
             }
             return Optional.empty();
-        } catch (co.elastic.clients.elasticsearch._types.ElasticsearchException e) {
+        } catch (ElasticsearchException e) {
             if (e.getMessage() != null && e.getMessage().contains("index_not_found_exception")) {
                 return Optional.empty();
             }
@@ -259,207 +265,11 @@ public class PostSearchAdapter implements PostSearchPort {
     }
 
     /**
-     * Document 저장 (테스트용)
-     * Elasticsearch Client를 사용하여 Document를 저장합니다.
-     * 테스트 환경에서 인덱스가 없으면 자동으로 생성합니다.
-     *
-     * Connection is closed 에러를 처리하기 위해 재시도 로직 포함
-     */
-    public void save(PostDetailDocument document) {
-        int maxRetries = 3;
-        int retryCount = 0;
-        Exception lastException = null;
-
-        while (retryCount < maxRetries) {
-            try {
-                saveInternal(document);
-                return;  // 성공 시 즉시 반환
-            } catch (Exception e) {
-                lastException = e;
-                retryCount++;
-
-                if (isRetriableException(e) && retryCount < maxRetries) {
-                    System.out.println("Elasticsearch 연결 오류 발생 (save), 재시도 " + retryCount + "/" + maxRetries);
-                    try {
-                        Thread.sleep(100 * retryCount);  // Exponential backoff
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        break;
-                    }
-                } else {
-                    break;
-                }
-            }
-        }
-
-        throw new SearchOperationException("Failed to save document: " + document.getIdAsString() + " after " + maxRetries + " retries", lastException);
-    }
-
-    private void saveInternal(PostDetailDocument document) throws IOException {
-        ensureIndexExists();
-
-        elasticsearchClient.index(i -> i
-                .index(INDEX_NAME)
-                .id(document.getIdAsString())
-                .document(document)
-        );
-
-        elasticsearchClient.indices().refresh(r -> r.index(INDEX_NAME));
-    }
-
-    /**
-     * 테스트 환경에서 인덱스가 없으면 생성합니다.
-     * Spring Data Elasticsearch가 PostDetailDocumentRepository를 통해
-     * 자동으로 인덱스를 생성하므로, 여기서는 인덱스 존재 여부만 확인합니다.
-     */
-    private void ensureIndexExists() throws IOException {
-        try {
-            boolean exists = elasticsearchClient.indices().exists(e -> e.index(INDEX_NAME)).value();
-            if (!exists) {
-                // 인덱스가 없으면 동적으로 생성됩니다.
-                // Spring이 @Document 어노테이션을 기반으로 매핑을 관리합니다.
-            }
-        } catch (Exception e) {
-            // 인덱스 확인 중 에러는 무시
-        }
-    }
-
-    /**
-     * PostDetailProjection을 Elasticsearch에 인덱싱
-     * Debezium에서 호출됩니다.
-     */
-    public void indexPostDetail(String payloadJson) {
-        try {
-            System.out.println("===== Indexing PostDetail =====");
-            System.out.println("Payload JSON: " + payloadJson);
-
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            mapper.findAndRegisterModules(); // LocalDateTime 등을 위해 필요
-
-            PostDetailDocument document = mapper.readValue(payloadJson, PostDetailDocument.class);
-            System.out.println("Document deserialized successfully: id=" + document.getIdAsString());
-
-            save(document);
-            System.out.println("Document saved successfully to Elasticsearch");
-        } catch (Exception e) {
-            System.err.println("Failed to index PostDetail: " + e.getMessage());
-            e.printStackTrace();
-            throw new SearchOperationException("Failed to index PostDetail", e);
-        }
-    }
-
-    /**
-     * PostCountProjection으로 Elasticsearch 업데이트
-     * Debezium에서 호출됩니다.
-     *
-     * Connection is closed 에러를 처리하기 위해 재시도 로직 포함
-     */
-    public void updatePostCounts(String payloadJson) {
-        int maxRetries = 3;
-        int retryCount = 0;
-        Exception lastException = null;
-
-        while (retryCount < maxRetries) {
-            try {
-                updatePostCountsInternal(payloadJson);
-                return;  // 성공 시 즉시 반환
-            } catch (Exception e) {
-                lastException = e;
-                retryCount++;
-
-                if (isRetriableException(e) && retryCount < maxRetries) {
-                    System.out.println("Elasticsearch 연결 오류 발생, 재시도 " + retryCount + "/" + maxRetries);
-                    try {
-                        Thread.sleep(100 * retryCount);  // Exponential backoff
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        break;
-                    }
-                } else {
-                    break;
-                }
-            }
-        }
-
-        throw new SearchOperationException("Failed to update post counts after " + maxRetries + " retries", lastException);
-    }
-
-    private void updatePostCountsInternal(String payloadJson) throws Exception {
-        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-        com.fasterxml.jackson.databind.JsonNode payload = mapper.readTree(payloadJson);
-
-        String postId = payload.get("id").asText();
-
-        // Partial update를 위한 스크립트 구성
-        StringBuilder scriptBuilder = new StringBuilder();
-        com.fasterxml.jackson.databind.node.ObjectNode params = mapper.createObjectNode();
-
-        if (payload.has("viewCount")) {
-            scriptBuilder.append("ctx._source.viewCount = params.viewCount; ");
-            params.put("viewCount", payload.get("viewCount").asLong());
-        }
-        if (payload.has("likeCount")) {
-            scriptBuilder.append("ctx._source.likeCount = params.likeCount; ");
-            params.put("likeCount", payload.get("likeCount").asLong());
-        }
-        if (payload.has("dislikeCount")) {
-            scriptBuilder.append("ctx._source.dislikeCount = params.dislikeCount; ");
-            params.put("dislikeCount", payload.get("dislikeCount").asLong());
-        }
-        if (payload.has("commentCount")) {
-            scriptBuilder.append("ctx._source.commentCount = params.commentCount; ");
-            params.put("commentCount", payload.get("commentCount").asLong());
-        }
-
-        if (scriptBuilder.length() > 0) {
-            String script = scriptBuilder.toString();
-            java.util.Map<String, co.elastic.clients.json.JsonData> paramsMap = new java.util.HashMap<>();
-
-            if (payload.has("viewCount")) {
-                paramsMap.put("viewCount", co.elastic.clients.json.JsonData.of(payload.get("viewCount").asLong()));
-            }
-            if (payload.has("likeCount")) {
-                paramsMap.put("likeCount", co.elastic.clients.json.JsonData.of(payload.get("likeCount").asLong()));
-            }
-            if (payload.has("dislikeCount")) {
-                paramsMap.put("dislikeCount", co.elastic.clients.json.JsonData.of(payload.get("dislikeCount").asLong()));
-            }
-            if (payload.has("commentCount")) {
-                paramsMap.put("commentCount", co.elastic.clients.json.JsonData.of(payload.get("commentCount").asLong()));
-            }
-
-            elasticsearchClient.update(u -> u
-                    .index(INDEX_NAME)
-                    .id(postId)
-                    .script(s -> s
-                            .inline(i -> i
-                                    .source(script)
-                                    .params(paramsMap)
-                            )
-                    ),
-                    PostDetailDocument.class
-            );
-        }
-    }
-
-    /**
-     * 재시도 가능한 예외인지 확인
-     */
-    private boolean isRetriableException(Exception e) {
-        String message = e.getMessage();
-        return message != null && (
-                message.contains("Connection is closed") ||
-                message.contains("Connection reset") ||
-                message.contains("Broken pipe") ||
-                message.contains("Connection refused")
-        );
-    }
-
-    /**
      * 현재 사용자의 reaction 정보 및 작성자 여부를 응답에 추가
      * 인증되지 않은 사용자의 경우 false로 설정
      *
      * @param response 응답 객체
+     * todo 성능을 잡아먹는 나쁜 친구, 단일 조회 시에만 사용하도록하자 (최대 응답시간 189ms..)
      */
     private void enrichWithUserInfo(PostSearchResponse response) {
         try {
@@ -468,7 +278,7 @@ public class PostSearchAdapter implements PostSearchPort {
             // 작성자 여부 확인
             response.setIsAuthor(response.getAuthorId().equals(currentUserId));
 
-            // LIKE 확인
+            // LIKE 확인 // todo join으로 처리하기
             reactionRepository.findByTargetIdAndUserIdAndReactionType(
                     response.getId(), currentUserId, ReactionType.LIKE
             ).ifPresentOrElse(
@@ -502,21 +312,6 @@ public class PostSearchAdapter implements PostSearchPort {
             response.setHasUserDisliked(false);
             response.setUserLikeReactionId(null);
             response.setUserDislikeReactionId(null);
-        }
-    }
-
-    /**
-     * Post 삭제
-     * Debezium에서 호출됩니다.
-     */
-    public void deletePost(String postId) {
-        try {
-            elasticsearchClient.delete(d -> d
-                    .index(INDEX_NAME)
-                    .id(postId)
-            );
-        } catch (Exception e) {
-            throw new SearchOperationException("Failed to delete post: " + postId, e);
         }
     }
 }

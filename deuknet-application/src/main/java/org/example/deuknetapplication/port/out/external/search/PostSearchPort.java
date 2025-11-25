@@ -1,10 +1,9 @@
-package org.example.deuknetapplication.port.out.post;
+package org.example.deuknetapplication.port.out.external.search;
 
 import org.example.deuknetapplication.port.in.post.PageResponse;
 import org.example.deuknetapplication.port.in.post.PostSearchRequest;
 import org.example.deuknetapplication.port.in.post.PostSearchResponse;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 

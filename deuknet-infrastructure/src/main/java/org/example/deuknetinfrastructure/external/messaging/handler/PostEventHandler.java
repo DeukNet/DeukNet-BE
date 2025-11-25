@@ -2,9 +2,10 @@ package org.example.deuknetinfrastructure.external.messaging.handler;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.deuknetapplication.messaging.EventType;
-import org.example.deuknetinfrastructure.external.search.adapter.PostSearchAdapter;
+import org.example.deuknetapplication.port.out.external.search.PostProjectionCommandPort;
 import org.springframework.stereotype.Component;
 
 /**
@@ -16,18 +17,11 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class PostEventHandler implements EventHandler {
 
-    private final PostSearchAdapter postSearchAdapter;
+    private final PostProjectionCommandPort postProjectionCommandPort;
     private final ObjectMapper objectMapper;
-
-    public PostEventHandler(
-            PostSearchAdapter postSearchAdapter,
-            ObjectMapper objectMapper
-    ) {
-        this.postSearchAdapter = postSearchAdapter;
-        this.objectMapper = objectMapper;
-    }
 
     @Override
     public boolean canHandle(EventType eventType) {
@@ -43,7 +37,7 @@ public class PostEventHandler implements EventHandler {
         log.debug("Payload JSON: {}", payloadJson);
 
         if (eventType == EventType.POST_DELETED) {
-            postSearchAdapter.deletePost(aggregateId);
+            postProjectionCommandPort.deletePost(aggregateId);
             log.info("Post deleted from Elasticsearch: id={}", aggregateId);
             return;
         }
@@ -62,12 +56,12 @@ public class PostEventHandler implements EventHandler {
         // PostDetailProjection인지 PostCountProjection인지 구분
         if (payload.has("title")) {
             // PostDetailProjection
-            postSearchAdapter.indexPostDetail(payloadJson);
+            postProjectionCommandPort.indexPostDetail(payloadJson);
             log.info("{} - PostDetailProjection indexed", eventType);
         } else if (payload.has("viewCount") || payload.has("commentCount") ||
                    payload.has("likeCount") || payload.has("dislikeCount")) {
             // PostCountProjection (count 필드 중 하나라도 있으면 PostCountProjection)
-            postSearchAdapter.updatePostCounts(payloadJson);
+            postProjectionCommandPort.updatePostCounts(payloadJson);
             log.info("{} - PostCountProjection updated", eventType);
         }
     }

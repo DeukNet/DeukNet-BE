@@ -1,9 +1,11 @@
 package org.example.deuknetpresentation.controller.post;
 
+import jakarta.validation.constraints.Max;
 import org.example.deuknetapplication.port.in.post.*;
 import org.example.deuknetpresentation.controller.post.dto.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,6 +13,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/posts")
+@Validated
 public class PostController implements PostApi {
 
     private final CreatePostUseCase createPostUseCase;
@@ -82,13 +85,10 @@ public class PostController implements PostApi {
             @RequestParam(required = false) UUID categoryId,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "20") @Max(100) int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortOrder
-    ) {
-        if (size > 100) {
-            size = 100;
-        }
+    ){
 
         PostSearchRequest request = PostSearchRequest.builder()
                 .keyword(keyword)
@@ -110,12 +110,10 @@ public class PostController implements PostApi {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<PageResponse<PostSearchResponse>> getPopularPosts(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "20") @Max(100) int size,
             @RequestParam(required = false) UUID categoryId
     ) {
-        if (size > 100) {
-            size = 100;
-        }
+
         PageResponse<PostSearchResponse> results = searchPostUseCase.findPopularPosts(page, size, categoryId);
         return ResponseEntity.ok(results);
     }

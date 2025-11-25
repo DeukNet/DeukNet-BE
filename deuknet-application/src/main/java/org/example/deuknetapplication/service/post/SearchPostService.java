@@ -4,7 +4,7 @@ import org.example.deuknetapplication.port.in.post.PageResponse;
 import org.example.deuknetapplication.port.in.post.PostSearchRequest;
 import org.example.deuknetapplication.port.in.post.PostSearchResponse;
 import org.example.deuknetapplication.port.in.post.SearchPostUseCase;
-import org.example.deuknetapplication.port.out.post.PostSearchPort;
+import org.example.deuknetapplication.port.out.external.search.PostSearchPort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
