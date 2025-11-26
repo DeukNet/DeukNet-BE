@@ -48,8 +48,8 @@ public class PostSearchResponse {
         this.authorUsername = projection.getAuthorUsername();
         this.authorDisplayName = projection.getAuthorDisplayName();
         this.status = projection.getStatus();
-        this.categoryIds = projection.getCategoryIds();
-        this.categoryNames = projection.getCategoryNames();
+        this.categoryIds = projection.getCategoryIds() != null ? projection.getCategoryIds() : List.of();
+        this.categoryNames = projection.getCategoryNames() != null ? projection.getCategoryNames() : List.of();
         this.viewCount = projection.getViewCount();
         this.commentCount = projection.getCommentCount();
         this.likeCount = projection.getLikeCount();

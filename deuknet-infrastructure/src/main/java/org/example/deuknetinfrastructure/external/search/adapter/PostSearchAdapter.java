@@ -13,9 +13,6 @@ import org.example.deuknetapplication.port.in.post.PageResponse;
 import org.example.deuknetapplication.port.in.post.PostSearchRequest;
 import org.example.deuknetapplication.port.in.post.PostSearchResponse;
 import org.example.deuknetapplication.port.out.external.search.PostSearchPort;
-import org.example.deuknetapplication.port.out.repository.ReactionRepository;
-import org.example.deuknetapplication.port.out.security.CurrentUserPort;
-import org.example.deuknetdomain.domain.reaction.ReactionType;
 import org.example.deuknetinfrastructure.external.search.document.PostDetailDocument;
 import org.example.deuknetinfrastructure.external.search.exception.SearchOperationException;
 import org.example.deuknetinfrastructure.external.search.mapper.PostDetailDocumentMapper;
@@ -31,12 +28,6 @@ import java.util.stream.Collectors;
  * <br>
  * PostSearchPort 구현 (out port)
  * - SearchPostService, GetPostByIdService가 사용
- *
- * todo 문제가 상당히 많은 코드
- * 1. debezium과 search의 책임 분리
- * 2. 너무 최적화 덜된코드
- * 3. ReactionRepository(다른 Aggregate)를 직접 참조????
- * 4. 심지어 Reaction가져오는 부분이 상상이상으로 능딸임(느림)
  */
 @Component
 @RequiredArgsConstructor
@@ -44,8 +35,6 @@ public class PostSearchAdapter implements PostSearchPort {
 
     private static final String INDEX_NAME = "posts-detail";
     private final ElasticsearchClient elasticsearchClient;
-    private final CurrentUserPort currentUserPort;
-    private final ReactionRepository reactionRepository;
     private final PostDetailDocumentMapper mapper;
 
     @Override
@@ -171,9 +160,6 @@ public class PostSearchAdapter implements PostSearchPort {
                 .map(PostSearchResponse::new)
                 .collect(Collectors.toList());
 
-            // 각 결과에 사용자 정보 추가
-            results.forEach(this::enrichWithUserInfo);
-
             long totalElements = response.hits().total() != null ? response.hits().total().value() : 0;
             return new PageResponse<>(results, totalElements, page, size);
 
@@ -224,9 +210,6 @@ public class PostSearchAdapter implements PostSearchPort {
                 .map(PostSearchResponse::new)
                 .collect(Collectors.toList());
 
-            // 각 결과에 사용자 정보 추가
-            results.forEach(this::enrichWithUserInfo);
-
             long totalElements = response.hits().total() != null ? response.hits().total().value() : 0;
             return new PageResponse<>(results, totalElements, page, size);
 
@@ -239,57 +222,6 @@ public class PostSearchAdapter implements PostSearchPort {
             throw new SearchOperationException("Failed to execute search", e);
         } catch (IOException e) {
             throw new SearchOperationException("Failed to execute search", e);
-        }
-    }
-
-    /**
-     * 현재 사용자의 reaction 정보 및 작성자 여부를 응답에 추가
-     * 인증되지 않은 사용자의 경우 false로 설정
-     *
-     * @param response 응답 객체
-     * todo 성능을 잡아먹는 나쁜 친구, 단일 조회 시에만 사용하도록하자 (최대 응답시간 189ms..)
-     */
-    private void enrichWithUserInfo(PostSearchResponse response) {
-        try {
-            UUID currentUserId = currentUserPort.getCurrentUserId();
-
-            // 작성자 여부 확인
-            response.setIsAuthor(response.getAuthorId().equals(currentUserId));
-
-            // LIKE 확인 // todo join으로 처리하기
-            reactionRepository.findByTargetIdAndUserIdAndReactionType(
-                    response.getId(), currentUserId, ReactionType.LIKE
-            ).ifPresentOrElse(
-                    likeReaction -> {
-                        response.setHasUserLiked(true);
-                        response.setUserLikeReactionId(likeReaction.getId());
-                    },
-                    () -> {
-                        response.setHasUserLiked(false);
-                        response.setUserLikeReactionId(null);
-                    }
-            );
-
-            // DISLIKE 확인
-            reactionRepository.findByTargetIdAndUserIdAndReactionType(
-                    response.getId(), currentUserId, ReactionType.DISLIKE
-            ).ifPresentOrElse(
-                    dislikeReaction -> {
-                        response.setHasUserDisliked(true);
-                        response.setUserDislikeReactionId(dislikeReaction.getId());
-                    },
-                    () -> {
-                        response.setHasUserDisliked(false);
-                        response.setUserDislikeReactionId(null);
-                    }
-            );
-        } catch (Exception e) {
-            // 인증되지 않은 사용자 (ForbiddenException 등)
-            response.setIsAuthor(false);
-            response.setHasUserLiked(false);
-            response.setHasUserDisliked(false);
-            response.setUserLikeReactionId(null);
-            response.setUserDislikeReactionId(null);
         }
     }
 }

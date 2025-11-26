@@ -5,8 +5,10 @@ import org.example.deuknetdomain.domain.reaction.Reaction;
 import org.example.deuknetdomain.domain.reaction.ReactionType;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 public class ReactionRepositoryAdapter implements ReactionRepository {
@@ -52,5 +54,12 @@ public class ReactionRepositoryAdapter implements ReactionRepository {
     @Override
     public boolean existsByTargetIdAndUserIdAndReactionType(UUID targetId, UUID userId, ReactionType reactionType) {
         return jpaReactionRepository.existsByTargetIdAndUserIdAndReactionType(targetId, userId, reactionType);
+    }
+
+    @Override
+    public List<Reaction> findByTargetIdAndUserId(UUID targetId, UUID userId) {
+        return jpaReactionRepository.findByTargetIdAndUserId(targetId, userId).stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
     }
 }

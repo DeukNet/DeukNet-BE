@@ -84,8 +84,8 @@ class GetPostByIdServiceTest {
         PostSearchResponse elasticsearchResponse = new PostSearchResponse(testProjection);
         when(postSearchPort.findById(testPostId)).thenReturn(Optional.of(elasticsearchResponse));
         when(currentUserPort.getCurrentUserId()).thenReturn(testUserId);
-        when(reactionRepository.findByTargetIdAndUserIdAndReactionType(any(), any(), any()))
-                .thenReturn(Optional.empty());
+        when(reactionRepository.findByTargetIdAndUserId(testPostId, testUserId))
+                .thenReturn(List.of());
 
         // When
         PostSearchResponse result = getPostByIdService.getPostById(testPostId);
@@ -103,8 +103,8 @@ class GetPostByIdServiceTest {
         when(postSearchPort.findById(testPostId)).thenReturn(Optional.empty());
         when(postRepository.findDetailById(testPostId)).thenReturn(Optional.of(testProjection));
         when(currentUserPort.getCurrentUserId()).thenReturn(testUserId);
-        when(reactionRepository.findByTargetIdAndUserIdAndReactionType(any(), any(), any()))
-                .thenReturn(Optional.empty());
+        when(reactionRepository.findByTargetIdAndUserId(testPostId, testUserId))
+                .thenReturn(List.of());
 
         // When
         PostSearchResponse result = getPostByIdService.getPostById(testPostId);
@@ -136,12 +136,8 @@ class GetPostByIdServiceTest {
         when(currentUserPort.getCurrentUserId()).thenReturn(testUserId);
 
         Reaction likeReaction = Reaction.create(ReactionType.LIKE, TargetType.POST, testPostId, testUserId);
-        when(reactionRepository.findByTargetIdAndUserIdAndReactionType(
-                testPostId, testUserId, ReactionType.LIKE))
-                .thenReturn(Optional.of(likeReaction));
-        when(reactionRepository.findByTargetIdAndUserIdAndReactionType(
-                testPostId, testUserId, ReactionType.DISLIKE))
-                .thenReturn(Optional.empty());
+        when(reactionRepository.findByTargetIdAndUserId(testPostId, testUserId))
+                .thenReturn(List.of(likeReaction));
 
         // When
         PostSearchResponse result = getPostByIdService.getPostById(testPostId);
@@ -177,8 +173,8 @@ class GetPostByIdServiceTest {
         PostSearchResponse elasticsearchResponse = new PostSearchResponse(authorProjection);
         when(postSearchPort.findById(testPostId)).thenReturn(Optional.of(elasticsearchResponse));
         when(currentUserPort.getCurrentUserId()).thenReturn(testUserId);
-        when(reactionRepository.findByTargetIdAndUserIdAndReactionType(any(), any(), any()))
-                .thenReturn(Optional.empty());
+        when(reactionRepository.findByTargetIdAndUserId(testPostId, testUserId))
+                .thenReturn(List.of());
 
         // When
         PostSearchResponse result = getPostByIdService.getPostById(testPostId);
@@ -197,12 +193,8 @@ class GetPostByIdServiceTest {
         when(currentUserPort.getCurrentUserId()).thenReturn(testUserId);
 
         Reaction dislikeReaction = Reaction.create(ReactionType.DISLIKE, TargetType.POST, testPostId, testUserId);
-        when(reactionRepository.findByTargetIdAndUserIdAndReactionType(
-                testPostId, testUserId, ReactionType.LIKE))
-                .thenReturn(Optional.empty());
-        when(reactionRepository.findByTargetIdAndUserIdAndReactionType(
-                testPostId, testUserId, ReactionType.DISLIKE))
-                .thenReturn(Optional.of(dislikeReaction));
+        when(reactionRepository.findByTargetIdAndUserId(testPostId, testUserId))
+                .thenReturn(List.of(dislikeReaction));
 
         // When
         PostSearchResponse result = getPostByIdService.getPostById(testPostId);
@@ -219,8 +211,8 @@ class GetPostByIdServiceTest {
         PostSearchResponse elasticsearchResponse = new PostSearchResponse(testProjection);
         when(postSearchPort.findById(testPostId)).thenReturn(Optional.of(elasticsearchResponse));
         when(currentUserPort.getCurrentUserId()).thenReturn(testUserId);
-        when(reactionRepository.findByTargetIdAndUserIdAndReactionType(any(), any(), any()))
-                .thenReturn(Optional.empty());
+        when(reactionRepository.findByTargetIdAndUserId(testPostId, testUserId))
+                .thenReturn(List.of());
 
         // When
         PostSearchResponse result = getPostByIdService.getPostById(testPostId);
@@ -245,7 +237,7 @@ class GetPostByIdServiceTest {
         assertThat(result.getHasUserLiked()).isFalse();
         assertThat(result.getHasUserDisliked()).isFalse();
         assertThat(result.getIsAuthor()).isFalse(); // 비인증 사용자는 작성자가 아님
-        verify(reactionRepository, never()).findByTargetIdAndUserIdAndReactionType(any(), any(), any());
+        verify(reactionRepository, never()).findByTargetIdAndUserId(any(), any());
     }
 
     @Test
@@ -257,12 +249,8 @@ class GetPostByIdServiceTest {
         when(currentUserPort.getCurrentUserId()).thenReturn(testUserId);
 
         Reaction likeReaction = Reaction.create(ReactionType.LIKE, TargetType.POST, testPostId, testUserId);
-        when(reactionRepository.findByTargetIdAndUserIdAndReactionType(
-                testPostId, testUserId, ReactionType.LIKE))
-                .thenReturn(Optional.of(likeReaction));
-        when(reactionRepository.findByTargetIdAndUserIdAndReactionType(
-                testPostId, testUserId, ReactionType.DISLIKE))
-                .thenReturn(Optional.empty());
+        when(reactionRepository.findByTargetIdAndUserId(testPostId, testUserId))
+                .thenReturn(List.of(likeReaction));
 
         // When
         PostSearchResponse result = getPostByIdService.getPostById(testPostId);

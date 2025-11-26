@@ -89,6 +89,7 @@ public class GetPostByIdService implements GetPostByIdUseCase {
     /**
      * 현재 사용자의 reaction 정보 및 작성자 여부를 응답에 추가
      * 인증되지 않은 사용자의 경우 false로 설정
+     * 성능 최적화: 1번의 쿼리로 LIKE, DISLIKE 모두 조회
      *
      * @param response 응답 객체
      * @param postId 게시글 ID
@@ -100,33 +101,26 @@ public class GetPostByIdService implements GetPostByIdUseCase {
             // 작성자 여부 확인
             response.setIsAuthor(response.getAuthorId().equals(currentUserId));
 
-            // LIKE 확인
-            reactionRepository.findByTargetIdAndUserIdAndReactionType(
-                    postId, currentUserId, ReactionType.LIKE
-            ).ifPresentOrElse(
-                    likeReaction -> {
-                        response.setHasUserLiked(true);
-                        response.setUserLikeReactionId(likeReaction.getId());
-                    },
-                    () -> {
-                        response.setHasUserLiked(false);
-                        response.setUserLikeReactionId(null);
-                    }
-            );
+            // 한 번의 쿼리로 모든 reaction 조회 (LIKE, DISLIKE 포함)
+            java.util.List<org.example.deuknetdomain.domain.reaction.Reaction> reactions =
+                    reactionRepository.findByTargetIdAndUserId(postId, currentUserId);
 
-            // DISLIKE 확인
-            reactionRepository.findByTargetIdAndUserIdAndReactionType(
-                    postId, currentUserId, ReactionType.DISLIKE
-            ).ifPresentOrElse(
-                    dislikeReaction -> {
-                        response.setHasUserDisliked(true);
-                        response.setUserDislikeReactionId(dislikeReaction.getId());
-                    },
-                    () -> {
-                        response.setHasUserDisliked(false);
-                        response.setUserDislikeReactionId(null);
-                    }
-            );
+            // 기본값 설정
+            response.setHasUserLiked(false);
+            response.setUserLikeReactionId(null);
+            response.setHasUserDisliked(false);
+            response.setUserDislikeReactionId(null);
+
+            // reaction 타입별로 분류
+            for (var reaction : reactions) {
+                if (reaction.getReactionType() == ReactionType.LIKE) {
+                    response.setHasUserLiked(true);
+                    response.setUserLikeReactionId(reaction.getId());
+                } else if (reaction.getReactionType() == ReactionType.DISLIKE) {
+                    response.setHasUserDisliked(true);
+                    response.setUserDislikeReactionId(reaction.getId());
+                }
+            }
         } catch (Exception e) {
             // 인증되지 않은 사용자 (ForbiddenException 등)
             response.setIsAuthor(false);
