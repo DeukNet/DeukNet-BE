@@ -41,7 +41,6 @@ echo
 # 기존 배포 확인 및 삭제
 if helm list | grep -q "deuknet-cdc"; then
     echo "🗑️  기존 배포 제거 중..."
-    helm uninstall deuknet-cdc
     echo "⏳ Pod 종료 대기 중..."
     kubectl wait --for=delete pod --all --timeout=60s 2>/dev/null || true
     echo

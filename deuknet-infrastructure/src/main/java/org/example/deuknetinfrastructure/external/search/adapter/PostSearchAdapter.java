@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
@@ -18,6 +19,7 @@ import org.example.deuknetinfrastructure.external.search.exception.SearchOperati
 import org.example.deuknetinfrastructure.external.search.mapper.PostDetailDocumentMapper;
 import org.springframework.stereotype.Component;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -66,14 +68,28 @@ public class PostSearchAdapter implements PostSearchPort {
     public PageResponse<PostSearchResponse> search(PostSearchRequest request) {
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
-        // 키워드 검색 (must) - 제목/내용 전문 검색
         if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
-            boolQueryBuilder.must(Query.of(q -> q
-                .multiMatch(m -> m
-                    .query(request.getKeyword())
-                    .fields("title^2", "content")  // title에 2배 가중치
-                )
-            ));
+
+            String keyword = request.getKeyword().trim();
+
+            List<String> keywords = Arrays.stream(keyword.split("\\s+"))
+                    .filter(k -> !k.isBlank())
+                    .toList();
+
+            boolQueryBuilder.must(b -> b.bool(inner -> {
+
+                // multi_match + fuzziness + ngram 기반 부분검색
+                keywords.forEach(kw -> inner.should(s ->
+                        s.multiMatch(m -> m
+                                .query(kw)
+                                .fields("title^2", "content")
+                                .fuzziness("AUTO")     // ⭐ 오타 허용
+                                .operator(Operator.Or) // 여러 단어 OR 매칭
+                        )
+                ));
+
+                return inner.minimumShouldMatch("1");
+            }));
         }
 
         // 작성자 필터 (filter)

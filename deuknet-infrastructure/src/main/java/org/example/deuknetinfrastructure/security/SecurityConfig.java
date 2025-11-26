@@ -73,8 +73,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/categories/*").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/categories/*").authenticated()
 
-                // User API
+                // User API (더 구체적인 패턴을 먼저 배치)
+                .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/users/me").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/users/*").permitAll()
 
                 // 기타 모든 요청 거부
                 .anyRequest().denyAll()
