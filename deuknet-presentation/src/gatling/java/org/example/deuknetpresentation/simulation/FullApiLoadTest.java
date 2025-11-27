@@ -18,7 +18,7 @@ import static io.gatling.javaapi.http.HttpDsl.*;
  * 3. 카테고리 목록 조회 (비인증)
  * 4. 사용자 프로필 조회 (비인증)
  *
- * 동시 사용자: 100명
+ * 동시 사용자: 200명
  * 기간: 60초
  */
 public class FullApiLoadTest extends Simulation {
@@ -37,7 +37,7 @@ public class FullApiLoadTest extends Simulation {
     private ScenarioBuilder browsePostsScenario = scenario("Browse Posts")
         .exec(
             http("Get Posts - Recent")
-                .get("/api/posts/search")
+                .get("/api/posts")
                 .queryParam("status", "PUBLISHED")
                 .queryParam("page", "0")
                 .queryParam("size", "20")
@@ -58,7 +58,7 @@ public class FullApiLoadTest extends Simulation {
     private ScenarioBuilder readPostScenario = scenario("Read Post Detail")
         .exec(
             http("Get Post List")
-                .get("/api/posts/search")
+                .get("/api/posts")
                 .queryParam("status", "PUBLISHED")
                 .queryParam("page", "0")
                 .queryParam("size", "5")
@@ -90,7 +90,7 @@ public class FullApiLoadTest extends Simulation {
         .doIf(session -> session.contains("categoryId")).then(
             exec(
                 http("Get Posts by Category")
-                    .get("/api/posts/search")
+                    .get("/api/posts")
                     .queryParam("status", "PUBLISHED")
                     .queryParam("categoryId", "#{categoryId}")
                     .queryParam("page", "0")
@@ -103,7 +103,7 @@ public class FullApiLoadTest extends Simulation {
     private ScenarioBuilder viewUserProfileScenario = scenario("View User Profile")
         .exec(
             http("Get Post List")
-                .get("/api/posts/search")
+                .get("/api/posts")
                 .queryParam("status", "PUBLISHED")
                 .queryParam("page", "0")
                 .queryParam("size", "5")
@@ -121,7 +121,7 @@ public class FullApiLoadTest extends Simulation {
     private ScenarioBuilder searchScenario = scenario("Search Posts")
         .exec(
             http("Search Posts")
-                .get("/api/posts/search")
+                .get("/api/posts")
                 .queryParam("keyword", "테스트")
                 .queryParam("status", "PUBLISHED")
                 .queryParam("page", "0")
@@ -133,7 +133,7 @@ public class FullApiLoadTest extends Simulation {
     private ScenarioBuilder mixedScenario = scenario("Mixed User Behavior")
         .exec(
             http("Visit Homepage - Get Posts")
-                .get("/api/posts/search")
+                .get("/api/posts")
                 .queryParam("status", "PUBLISHED")
                 .queryParam("page", "0")
                 .queryParam("size", "20")
