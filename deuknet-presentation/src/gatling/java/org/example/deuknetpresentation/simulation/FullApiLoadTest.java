@@ -18,7 +18,7 @@ import static io.gatling.javaapi.http.HttpDsl.*;
  * 3. 카테고리 목록 조회 (비인증)
  * 4. 사용자 프로필 조회 (비인증)
  *
- * 동시 사용자: 200명
+ * 동시 사용자: 150명
  * 기간: 60초
  */
 public class FullApiLoadTest extends Simulation {
@@ -173,24 +173,24 @@ public class FullApiLoadTest extends Simulation {
 
     {
         setUp(
-            // 각 시나리오에 사용자 분배
+            // 각 시나리오에 사용자 분배 (총 150명)
             browsePostsScenario.injectOpen(
-                rampUsers(20).during(Duration.ofSeconds(30))
+                rampUsers(30).during(Duration.ofSeconds(30))
             ),
             readPostScenario.injectOpen(
-                rampUsers(25).during(Duration.ofSeconds(30))
+                rampUsers(37).during(Duration.ofSeconds(30))
             ),
             browseCategoriesScenario.injectOpen(
-                rampUsers(15).during(Duration.ofSeconds(30))
+                rampUsers(22).during(Duration.ofSeconds(30))
             ),
             viewUserProfileScenario.injectOpen(
-                rampUsers(10).during(Duration.ofSeconds(30))
+                rampUsers(15).during(Duration.ofSeconds(30))
             ),
             searchScenario.injectOpen(
-                rampUsers(10).during(Duration.ofSeconds(30))
+                rampUsers(15).during(Duration.ofSeconds(30))
             ),
             mixedScenario.injectOpen(
-                rampUsers(20).during(Duration.ofSeconds(30))
+                rampUsers(30).during(Duration.ofSeconds(30))
             )
         ).protocols(httpProtocol)
          .assertions(
