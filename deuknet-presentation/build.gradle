@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.3.5'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'io.gatling.gradle' version '3.11.5.2'
 }
 
 group = 'org.example'
@@ -81,6 +82,11 @@ dependencies {
     // Lombok for tests
     testCompileOnly 'org.projectlombok:lombok'
     testAnnotationProcessor 'org.projectlombok:lombok'
+
+    // Gatling
+    gatling 'io.gatling.highcharts:gatling-charts-highcharts:3.11.5'
+    gatlingImplementation 'io.gatling:gatling-app:3.11.5'
+    gatlingImplementation 'io.gatling:gatling-recorder:3.11.5'
 }
 
 tasks.named('bootJar') {
