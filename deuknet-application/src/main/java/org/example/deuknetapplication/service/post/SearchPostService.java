@@ -6,7 +6,6 @@ import org.example.deuknetapplication.port.in.post.PostSearchResponse;
 import org.example.deuknetapplication.port.in.post.SearchPostUseCase;
 import org.example.deuknetapplication.port.out.external.search.PostSearchPort;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -16,7 +15,6 @@ import java.util.UUID;
  * SRP: PostSearchPort로 위임하여 검색 로직 처리
  */
 @Service
-@Transactional(readOnly = true)
 public class SearchPostService implements SearchPostUseCase {
 
     private final PostSearchPort postSearchPort;
