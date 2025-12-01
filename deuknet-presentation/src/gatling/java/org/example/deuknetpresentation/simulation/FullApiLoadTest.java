@@ -23,8 +23,8 @@ import static io.gatling.javaapi.http.HttpDsl.*;
  */
 public class FullApiLoadTest extends Simulation {
 
-    // 테스트 대상 서버
-    private static final String BASE_URL = "http://localhost:8080";
+    // 테스트 대상 서버 (NodePort 사용)
+    private static final String BASE_URL = "http://172.17.0.2:30080";
 
     // HTTP 프로토콜 설정
     private HttpProtocolBuilder httpProtocol = http
@@ -175,22 +175,22 @@ public class FullApiLoadTest extends Simulation {
         setUp(
             // 각 시나리오에 사용자 분배 (총 150명)
             browsePostsScenario.injectOpen(
-                rampUsers(30).during(Duration.ofSeconds(30))
+                rampUsers(30).during(Duration.ofSeconds(3))
             ),
             readPostScenario.injectOpen(
-                rampUsers(37).during(Duration.ofSeconds(30))
+                rampUsers(37).during(Duration.ofSeconds(3))
             ),
             browseCategoriesScenario.injectOpen(
-                rampUsers(22).during(Duration.ofSeconds(30))
+                rampUsers(220).during(Duration.ofSeconds(3))
             ),
             viewUserProfileScenario.injectOpen(
-                rampUsers(15).during(Duration.ofSeconds(30))
+                rampUsers(150).during(Duration.ofSeconds(3))
             ),
             searchScenario.injectOpen(
-                rampUsers(15).during(Duration.ofSeconds(30))
+                rampUsers(1500).during(Duration.ofSeconds(3))
             ),
             mixedScenario.injectOpen(
-                rampUsers(30).during(Duration.ofSeconds(30))
+                rampUsers(300).during(Duration.ofSeconds(3))
             )
         ).protocols(httpProtocol)
          .assertions(
