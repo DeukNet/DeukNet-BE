@@ -10,8 +10,9 @@ app:
   replicas: 1
   port: 8080
   service:
-    type: ClusterIP
+    type: NodePort
     port: 8080
+    nodePort: 30080
 
 postgres:
   image: postgres:15-alpine

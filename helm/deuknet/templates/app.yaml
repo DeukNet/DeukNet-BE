@@ -87,5 +87,8 @@ spec:
   ports:
   - port: {{ .Values.app.service.port }}
     targetPort: {{ .Values.app.port }}
+    {{- if .Values.app.service.nodePort }}
+    nodePort: {{ .Values.app.service.nodePort }}
+    {{- end }}
   type: {{ .Values.app.service.type }}
 {{- end }}
