@@ -6,6 +6,7 @@ import org.example.deuknetinfrastructure.common.seedwork.BaseDocument;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.Setting;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,7 +23,7 @@ import java.util.UUID;
  * - 상세 필터링 (카테고리, 작성자, 태그 등)
  *
  * 필드:
- * - 제목, 내용: 형태소 분석을 통한 한글 검색
+ * - 제목, 내용: edge nGram을 통한 한글 자동완성 검색
  * - 작성자 정보: 필터링 및 검색
  * - 카테고리: 필터링
  * - 통계: 정렬 및 집계
@@ -30,20 +31,21 @@ import java.util.UUID;
 @Getter
 @Setter
 @Document(indexName = "posts-detail")
+@Setting(settingPath = "elasticsearch/posts-detail-settings.json")
 public class PostDetailDocument extends BaseDocument {
 
     /**
      * 게시글 제목 (검색 대상)
-     * 표준 분석기를 사용한 텍스트 검색
+     * edge nGram 분석기를 사용한 자동완성 검색
      */
-    @Field(type = FieldType.Text)
+    @Field(type = FieldType.Text, analyzer = "edge_ngram_analyzer", searchAnalyzer = "edge_ngram_search_analyzer")
     private String title;
 
     /**
      * 게시글 내용 (검색 대상)
-     * 표준 분석기를 사용한 텍스트 검색
+     * edge nGram 분석기를 사용한 자동완성 검색
      */
-    @Field(type = FieldType.Text)
+    @Field(type = FieldType.Text, analyzer = "edge_ngram_analyzer", searchAnalyzer = "edge_ngram_search_analyzer")
     private String content;
 
     /**

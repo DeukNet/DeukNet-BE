@@ -46,6 +46,8 @@ spec:
             secretKeyRef:
               name: google-oauth-secret
               key: GOOGLE_CLIENT_SECRET
+        - name: GOOGLE_REDIRECT_URI
+          value: {{ .Values.app.oauth.google.redirectUri | quote }}
         - name: DEBEZIUM_DATABASE_HOSTNAME
           value: "postgres"
         - name: DEBEZIUM_DATABASE_PORT

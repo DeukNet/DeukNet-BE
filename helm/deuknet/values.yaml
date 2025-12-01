@@ -13,6 +13,9 @@ app:
     type: NodePort
     port: 8080
     nodePort: 30080
+  oauth:
+    google:
+      redirectUri: http://localhost:8080/api/auth/oauth/callback/google
 
 postgres:
   image: postgres:15-alpine
