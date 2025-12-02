@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+      - name: minio
+        image: {{ .Values.minio.image }}
+        args:
+        - server
+        - /data
+        - --console-address
+        - ":9001"
+        env:
+        - name: MINIO_ROOT_USER
+          value: {{ .Values.minio.rootUser | quote }}
+        - name: MINIO_ROOT_PASSWORD
+          value: {{ .Values.minio.rootPassword | quote }}
+        ports:
+        - containerPort: {{ .Values.minio.apiPort }}
+          name: api
+        - containerPort: {{ .Values.minio.consolePort }}
+          name: console
+        volumeMounts:
+        - name: minio-data
+          mountPath: /data
+        livenessProbe:
+          httpGet:
+            path: /minio/health/live
+            port: {{ .Values.minio.apiPort }}
+          initialDelaySeconds: 30
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /minio/health/ready
+            port: {{ .Values.minio.apiPort }}
+          initialDelaySeconds: 30
+          periodSeconds: 20
+      volumes:
+      - name: minio-data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+spec:
+  selector:
+    app: minio
+  ports:
+  - name: api
+    port: {{ .Values.minio.apiPort }}
+    targetPort: {{ .Values.minio.apiPort }}
+  - name: console
+    port: {{ .Values.minio.consolePort }}
+    targetPort: {{ .Values.minio.consolePort }}
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-console
+spec:
+  selector:
+    app: minio
+  ports:
+  - port: {{ .Values.minio.consolePort }}
+    targetPort: {{ .Values.minio.consolePort }}
+    nodePort: {{ .Values.minio.consoleNodePort }}
+  type: NodePort

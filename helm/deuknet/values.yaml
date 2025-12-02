@@ -54,3 +54,11 @@ elasticsearchSink:
     name: elasticsearch-sink-post-detail
     topics: outbox.events.PostDetail
     indexName: posts-detail
+
+minio:
+  image: minio/minio:latest
+  rootUser: minioadmin
+  rootPassword: minioadmin123
+  apiPort: 9000
+  consolePort: 9001
+  consoleNodePort: 30900
