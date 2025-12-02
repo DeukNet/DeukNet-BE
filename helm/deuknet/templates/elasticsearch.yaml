@@ -12,6 +12,17 @@ spec:
       labels:
         app: elasticsearch
     spec:
+      initContainers:
+      - name: install-plugins
+        image: {{ .Values.elasticsearch.image }}
+        command:
+        - sh
+        - -c
+        - |
+          bin/elasticsearch-plugin list | grep -q analysis-nori || bin/elasticsearch-plugin install analysis-nori --batch
+        volumeMounts:
+        - name: es-plugins
+          mountPath: /usr/share/elasticsearch/plugins
       containers:
       - name: elasticsearch
         image: {{ .Values.elasticsearch.image }}
@@ -28,8 +39,12 @@ spec:
         volumeMounts:
         - name: es-data
           mountPath: /usr/share/elasticsearch/data
+        - name: es-plugins
+          mountPath: /usr/share/elasticsearch/plugins
       volumes:
       - name: es-data
+        emptyDir: {}
+      - name: es-plugins
         emptyDir: {}
 ---
 apiVersion: v1
@@ -37,7 +52,7 @@ kind: Service
 metadata:
   name: elasticsearch
 spec:
-  selector:
+  selector: Joined on Jul 25, 2024
     app: elasticsearch
   ports:
   - port: {{ .Values.elasticsearch.port }}

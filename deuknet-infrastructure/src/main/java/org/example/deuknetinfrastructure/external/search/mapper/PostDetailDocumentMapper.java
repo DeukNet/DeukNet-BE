@@ -65,7 +65,9 @@ public class PostDetailDocumentMapper {
                 projection.getViewCount(),
                 projection.getCommentCount(),
                 projection.getLikeCount(),
-                projection.getDislikeCount()
+                projection.getDislikeCount(),
+                projection.getCreatedAt(),
+                projection.getUpdatedAt()
         );
     }
 }

@@ -4,6 +4,7 @@ import org.example.deuknetapplication.port.in.post.PageResponse;
 import org.example.deuknetapplication.port.in.post.PostSearchRequest;
 import org.example.deuknetapplication.port.in.post.PostSearchResponse;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -28,5 +29,14 @@ public interface PostSearchPort {
     /**
      * 인기 게시글 조회
      */
-    PageResponse<PostSearchResponse> findPopularPosts(int page, int size, UUID categoryId);
+    PageResponse<PostSearchResponse> findPopularPosts(int page, int size, UUID categoryId, String keyword);
+
+    /**
+     * 검색어 자동완성 제안
+     *
+     * @param prefix 사용자가 입력한 검색어 (부분 문자열)
+     * @param size 최대 제안 개수
+     * @return 제안된 검색어 목록
+     */
+    List<String> suggestKeywords(String prefix, int size);
 }

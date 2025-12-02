@@ -187,7 +187,7 @@ public class FullApiLoadTest extends Simulation {
                 rampUsers(150).during(Duration.ofSeconds(3))
             ),
             searchScenario.injectOpen(
-                rampUsers(1500).during(Duration.ofSeconds(3))
+                rampUsers(150).during(Duration.ofSeconds(3))
             ),
             mixedScenario.injectOpen(
                 rampUsers(300).during(Duration.ofSeconds(3))

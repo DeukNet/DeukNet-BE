@@ -149,6 +149,7 @@ public interface PostApi {
     ResponseEntity<PageResponse<PostSearchResponse>> getPopularPosts(
             @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기 (최대 100)") @RequestParam(defaultValue = "20") int size,
-            @Parameter(description = "카테고리 ID (선택사항)") @RequestParam(required = false) UUID categoryId
+            @Parameter(description = "카테고리 ID (선택사항)") @RequestParam(required = false) UUID categoryId,
+            @Parameter(description = "검색어 (선택사항)") @RequestParam(required = false) String keyword
     );
 }

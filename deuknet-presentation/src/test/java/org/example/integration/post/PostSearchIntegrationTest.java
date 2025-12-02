@@ -197,7 +197,7 @@ class PostSearchIntegrationTest extends AbstractTest {
         waitForElasticsearch();
 
         // When
-        List<PostSearchResponse> results = searchPostUseCase.findPopularPosts(0, 20, null).getContent();
+        List<PostSearchResponse> results = searchPostUseCase.findPopularPosts(0, 20, null, null).getContent();
 
         // Then
         assertThat(results).isNotEmpty();

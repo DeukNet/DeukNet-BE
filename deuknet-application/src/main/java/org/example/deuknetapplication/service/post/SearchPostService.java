@@ -7,6 +7,7 @@ import org.example.deuknetapplication.port.in.post.SearchPostUseCase;
 import org.example.deuknetapplication.port.out.external.search.PostSearchPort;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -34,7 +35,12 @@ public class SearchPostService implements SearchPostUseCase {
     }
 
     @Override
-    public PageResponse<PostSearchResponse> findPopularPosts(int page, int size, UUID categoryId) {
-        return postSearchPort.findPopularPosts(page, size, categoryId);
+    public PageResponse<PostSearchResponse> findPopularPosts(int page, int size, UUID categoryId, String keyword) {
+        return postSearchPort.findPopularPosts(page, size, categoryId, keyword);
+    }
+
+    @Override
+    public List<String> suggestKeywords(String prefix, int size) {
+        return postSearchPort.suggestKeywords(prefix, size);
     }
 }

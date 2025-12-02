@@ -112,14 +112,30 @@ public class PostController implements PostApi {
     public ResponseEntity<PageResponse<PostSearchResponse>> getPopularPosts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) UUID categoryId
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) String keyword
     ) {
         // 페이지 크기 제한: 최대 100
         if (size > 100) {
             size = 100;
         }
 
-        PageResponse<PostSearchResponse> results = searchPostUseCase.findPopularPosts(page, size, categoryId);
+        PageResponse<PostSearchResponse> results = searchPostUseCase.findPopularPosts(page, size, categoryId, keyword);
         return ResponseEntity.ok(results);
+    }
+
+    @GetMapping("/suggest")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<List<String>> suggestKeywords(
+            @RequestParam String q,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        // 최대 제안 수 제한
+        if (size > 20) {
+            size = 20;
+        }
+
+        List<String> suggestions = searchPostUseCase.suggestKeywords(q, size);
+        return ResponseEntity.ok(suggestions);
     }
 }

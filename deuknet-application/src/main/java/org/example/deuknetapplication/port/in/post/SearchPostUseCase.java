@@ -22,5 +22,10 @@ public interface SearchPostUseCase {
     /**
      * 인기 게시글 조회
      */
-    PageResponse<PostSearchResponse> findPopularPosts(int page, int size, UUID categoryId);
+    PageResponse<PostSearchResponse> findPopularPosts(int page, int size, UUID categoryId, String keyword);
+
+    /**
+     * 검색어 자동완성 제안
+     */
+    List<String> suggestKeywords(String prefix, int size);
 }

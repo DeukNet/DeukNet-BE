@@ -110,6 +110,20 @@ public abstract class BaseDocument implements Persistable {
     }
 
     /**
+     * 생성 시각을 설정합니다.
+     */
+    protected void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    /**
+     * 수정 시각을 설정합니다.
+     */
+    protected void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    /**
      * ID 기반 동등성 비교
      */
     @Override

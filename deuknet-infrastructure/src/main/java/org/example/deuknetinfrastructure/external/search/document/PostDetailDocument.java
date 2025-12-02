@@ -6,6 +6,8 @@ import org.example.deuknetinfrastructure.common.seedwork.BaseDocument;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.InnerField;
+import org.springframework.data.elasticsearch.annotations.MultiField;
 import org.springframework.data.elasticsearch.annotations.Setting;
 
 import java.util.List;
@@ -36,16 +38,32 @@ public class PostDetailDocument extends BaseDocument {
 
     /**
      * 게시글 제목 (검색 대상)
-     * edge nGram 분석기를 사용한 자동완성 검색
+     * - 기본: Nori 형태소 분석 (조사/어미 제거, 어순 무관 검색)
+     * - autocomplete: edge nGram (자동완성용)
      */
-    @Field(type = FieldType.Text, analyzer = "edge_ngram_analyzer", searchAnalyzer = "edge_ngram_search_analyzer")
+    @MultiField(
+        mainField = @Field(type = FieldType.Text, analyzer = "nori_analyzer"),
+        otherFields = {
+            @InnerField(suffix = "autocomplete", type = FieldType.Text,
+                        analyzer = "edge_ngram_analyzer",
+                        searchAnalyzer = "edge_ngram_search_analyzer")
+        }
+    )
     private String title;
 
     /**
      * 게시글 내용 (검색 대상)
-     * edge nGram 분석기를 사용한 자동완성 검색
+     * - 기본: Nori 형태소 분석 (조사/어미 제거, 어순 무관 검색)
+     * - autocomplete: edge nGram (자동완성용)
      */
-    @Field(type = FieldType.Text, analyzer = "edge_ngram_analyzer", searchAnalyzer = "edge_ngram_search_analyzer")
+    @MultiField(
+        mainField = @Field(type = FieldType.Text, analyzer = "nori_analyzer"),
+        otherFields = {
+            @InnerField(suffix = "autocomplete", type = FieldType.Text,
+                        analyzer = "edge_ngram_analyzer",
+                        searchAnalyzer = "edge_ngram_search_analyzer")
+        }
+    )
     private String content;
 
     /**
@@ -120,7 +138,8 @@ public class PostDetailDocument extends BaseDocument {
     public static PostDetailDocument create(UUID id, String title, String content,
                                             UUID authorId, String authorUsername, String authorDisplayName,
                                             String status, List<UUID> categoryIds, List<String> categoryNames,
-                                            Long viewCount, Long commentCount, Long likeCount, Long dislikeCount) {
+                                            Long viewCount, Long commentCount, Long likeCount, Long dislikeCount,
+                                            java.time.LocalDateTime createdAt, java.time.LocalDateTime updatedAt) {
         PostDetailDocument document = new PostDetailDocument(id);
         document.title = title;
         document.content = content;
@@ -134,6 +153,8 @@ public class PostDetailDocument extends BaseDocument {
         document.commentCount = commentCount;
         document.likeCount = likeCount;
         document.dislikeCount = dislikeCount;
+        document.setCreatedAt(createdAt);
+        document.setUpdatedAt(updatedAt);
         return document;
     }
 }

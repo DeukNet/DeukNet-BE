@@ -9,9 +9,21 @@
           "letter",
           "digit"
         ]
+      },
+      "nori_tokenizer": {
+        "type": "nori_tokenizer",
+        "decompound_mode": "mixed"
       }
     },
     "analyzer": {
+      "nori_analyzer": {
+        "type": "custom",
+        "tokenizer": "nori_tokenizer",
+        "filter": [
+          "lowercase",
+          "nori_readingform"
+        ]
+      },
       "edge_ngram_analyzer": {
         "type": "custom",
         "tokenizer": "edge_ngram_tokenizer",
