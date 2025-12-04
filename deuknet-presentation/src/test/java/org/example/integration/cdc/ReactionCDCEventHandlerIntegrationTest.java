@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * CDC를 통해 Elasticsearch의 카운트 필드를 올바르게 업데이트하는지 검증합니다.
  */
 @DisplayName("ReactionEventHandler Integration Test")
-class ReactionEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTest {
+class ReactionCDCEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTest {
 
     @Autowired
     private PostSearchPort postSearchPort;

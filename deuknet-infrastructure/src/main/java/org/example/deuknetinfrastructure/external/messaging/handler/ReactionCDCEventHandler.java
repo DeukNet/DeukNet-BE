@@ -14,11 +14,11 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-public class ReactionEventHandler implements EventHandler {
+public class ReactionCDCEventHandler implements CDCEventHandler {
 
     private final PostProjectionCommandPort postProjectionCommandPort;
 
-    public ReactionEventHandler(PostProjectionCommandPort postProjectionCommandPort) {
+    public ReactionCDCEventHandler(PostProjectionCommandPort postProjectionCommandPort) {
         this.postProjectionCommandPort = postProjectionCommandPort;
     }
 
@@ -29,7 +29,10 @@ public class ReactionEventHandler implements EventHandler {
     }
 
     @Override
-    public void handle(EventType eventType, String aggregateId, String payloadJson) throws Exception {
+    public void handle(CDCEventMessage message) throws Exception {
+        String payloadJson = message.payloadJson();
+        EventType eventType = message.eventType();
+
         postProjectionCommandPort.updatePostCounts(payloadJson);
         log.info("{} - Reaction count updated", eventType);
     }

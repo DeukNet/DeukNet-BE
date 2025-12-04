@@ -23,18 +23,18 @@ import static org.mockito.Mockito.*;
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("PostEventHandler Unit Test")
-class PostEventHandlerTest {
+class PostCDCEventHandlerTest {
 
     @Mock
     private PostProjectionCommandPort mockPostProjectionCommandPort;
 
-    private PostEventHandler postEventHandler;
+    private PostCDCEventHandler postEventHandler;
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        postEventHandler = new PostEventHandler(mockPostProjectionCommandPort, objectMapper);
+        postEventHandler = new PostCDCEventHandler(mockPostProjectionCommandPort, objectMapper);
     }
 
     @Test
@@ -73,9 +73,11 @@ class PostEventHandlerTest {
 
         // When: POST_CREATED 이벤트 처리
         postEventHandler.handle(
-                EventType.POST_CREATED,
-                "123e4567-e89b-12d3-a456-426614174000",
-                postDetailPayload
+                new CDCEventMessage(
+                        EventType.POST_CREATED,
+                        "123e4567-e89b-12d3-a456-426614174000",
+                        postDetailPayload
+                )
         );
 
         // Then: indexPostDetail이 호출되어야 함
@@ -102,9 +104,11 @@ class PostEventHandlerTest {
 
         // When: REACTION_ADDED 이벤트 처리 (EventType은 무관, payload 구조로 판단)
         postEventHandler.handle(
-                EventType.POST_CREATED,
-                "123e4567-e89b-12d3-a456-426614174000",
-                postCountPayload
+                new CDCEventMessage(
+                        EventType.POST_CREATED,
+                        "123e4567-e89b-12d3-a456-426614174000",
+                        postCountPayload
+                )
         );
 
         // Then: updatePostCounts가 호출되어야 함
@@ -120,9 +124,11 @@ class PostEventHandlerTest {
 
         // When: POST_DELETED 이벤트 처리
         postEventHandler.handle(
-                EventType.POST_DELETED,
-                aggregateId,
-                "{}" // payload는 사용되지 않음
+                new CDCEventMessage(
+                        EventType.POST_DELETED,
+                        aggregateId,
+                        "{}" // payload는 사용되지 않음
+                )
         );
 
         // Then: deletePost가 호출되어야 함
@@ -147,9 +153,11 @@ class PostEventHandlerTest {
 
         // When: POST_PUBLISHED 이벤트 처리
         postEventHandler.handle(
-                EventType.POST_PUBLISHED,
-                "123e4567-e89b-12d3-a456-426614174000",
-                postDetailPayload
+                new CDCEventMessage(
+                        EventType.POST_PUBLISHED,
+                        "123e4567-e89b-12d3-a456-426614174000",
+                        postDetailPayload
+                )
         );
 
         // Then: indexPostDetail이 호출되어야 함
@@ -173,9 +181,11 @@ class PostEventHandlerTest {
 
         // When: POST_PUBLISHED 이벤트 처리
         postEventHandler.handle(
-                EventType.POST_PUBLISHED,
-                "123e4567-e89b-12d3-a456-426614174000",
-                postCountPayload
+                new CDCEventMessage(
+                        EventType.POST_PUBLISHED,
+                        "123e4567-e89b-12d3-a456-426614174000",
+                        postCountPayload
+                )
         );
 
         // Then: updatePostCounts가 호출되어야 함
@@ -199,9 +209,11 @@ class PostEventHandlerTest {
 
         // When: 이벤트 처리
         postEventHandler.handle(
-                EventType.POST_CREATED,
-                "123e4567-e89b-12d3-a456-426614174000",
-                payload
+                new CDCEventMessage(
+                        EventType.POST_CREATED,
+                        "123e4567-e89b-12d3-a456-426614174000",
+                        payload
+                )
         );
 
         // Then: title이 우선되어 indexPostDetail이 호출되어야 함
@@ -222,9 +234,11 @@ class PostEventHandlerTest {
 
         // When: 이벤트 처리
         postEventHandler.handle(
-                EventType.POST_CREATED,
-                "123e4567-e89b-12d3-a456-426614174000",
-                payload
+                new CDCEventMessage(
+                        EventType.POST_CREATED,
+                        "123e4567-e89b-12d3-a456-426614174000",
+                        payload
+                )
         );
 
         // Then: 아무 메서드도 호출되지 않아야 함
@@ -247,9 +261,11 @@ class PostEventHandlerTest {
 
         // When: POST_UPDATED 이벤트 처리
         postEventHandler.handle(
-                EventType.POST_UPDATED,
-                "123e4567-e89b-12d3-a456-426614174000",
-                payload
+                new CDCEventMessage(
+                        EventType.POST_UPDATED,
+                        "123e4567-e89b-12d3-a456-426614174000",
+                        payload
+                )
         );
 
         // Then: indexPostDetail이 호출되어야 함

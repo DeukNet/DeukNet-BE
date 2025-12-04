@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * CDC를 통해 Elasticsearch에 제대로 동기화되는지 검증합니다.
  */
 @DisplayName("PostEventHandler Integration Test")
-class PostEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTest {
+class PostCDCEventHandlerIntegrationTest extends AbstractDebeziumIntegrationTest {
 
     @Autowired
     private PostSearchPort postSearchPort;

@@ -6,7 +6,7 @@ import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.format.Json;
 import lombok.extern.slf4j.Slf4j;
 import org.example.deuknetinfrastructure.external.messaging.debezium.DebeziumEventHandler;
-import org.example.deuknetinfrastructure.external.messaging.handler.EventHandler;
+import org.example.deuknetinfrastructure.external.messaging.handler.CDCEventHandler;
 import org.example.seedwork.TestPostgreSQLContainer;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -32,10 +32,10 @@ public class DebeziumTestConfig {
     @Bean
     @Primary  // 실제 DebeziumEventHandler를 Override
     public DebeziumEventHandler testDebeziumEventHandler(
-            List<EventHandler> eventHandlers,
+            List<CDCEventHandler> CDCEventHandlers,
             ObjectMapper objectMapper
     ) {
-        return new TestDebeziumEventHandler(eventHandlers, objectMapper);
+        return new TestDebeziumEventHandler(CDCEventHandlers, objectMapper);
     }
 
     @Bean

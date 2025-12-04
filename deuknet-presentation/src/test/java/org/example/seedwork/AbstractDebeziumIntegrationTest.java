@@ -39,13 +39,13 @@ public abstract class AbstractDebeziumIntegrationTest extends AbstractTest {
     protected DeletePostUseCase deletePostUseCase;
 
     @Autowired
-    private DebeziumEventHandler debeziumEventHandler;
+    private DebeziumEventHandler DebeziumEventHandler;
 
     /**
      * 캡처된 CDC 이벤트 개수 조회
      */
     protected int getCapturedEventCount() {
-        if (debeziumEventHandler instanceof TestDebeziumEventHandler testHandler) {
+        if (DebeziumEventHandler instanceof TestDebeziumEventHandler testHandler) {
             return testHandler.getCapturedEvents().size();
         }
         return 0;
@@ -55,7 +55,7 @@ public abstract class AbstractDebeziumIntegrationTest extends AbstractTest {
      * 캡처된 이벤트 초기화
      */
     protected void clearCapturedEvents() {
-        if (debeziumEventHandler instanceof TestDebeziumEventHandler testHandler) {
+        if (DebeziumEventHandler instanceof TestDebeziumEventHandler testHandler) {
             testHandler.clear();
         }
     }

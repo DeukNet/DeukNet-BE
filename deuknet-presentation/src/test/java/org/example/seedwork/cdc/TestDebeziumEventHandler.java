@@ -3,7 +3,7 @@ package org.example.seedwork.cdc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import org.example.deuknetinfrastructure.external.messaging.debezium.DebeziumEventHandler;
-import org.example.deuknetinfrastructure.external.messaging.handler.EventHandler;
+import org.example.deuknetinfrastructure.external.messaging.handler.CDCEventHandler;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -20,10 +20,10 @@ public class TestDebeziumEventHandler extends DebeziumEventHandler {
     private final List<CapturedEvent> capturedEvents = new CopyOnWriteArrayList<>();
 
     public TestDebeziumEventHandler(
-            List<EventHandler> eventHandlers,
+            List<CDCEventHandler> CDCEventHandlers,
             ObjectMapper objectMapper
     ) {
-        super(eventHandlers, objectMapper);
+        super(CDCEventHandlers, objectMapper);
     }
 
     @Override

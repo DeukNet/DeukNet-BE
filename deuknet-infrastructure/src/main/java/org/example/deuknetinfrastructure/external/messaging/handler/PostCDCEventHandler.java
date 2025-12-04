@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PostEventHandler implements EventHandler {
+public class PostCDCEventHandler implements CDCEventHandler {
 
     private final PostProjectionCommandPort postProjectionCommandPort;
     private final ObjectMapper objectMapper;
@@ -32,7 +32,12 @@ public class PostEventHandler implements EventHandler {
     }
 
     @Override
-    public void handle(EventType eventType, String aggregateId, String payloadJson) throws Exception {
+    public void handle(CDCEventMessage message) throws Exception {
+
+        EventType eventType = message.eventType();
+        String aggregateId = message.aggregateId();
+        String payloadJson = message.payloadJson();
+
         log.info("Handling event: type={}, aggregateId={}", eventType, aggregateId);
         log.debug("Payload JSON: {}", payloadJson);
 

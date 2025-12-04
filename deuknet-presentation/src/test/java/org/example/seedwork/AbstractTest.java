@@ -14,8 +14,8 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.elasticsearch.ElasticsearchContainer;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -29,7 +29,7 @@ import java.util.UUID;
 public abstract class AbstractTest {
 
     protected static final PostgreSQLContainer<?> postgres = TestPostgreSQLContainer.getInstance();
-    protected static final ElasticsearchContainer elasticsearch = TestElasticsearchContainer.getInstance();
+    protected static final GenericContainer<?> elasticsearch = TestElasticsearchContainer.getInstance();
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
@@ -50,7 +50,8 @@ public abstract class AbstractTest {
         registry.add("spring.datasource.hikari.max-lifetime", () -> "1800000");
 
         // Elasticsearch 설정
-        registry.add("spring.elasticsearch.uris", elasticsearch::getHttpHostAddress);
+        registry.add("spring.elasticsearch.uris",
+            () -> "http://" + elasticsearch.getHost() + ":" + elasticsearch.getMappedPort(9200));
         registry.add("spring.data.elasticsearch.repositories.enabled", () -> "true");
 
         // Debezium 기본 비활성화 (CDC 테스트에서만 활성화)

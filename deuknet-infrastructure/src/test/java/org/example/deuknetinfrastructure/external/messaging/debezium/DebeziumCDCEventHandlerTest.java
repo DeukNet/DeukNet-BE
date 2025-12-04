@@ -2,7 +2,8 @@ package org.example.deuknetinfrastructure.external.messaging.debezium;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.deuknetapplication.messaging.EventType;
-import org.example.deuknetinfrastructure.external.messaging.handler.EventHandler;
+import org.example.deuknetinfrastructure.external.messaging.handler.CDCEventHandler;
+import org.example.deuknetinfrastructure.external.messaging.handler.CDCEventMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,19 +28,19 @@ import static org.mockito.Mockito.*;
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("DebeziumEventHandler Unit Test")
-class DebeziumEventHandlerTest {
+class DebeziumCDCEventHandlerTest {
 
     @Mock
-    private EventHandler mockEventHandler;
+    private CDCEventHandler mockCDCEventHandler;
 
-    private DebeziumEventHandler debeziumEventHandler;
+    private DebeziumEventHandler DebeziumEventHandler;
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        debeziumEventHandler = new DebeziumEventHandler(
-                List.of(mockEventHandler),
+        DebeziumEventHandler = new DebeziumEventHandler(
+                List.of(mockCDCEventHandler),
                 objectMapper
         );
     }
@@ -64,25 +65,20 @@ class DebeziumEventHandlerTest {
             }
             """;
 
-        when(mockEventHandler.canHandle(EventType.POST_CREATED)).thenReturn(true);
+        when(mockCDCEventHandler.canHandle(EventType.POST_CREATED)).thenReturn(true);
 
         // When: 이벤트 처리
-        debeziumEventHandler.handleEvent("test-key", cdcEvent);
+        DebeziumEventHandler.handleEvent("test-key", cdcEvent);
 
         // Then: 올바른 EventType과 aggregateId로 handler가 호출되어야 함
-        ArgumentCaptor<EventType> eventTypeCaptor = ArgumentCaptor.forClass(EventType.class);
-        ArgumentCaptor<String> aggregateIdCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<String> payloadCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<CDCEventMessage> messageCaptor = ArgumentCaptor.forClass(CDCEventMessage.class);
 
-        verify(mockEventHandler).handle(
-                eventTypeCaptor.capture(),
-                aggregateIdCaptor.capture(),
-                payloadCaptor.capture()
-        );
+        verify(mockCDCEventHandler).handle(messageCaptor.capture());
 
-        assertThat(eventTypeCaptor.getValue()).isEqualTo(EventType.POST_CREATED);
-        assertThat(aggregateIdCaptor.getValue()).isEqualTo("123e4567-e89b-12d3-a456-426614174000");
-        assertThat(payloadCaptor.getValue()).contains("Test Post");
+        CDCEventMessage message = messageCaptor.getValue();
+        assertThat(message.eventType()).isEqualTo(EventType.POST_CREATED);
+        assertThat(message.aggregateId()).isEqualTo("123e4567-e89b-12d3-a456-426614174000");
+        assertThat(message.payloadJson()).contains("Test Post");
     }
 
     @Test
@@ -96,10 +92,10 @@ class DebeziumEventHandlerTest {
             """;
 
         // When: 이벤트 처리
-        debeziumEventHandler.handleEvent("test-key", cdcEvent);
+        DebeziumEventHandler.handleEvent("test-key", cdcEvent);
 
         // Then: handler가 호출되지 않아야 함
-        verify(mockEventHandler, never()).handle(any(), any(), any());
+        verify(mockCDCEventHandler, never()).handle(any());
     }
 
     @Test
@@ -117,10 +113,10 @@ class DebeziumEventHandlerTest {
             """;
 
         // When & Then: 예외가 발생하지 않아야 함
-        assertThatCode(() -> debeziumEventHandler.handleEvent("test-key", cdcEvent))
+        assertThatCode(() -> DebeziumEventHandler.handleEvent("test-key", cdcEvent))
                 .doesNotThrowAnyException();
 
-        verify(mockEventHandler, never()).handle(any(), any(), any());
+        verify(mockCDCEventHandler, never()).handle(any());
     }
 
     @Test
@@ -137,14 +133,14 @@ class DebeziumEventHandlerTest {
             }
             """;
 
-        when(mockEventHandler.canHandle(EventType.POST_CREATED)).thenReturn(false);
+        when(mockCDCEventHandler.canHandle(EventType.POST_CREATED)).thenReturn(false);
 
         // When: 이벤트 처리
-        debeziumEventHandler.handleEvent("test-key", cdcEvent);
+        DebeziumEventHandler.handleEvent("test-key", cdcEvent);
 
         // Then: handler가 호출되지 않아야 함
-        verify(mockEventHandler, never()).handle(any(), any(), any());
-        verify(mockEventHandler).canHandle(EventType.POST_CREATED);
+        verify(mockCDCEventHandler, never()).handle(any());
+        verify(mockCDCEventHandler).canHandle(EventType.POST_CREATED);
     }
 
     @Test
@@ -165,21 +161,19 @@ class DebeziumEventHandlerTest {
             }
             """;
 
-        when(mockEventHandler.canHandle(EventType.POST_PUBLISHED)).thenReturn(true);
+        when(mockCDCEventHandler.canHandle(EventType.POST_PUBLISHED)).thenReturn(true);
 
         // When: 이벤트 처리
-        debeziumEventHandler.handleEvent("test-key", cdcEvent);
+        DebeziumEventHandler.handleEvent("test-key", cdcEvent);
 
         // Then: POST_PUBLISHED 타입으로 handler가 호출되어야 함
-        ArgumentCaptor<EventType> eventTypeCaptor = ArgumentCaptor.forClass(EventType.class);
+        ArgumentCaptor<CDCEventMessage> messageCaptor = ArgumentCaptor.forClass(CDCEventMessage.class);
 
-        verify(mockEventHandler).handle(
-                eventTypeCaptor.capture(),
-                eq("123e4567-e89b-12d3-a456-426614174000"),
-                any()
-        );
+        verify(mockCDCEventHandler).handle(messageCaptor.capture());
 
-        assertThat(eventTypeCaptor.getValue()).isEqualTo(EventType.POST_PUBLISHED);
+        CDCEventMessage message = messageCaptor.getValue();
+        assertThat(message.eventType()).isEqualTo(EventType.POST_PUBLISHED);
+        assertThat(message.aggregateId()).isEqualTo("123e4567-e89b-12d3-a456-426614174000");
     }
 
     @Test
@@ -199,21 +193,19 @@ class DebeziumEventHandlerTest {
             }
             """;
 
-        when(mockEventHandler.canHandle(EventType.REACTION_ADDED)).thenReturn(true);
+        when(mockCDCEventHandler.canHandle(EventType.REACTION_ADDED)).thenReturn(true);
 
         // When: 이벤트 처리
-        debeziumEventHandler.handleEvent("test-key", cdcEvent);
+        DebeziumEventHandler.handleEvent("test-key", cdcEvent);
 
         // Then: REACTION_ADDED 타입으로 handler가 호출되어야 함
-        ArgumentCaptor<EventType> eventTypeCaptor = ArgumentCaptor.forClass(EventType.class);
+        ArgumentCaptor<CDCEventMessage> messageCaptor = ArgumentCaptor.forClass(CDCEventMessage.class);
 
-        verify(mockEventHandler).handle(
-                eventTypeCaptor.capture(),
-                eq("123e4567-e89b-12d3-a456-426614174000"),
-                any()
-        );
+        verify(mockCDCEventHandler).handle(messageCaptor.capture());
 
-        assertThat(eventTypeCaptor.getValue()).isEqualTo(EventType.REACTION_ADDED);
+        CDCEventMessage message = messageCaptor.getValue();
+        assertThat(message.eventType()).isEqualTo(EventType.REACTION_ADDED);
+        assertThat(message.aggregateId()).isEqualTo("123e4567-e89b-12d3-a456-426614174000");
     }
 
     @Test
@@ -223,21 +215,21 @@ class DebeziumEventHandlerTest {
         String invalidJson = "{ invalid json }";
 
         // When & Then: 예외가 던져지지 않아야 함 (내부적으로 로깅만)
-        assertThatCode(() -> debeziumEventHandler.handleEvent("test-key", invalidJson))
+        assertThatCode(() -> DebeziumEventHandler.handleEvent("test-key", invalidJson))
                 .doesNotThrowAnyException();
 
-        verify(mockEventHandler, never()).handle(any(), any(), any());
+        verify(mockCDCEventHandler, never()).handle(any());
     }
 
     @Test
     @DisplayName("여러 handler 중 처리 가능한 첫 번째 handler에게 위임한다")
     void shouldDelegateToFirstCapableHandler() throws Exception {
         // Given: 3개의 handler가 있고, 두 번째 handler만 처리 가능
-        EventHandler handler1 = mock(EventHandler.class);
-        EventHandler handler2 = mock(EventHandler.class);
-        EventHandler handler3 = mock(EventHandler.class);
+        CDCEventHandler handler1 = mock(CDCEventHandler.class);
+        CDCEventHandler handler2 = mock(CDCEventHandler.class);
+        CDCEventHandler handler3 = mock(CDCEventHandler.class);
 
-        debeziumEventHandler = new DebeziumEventHandler(
+        DebeziumEventHandler = new DebeziumEventHandler(
                 List.of(handler1, handler2, handler3),
                 objectMapper
         );
@@ -257,13 +249,13 @@ class DebeziumEventHandlerTest {
         // handler3는 호출되지 않으므로 stubbing 제거
 
         // When: 이벤트 처리
-        debeziumEventHandler.handleEvent("test-key", cdcEvent);
+        DebeziumEventHandler.handleEvent("test-key", cdcEvent);
 
         // Then: handler2만 호출되고 handler3는 호출되지 않아야 함
         verify(handler1).canHandle(EventType.POST_CREATED);
         verify(handler2).canHandle(EventType.POST_CREATED);
-        verify(handler2).handle(any(), any(), any());
+        verify(handler2).handle(any());
         verify(handler3, never()).canHandle(any());
-        verify(handler3, never()).handle(any(), any(), any());
+        verify(handler3, never()).handle(any());
     }
 }

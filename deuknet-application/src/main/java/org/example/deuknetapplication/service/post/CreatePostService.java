@@ -17,6 +17,7 @@ import org.example.deuknetdomain.domain.user.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -62,17 +63,19 @@ public class CreatePostService implements CreatePostUseCase {
 
         Post post = createAndSavePost(request, author.getId());
 
-        categoryAssignmentService.assignCategories(post.getId(), request.getCategoryIds());
+        return post.getId();
+    }
+
+    private void publishPostCreated(Post post, List<UUID> categoryIds, User author) {
+        categoryAssignmentService.assignCategories(post.getId(), categoryIds);
 
         PostDetailProjection detailProjection = projectionFactory.createDetailProjectionForCreation(
-                post, author, request.getCategoryIds(), java.util.List.of()  // 빈 카테고리 이름 목록
+                post, author, categoryIds, java.util.List.of()
         );
         PostCountProjection countProjection = projectionFactory.createCountProjectionForCreation(post.getId());
 
         dataChangeEventPublisher.publish(EventType.POST_CREATED, post.getId(), detailProjection);
         dataChangeEventPublisher.publish(EventType.POST_CREATED, post.getId(), countProjection);
-
-        return post.getId();
     }
 
     /**
@@ -84,7 +87,8 @@ public class CreatePostService implements CreatePostUseCase {
                 .orElseThrow(ResourceNotFoundException::new);
     }
 
-    /**PostService
+    /**
+     * PostService
      * Post Aggregate 생성 및 저장
      * 이것만이 이 서비스의 핵심 책임입니다.
      */

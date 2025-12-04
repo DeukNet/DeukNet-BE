@@ -7,7 +7,7 @@ import org.example.deuknetapplication.messaging.EventType;
  *
  * Strategy 패턴을 사용하여 각 도메인 이벤트를 독립적으로 처리합니다.
  */
-public interface EventHandler {
+public interface CDCEventHandler {
 
     /**
      * 이 핸들러가 처리할 수 있는 이벤트 타입인지 확인
@@ -20,10 +20,8 @@ public interface EventHandler {
     /**
      * 이벤트 처리
      *
-     * @param eventType 이벤트 타입
-     * @param aggregateId Aggregate ID
-     * @param payloadJson 이벤트 페이로드 (JSON)
+     * @param message CDC 이벤트에 필요한 메시지
      * @throws Exception 처리 중 오류 발생 시
      */
-    void handle(EventType eventType, String aggregateId, String payloadJson) throws Exception;
+    void handle(CDCEventMessage message) throws Exception;
 }
