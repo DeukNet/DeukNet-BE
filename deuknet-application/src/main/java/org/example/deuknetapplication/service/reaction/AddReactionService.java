@@ -12,6 +12,7 @@ import org.example.deuknetdomain.domain.reaction.TargetType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -22,8 +23,9 @@ import java.util.UUID;
  * - LIKE/DISLIKE 배타적 처리 (둘 중 하나만 가능)
  * - PostCountProjection 업데이트 이벤트 발행
  *
- * VIEW(조회수)도 Reaction으로 통일하여 처리합니다.
- * LIKE와 DISLIKE는 배타적이므로, 하나를 누르면 반대쪽이 자동으로 삭제됩니다.
+ * 참고:
+ * - VIEW(조회수)는 중복이 허용됩니다 (동시 요청 시 여러 개 생성 가능)
+ * - LIKE/DISLIKE는 배타적이므로, 하나를 누르면 반대쪽이 자동으로 삭제됩니다
  */
 @Service
 @Transactional
@@ -50,34 +52,47 @@ public class AddReactionService implements AddReactionUseCase {
         // 항상 현재 인증된 사용자의 ID 사용 (보안)
         UUID currentUserId = currentUserPort.getCurrentUserId();
 
-        // 모든 Reaction 타입에 대해 중복 체크
-        boolean alreadyReacted = reactionRepository.existsByTargetIdAndUserIdAndReactionType(
+        // VIEW는 중복을 허용하므로, 별도 체크 없이 바로 생성
+        if (command.reactionType() == ReactionType.VIEW) {
+            Reaction reaction = Reaction.create(
+                    command.reactionType(),
+                    TargetType.POST,
+                    command.targetId(),
+                    currentUserId
+            );
+            reactionRepository.save(reaction);
+            publishReactionEvent(command.targetId(), command.reactionType());
+            return reaction.getId();
+        }
+
+        // LIKE/DISLIKE는 배타적: 반대 반응이 있으면 먼저 삭제
+        ReactionType oppositeType = command.reactionType() == ReactionType.LIKE
+            ? ReactionType.DISLIKE
+            : ReactionType.LIKE;
+
+        reactionRepository.findByTargetIdAndUserIdAndReactionType(
+                command.targetId(),
+                currentUserId,
+                oppositeType
+        ).ifPresent(existingReaction -> {
+            reactionRepository.delete(existingReaction);
+            // 반대 반응 삭제 이벤트 발행
+            publishReactionEvent(command.targetId(), oppositeType);
+        });
+
+        // 같은 타입의 LIKE/DISLIKE가 이미 있는지 확인
+        Optional<Reaction> existing = reactionRepository.findByTargetIdAndUserIdAndReactionType(
                 command.targetId(),
                 currentUserId,
                 command.reactionType()
         );
 
-        if (alreadyReacted) {
-            throw new org.example.deuknetdomain.domain.reaction.exception.DuplicateReactionException();
+        // 이미 있으면 기존 ID 반환
+        if (existing.isPresent()) {
+            return existing.get().getId();
         }
 
-        // LIKE/DISLIKE는 배타적: 반대 반응이 있으면 먼저 삭제 (VIEW는 해당 없음)
-        if (command.reactionType() == ReactionType.LIKE || command.reactionType() == ReactionType.DISLIKE) {
-            ReactionType oppositeType = command.reactionType() == ReactionType.LIKE
-                ? ReactionType.DISLIKE
-                : ReactionType.LIKE;
-
-            reactionRepository.findByTargetIdAndUserIdAndReactionType(
-                    command.targetId(),
-                    currentUserId,
-                    oppositeType
-            ).ifPresent(existingReaction -> {
-                reactionRepository.delete(existingReaction);
-                // 반대 반응 삭제 이벤트 발행
-                publishReactionEvent(command.targetId(), oppositeType);
-            });
-        }
-
+        // 없으면 새로 생성
         Reaction reaction = Reaction.create(
                 command.reactionType(),
                 TargetType.POST,
@@ -86,8 +101,6 @@ public class AddReactionService implements AddReactionUseCase {
         );
 
         reactionRepository.save(reaction);
-
-        // Reaction 타입별로 적절한 Projection 생성 및 이벤트 발행
         publishReactionEvent(command.targetId(), command.reactionType());
 
         return reaction.getId();

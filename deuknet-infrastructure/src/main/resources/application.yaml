@@ -1,19 +1,24 @@
 spring:
   datasource:
-    url: jdbc:postgresql://postgres:5432/app_db
+    url: jdbc:postgresql://localhost:5432/app_db
     username: app_user
     password: app_pass
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     show-sql: true
     open-in-view: false
     properties:
       hibernate.format_sql: true
       hibernate.hbm2ddl.auto: update
   elasticsearch:
-    uris: http://elasticsearch:9200
+    uris: http://localhost:9200
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
       
 # 로깅 설정
 logging:
@@ -51,13 +56,17 @@ springdoc:
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
 
+# Application Configuration
+app:
+  base-url: ${APP_BASE_URL:http://localhost:8080}
+
 # Debezium Embedded Engine Configuration
 debezium:
   enabled: ${DEBEZIUM_ENABLED:true}  # 환경 변수로 제어 가능, 기본값 true
   connector-name: deuknet-outbox-connector
   offset-storage-file-name: ${DEBEZIUM_OFFSET_STORAGE_FILE_NAME:/tmp/debezium-offsets.dat}
   database:
-    hostname: ${DEBEZIUM_DATABASE_HOSTNAME:postgres}
+    hostname: ${DEBEZIUM_DATABASE_HOSTNAME:localhost}
     port: ${DEBEZIUM_DATABASE_PORT:5432}
     name: ${DEBEZIUM_DATABASE_NAME:app_db}
     username: ${DEBEZIUM_DATABASE_USERNAME:app_user}
@@ -65,3 +74,11 @@ debezium:
     server-name: deuknet  # topic.prefix
     schema-include-list: public
     table-include-list: public.outbox_events
+
+# MinIO Configuration
+minio:
+  url: ${MINIO_URL:http://localhost:9000}
+  external-url: ${MINIO_EXTERNAL_URL:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin123}
+  bucket-name: ${MINIO_BUCKET_NAME:deuknet-files}

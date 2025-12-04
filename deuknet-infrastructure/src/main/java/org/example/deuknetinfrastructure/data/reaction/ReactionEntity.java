@@ -12,15 +12,7 @@ import java.util.UUID;
 @Setter
 @Getter
 @Entity
-@Table(
-    name = "reactions",
-    uniqueConstraints = {
-        @UniqueConstraint(
-            name = "uk_reactions_target_user_type",
-            columnNames = {"target_id", "user_id", "reaction_type"}
-        )
-    }
-)
+@Table(name = "reactions")
 public class ReactionEntity {
     
     @Id

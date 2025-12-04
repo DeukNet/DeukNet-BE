@@ -52,7 +52,7 @@ kind: Service
 metadata:
   name: elasticsearch
 spec:
-  selector: Joined on Jul 25, 2024
+  selector:
     app: elasticsearch
   ports:
   - port: {{ .Values.elasticsearch.port }}

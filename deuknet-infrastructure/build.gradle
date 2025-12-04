@@ -67,6 +67,9 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
 
+    // MinIO
+    implementation 'io.minio:minio:8.5.7'
+
     // Debezium Embedded Engine (Kafka 3.7.0/3.7.1 호환)
     implementation 'io.debezium:debezium-embedded:2.7.3.Final'
     implementation 'io.debezium:debezium-connector-postgres:2.7.3.Final'

@@ -84,7 +84,7 @@ public class CreatePostService implements CreatePostUseCase {
                 .orElseThrow(ResourceNotFoundException::new);
     }
 
-    /**
+    /**PostService
      * Post Aggregate 생성 및 저장
      * 이것만이 이 서비스의 핵심 책임입니다.
      */

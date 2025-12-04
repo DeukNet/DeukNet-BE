@@ -26,12 +26,12 @@ public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     /**
-     * Domain Exception 처리
-     * 도메인 규칙 위반 시 발생하는 예외를 처리합니다.
+     * DeukNet Exception 처리
+     * 도메인 및 애플리케이션 예외를 통합 처리합니다.
      */
     @ExceptionHandler(DeukNetException.class)
-    public ResponseEntity<ErrorResponse> handleDomainException(DomainException e) {
-        log.warn("Domain exception occurred: {}", e.getMessage());
+    public ResponseEntity<ErrorResponse> handleDeukNetException(DeukNetException e) {
+        log.warn("DeukNet exception occurred: {}", e.getMessage());
 
         ErrorResponse response = ErrorResponse.of(
                 e.getStatus(),

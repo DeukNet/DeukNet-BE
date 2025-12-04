@@ -60,10 +60,11 @@ spec:
   - name: api
     port: {{ .Values.minio.apiPort }}
     targetPort: {{ .Values.minio.apiPort }}
+    nodePort: {{ .Values.minio.apiNodePort }}
   - name: console
     port: {{ .Values.minio.consolePort }}
     targetPort: {{ .Values.minio.consolePort }}
-  type: ClusterIP
+  type: NodePort
 ---
 apiVersion: v1
 kind: Service
@@ -77,3 +78,27 @@ spec:
     targetPort: {{ .Values.minio.consolePort }}
     nodePort: {{ .Values.minio.consoleNodePort }}
   type: NodePort
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-init
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: minio-mc
+        image: minio/mc:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          mc alias set myminio http://minio:{{ .Values.minio.apiPort }} {{ .Values.minio.rootUser }} {{ .Values.minio.rootPassword }}
+          mc mb myminio/{{ .Values.minio.bucketName }} --ignore-existing
+          mc anonymous set public myminio/{{ .Values.minio.bucketName }}
+          echo "MinIO bucket initialized successfully"

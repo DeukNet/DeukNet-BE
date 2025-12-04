@@ -48,6 +48,8 @@ spec:
               key: GOOGLE_CLIENT_SECRET
         - name: GOOGLE_REDIRECT_URI
           value: {{ .Values.app.oauth.google.redirectUri | quote }}
+        - name: APP_BASE_URL
+          value: {{ .Values.app.baseUrl | quote }}
         - name: DEBEZIUM_DATABASE_HOSTNAME
           value: "postgres"
         - name: DEBEZIUM_DATABASE_PORT
@@ -58,6 +60,16 @@ spec:
           value: {{ .Values.postgres.username | quote }}
         - name: DEBEZIUM_DATABASE_PASSWORD
           value: {{ .Values.postgres.password | quote }}
+        - name: MINIO_URL
+          value: "http://minio:{{ .Values.minio.apiPort }}"
+        - name: MINIO_EXTERNAL_URL
+          value: {{ .Values.minio.externalUrl | quote }}
+        - name: MINIO_ACCESS_KEY
+          value: {{ .Values.minio.rootUser | quote }}
+        - name: MINIO_SECRET_KEY
+          value: {{ .Values.minio.rootPassword | quote }}
+        - name: MINIO_BUCKET_NAME
+          value: {{ .Values.minio.bucketName | quote }}
         livenessProbe:
           httpGet:
             path: /actuator/health

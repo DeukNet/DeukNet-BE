@@ -13,15 +13,16 @@ app:
     type: NodePort
     port: 8080
     nodePort: 30080
+  baseUrl: http://localhost:8080
   oauth:
     google:
       redirectUri: http://localhost:8080/api/auth/oauth/callback/google
 
 postgres:
   image: postgres:15-alpine
-  database: deuknet
-  username: deuknet_user
-  password: deuknet_pass
+  database: app_db
+  username: app_user
+  password: app_pass
   port: 5432
 
 kafka:
@@ -60,5 +61,8 @@ minio:
   rootUser: minioadmin
   rootPassword: minioadmin123
   apiPort: 9000
+  apiNodePort: 30901
   consolePort: 9001
   consoleNodePort: 30900
+  bucketName: deuknet-files
+  externalUrl: http://172.17.0.2:30901  # Minikube 환경의 external URL

@@ -4,37 +4,32 @@ import io.gatling.javaapi.core.*;
 import io.gatling.javaapi.http.*;
 
 import java.time.Duration;
-import java.util.UUID;
-
 import static io.gatling.javaapi.core.CoreDsl.*;
 import static io.gatling.javaapi.http.HttpDsl.*;
 
 /**
  * DeukNet 전체 API 부하 테스트
- *
  * 시나리오:
  * 1. 게시글 목록 조회 (비인증)
  * 2. 게시글 상세 조회 (비인증)
  * 3. 카테고리 목록 조회 (비인증)
  * 4. 사용자 프로필 조회 (비인증)
- *
  * 동시 사용자: 150명
  * 기간: 60초
  */
 public class FullApiLoadTest extends Simulation {
 
     // 테스트 대상 서버 (NodePort 사용)
-    private static final String BASE_URL = "http://172.17.0.2:30080";
+    private static final String BASE_URL = "http://172.17.0.3:30080";
 
     // HTTP 프로토콜 설정
-    private HttpProtocolBuilder httpProtocol = http
+    private final HttpProtocolBuilder httpProtocol = http
         .baseUrl(BASE_URL)
         .acceptHeader("application/json")
         .contentTypeHeader("application/json")
         .userAgentHeader("Gatling Load Test");
 
-    // 시나리오 1: 게시글 목록 조회
-    private ScenarioBuilder browsePostsScenario = scenario("Browse Posts")
+    private final ScenarioBuilder browsePostsScenario = scenario("Browse Posts")
         .exec(
             http("Get Posts - Recent")
                 .get("/api/posts")
@@ -55,7 +50,7 @@ public class FullApiLoadTest extends Simulation {
         );
 
     // 시나리오 2: 게시글 상세 조회
-    private ScenarioBuilder readPostScenario = scenario("Read Post Detail")
+    private final ScenarioBuilder readPostScenario = scenario("Read Post Detail")
         .exec(
             http("Get Post List")
                 .get("/api/posts")
@@ -79,7 +74,7 @@ public class FullApiLoadTest extends Simulation {
         );
 
     // 시나리오 3: 카테고리 조회
-    private ScenarioBuilder browseCategoriesScenario = scenario("Browse Categories")
+    private final ScenarioBuilder browseCategoriesScenario = scenario("Browse Categories")
         .exec(
             http("Get All Categories")
                 .get("/api/categories")
@@ -100,7 +95,7 @@ public class FullApiLoadTest extends Simulation {
         );
 
     // 시나리오 4: 사용자 프로필 조회
-    private ScenarioBuilder viewUserProfileScenario = scenario("View User Profile")
+    private final ScenarioBuilder viewUserProfileScenario = scenario("View User Profile")
         .exec(
             http("Get Post List")
                 .get("/api/posts")
@@ -118,7 +113,7 @@ public class FullApiLoadTest extends Simulation {
         );
 
     // 시나리오 5: 검색 기능
-    private ScenarioBuilder searchScenario = scenario("Search Posts")
+    private final ScenarioBuilder searchScenario = scenario("Search Posts")
         .exec(
             http("Search Posts")
                 .get("/api/posts")
@@ -130,7 +125,7 @@ public class FullApiLoadTest extends Simulation {
         );
 
     // 시나리오 6: 혼합 시나리오 (실제 사용자 행동 패턴)
-    private ScenarioBuilder mixedScenario = scenario("Mixed User Behavior")
+    private final ScenarioBuilder mixedScenario = scenario("Mixed User Behavior")
         .exec(
             http("Visit Homepage - Get Posts")
                 .get("/api/posts")
