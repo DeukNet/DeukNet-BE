@@ -22,9 +22,11 @@ public class RefreshTokenService implements RefreshTokenUseCase {
         if (!jwtPort.isRefreshToken(refreshToken)) {
             throw new InvalidRefreshTokenException();
         }
-        
+
         UUID userId = jwtPort.validateToken(refreshToken);
 
-        return jwtPort.createTokenPair(userId);
+        // 새로운 access token만 생성하고, refresh token은 재발급하지 않음
+        String newAccessToken = jwtPort.generateAccessToken(userId);
+        return new TokenPair(newAccessToken, refreshToken);
     }
 }
