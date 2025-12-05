@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 import static org.example.deuknetinfrastructure.data.category.QCategoryEntity.categoryEntity;
 import static org.example.deuknetinfrastructure.data.comment.QCommentEntity.commentEntity;
-import static org.example.deuknetinfrastructure.data.post.QPostCategoryAssignmentEntity.postCategoryAssignmentEntity;
 import static org.example.deuknetinfrastructure.data.post.QPostEntity.postEntity;
 import static org.example.deuknetinfrastructure.data.reaction.QReactionEntity.reactionEntity;
 import static org.example.deuknetinfrastructure.data.user.QUserEntity.userEntity;
@@ -103,21 +102,15 @@ public class PostRepositoryAdapter implements PostRepository {
         Long dislikeCount = postAndCounts.get(4, Long.class);
         Long viewCount = postAndCounts.get(5, Long.class);
 
-        // 2. Category Assignment + Category join으로 조회
-        List<Tuple> categoryResults = queryFactory
-                .select(postCategoryAssignmentEntity.categoryId, categoryEntity.name)
-                .from(postCategoryAssignmentEntity)
-                .leftJoin(categoryEntity).on(postCategoryAssignmentEntity.categoryId.eq(categoryEntity.id))
-                .where(postCategoryAssignmentEntity.postId.eq(id))
-                .fetch();
-
-        List<UUID> categoryIds = categoryResults.stream()
-                .map(tuple -> tuple.get(postCategoryAssignmentEntity.categoryId))
-                .collect(Collectors.toList());
-
-        List<String> categoryNames = categoryResults.stream()
-                .map(tuple -> tuple.get(categoryEntity.name))
-                .collect(Collectors.toList());
+        // 2. Category 조회 (Post의 categoryId로 직접 조회)
+        String categoryName = null;
+        if (post.getCategoryId() != null) {
+            categoryName = queryFactory
+                    .select(categoryEntity.name)
+                    .from(categoryEntity)
+                    .where(categoryEntity.id.eq(post.getCategoryId()))
+                    .fetchOne();
+        }
 
         // 7. Projection 생성
         PostDetailProjection result = PostDetailProjection.builder()
@@ -132,8 +125,8 @@ public class PostRepositoryAdapter implements PostRepository {
                 .viewCount(viewCount != null ? viewCount : 0L)
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
-                .categoryIds(categoryIds)
-                .categoryNames(categoryNames)
+                .categoryId(post.getCategoryId())
+                .categoryName(categoryName)
                 .commentCount(commentCount != null ? commentCount : 0L)
                 .likeCount(likeCount != null ? likeCount : 0L)
                 .dislikeCount(dislikeCount != null ? dislikeCount : 0L)

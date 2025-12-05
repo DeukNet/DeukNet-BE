@@ -28,7 +28,7 @@ logging:
 
 # JWT Configuration
 jwt:
-  secret: your-secret-key-here-please-change-this-to-a-secure-random-string-at-least-256-bits
+  secret: ${JWT_SECRET:DDDpc0lzQVZlcnlTZWN1cmVTddNyZXRLZXlGb3JKV1Rddd2tlbkdlddVyYXRpb25XaXRoSFM1MTJBbGdvcml0aG1JdE11c3RCZUxvbmdFbm91Z2d}
   access-token-validity-ms: 3600000  # 1 hour
   refresh-token-validity-ms: 604800000  # 7 days
 

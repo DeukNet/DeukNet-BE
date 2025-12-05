@@ -7,7 +7,6 @@ import org.example.deuknetdomain.domain.user.User;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -27,14 +26,13 @@ public class PostProjectionFactory {
      *
      * @param post Post 엔티티
      * @param author 작성자 정보
-     * @param categoryIds 카테고리 ID 목록
+     * @param categoryId 카테고리 ID
      * @return PostDetailProjection
      */
     public PostDetailProjection createDetailProjectionForCreation(
             Post post,
             User author,
-            List<UUID> categoryIds,
-            List<String> categoryNames
+            UUID categoryId
     ) {
         LocalDateTime now = LocalDateTime.now();
 
@@ -50,8 +48,8 @@ public class PostProjectionFactory {
                 .viewCount(0L)  // 초기값 0 (Reaction으로 관리)
                 .createdAt(now)
                 .updatedAt(now)
-                .categoryIds(categoryIds)
-                .categoryNames(categoryNames)
+                .categoryId(categoryId)
+                .categoryName(null)  // TODO: 카테고리 조회 필요
                 .commentCount(0L)
                 .likeCount(0L)
                 .dislikeCount(0L)
@@ -63,7 +61,7 @@ public class PostProjectionFactory {
      *
      * @param post Post 엔티티
      * @param author 작성자 정보
-     * @param categoryIds 카테고리 ID 목록
+     * @param categoryId 카테고리 ID
      * @param commentCount 댓글 수
      * @param likeCount 좋아요 수
      * @param viewCount 조회수
@@ -72,8 +70,8 @@ public class PostProjectionFactory {
     public PostDetailProjection createDetailProjectionForUpdate(
             Post post,
             User author,
-            List<UUID> categoryIds,
-            List<String> categoryNames,
+            UUID categoryId,
+            String categoryName,
             Long commentCount,
             Long likeCount,
             Long dislikeCount,
@@ -91,8 +89,8 @@ public class PostProjectionFactory {
                 .viewCount(viewCount)  // Reaction에서 집계된 값
                 .createdAt(post.getCreatedAt())
                 .updatedAt(LocalDateTime.now())
-                .categoryIds(categoryIds)
-                .categoryNames(categoryNames)
+                .categoryId(categoryId)
+                .categoryName(categoryName)
                 .commentCount(commentCount)
                 .likeCount(likeCount)
                 .dislikeCount(dislikeCount)

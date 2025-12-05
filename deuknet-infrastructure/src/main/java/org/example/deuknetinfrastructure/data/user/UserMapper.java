@@ -15,7 +15,8 @@ public class UserMapper {
                 entity.getUsername(),
                 entity.getDisplayName(),
                 entity.getBio(),
-                entity.getAvatarUrl()
+                entity.getAvatarUrl(),
+                entity.getRole()
         );
     }
 
@@ -28,7 +29,8 @@ public class UserMapper {
                 domain.getUsername(),
                 domain.getDisplayName(),
                 domain.getBio(),
-                domain.getAvatarUrl()
+                domain.getAvatarUrl(),
+                domain.getRole()
         );
     }
 }

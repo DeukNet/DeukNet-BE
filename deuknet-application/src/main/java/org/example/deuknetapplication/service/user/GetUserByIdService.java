@@ -29,7 +29,8 @@ public class GetUserByIdService implements GetUserByIdUseCase {
                 user.getUsername(),
                 user.getDisplayName(),
                 user.getBio(),
-                user.getAvatarUrl()
+                user.getAvatarUrl(),
+                user.getRole()
         );
     }
 }

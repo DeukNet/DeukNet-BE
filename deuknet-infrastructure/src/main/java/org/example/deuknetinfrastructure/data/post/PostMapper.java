@@ -16,12 +16,13 @@ public class PostMapper {
                 Title.from(entity.getTitle()),
                 Content.from(entity.getContent()),
                 entity.getAuthorId(),
+                entity.getCategoryId(),
                 entity.getStatus(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );
     }
-    
+
     public PostEntity toEntity(Post domain) {
         if (domain == null) return null;
 
@@ -30,6 +31,7 @@ public class PostMapper {
                 domain.getTitle().getValue(),
                 domain.getContent().getValue(),
                 domain.getAuthorId(),
+                domain.getCategoryId(),
                 domain.getStatus(),
                 domain.getCreatedAt(),
                 domain.getUpdatedAt()

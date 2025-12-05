@@ -34,7 +34,8 @@ public class GetCurrentUserService implements GetCurrentUserUseCase {
                 user.getUsername(),
                 user.getDisplayName(),
                 user.getBio(),
-                user.getAvatarUrl()
+                user.getAvatarUrl(),
+                user.getRole()
         );
     }
 }

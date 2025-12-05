@@ -6,7 +6,6 @@ import lombok.Getter;
 import org.example.deuknetdomain.common.seedwork.Projection;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -35,8 +34,8 @@ public class PostDetailProjection extends Projection {
     private final LocalDateTime updatedAt;
 
     // 연관 데이터
-    private final List<UUID> categoryIds;
-    private final List<String> categoryNames;
+    private final UUID categoryId;
+    private final String categoryName;
     private final Long commentCount;
     private final Long likeCount;
     private final Long dislikeCount;
@@ -45,7 +44,7 @@ public class PostDetailProjection extends Projection {
     public PostDetailProjection(UUID id, String title, String content,
                                 UUID authorId, String authorUsername, String authorDisplayName, String authorAvatarUrl,
                                 String status, Long viewCount, LocalDateTime createdAt, LocalDateTime updatedAt,
-                                List<UUID> categoryIds, List<String> categoryNames, Long commentCount, Long likeCount, Long dislikeCount) {
+                                UUID categoryId, String categoryName, Long commentCount, Long likeCount, Long dislikeCount) {
         super(id);
         this.title = title;
         this.content = content;
@@ -57,8 +56,8 @@ public class PostDetailProjection extends Projection {
         this.viewCount = viewCount;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
-        this.categoryIds = categoryIds;
-        this.categoryNames = categoryNames;
+        this.categoryId = categoryId;
+        this.categoryName = categoryName;
         this.commentCount = commentCount;
         this.likeCount = likeCount;
         this.dislikeCount = dislikeCount;

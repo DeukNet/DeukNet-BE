@@ -1,20 +1,19 @@
 package org.example.deuknetapplication.port.in.post;
 
-import java.util.List;
 import java.util.UUID;
 
 public class CreatePostApplicationRequest {
     private String title;
     private String content;
-    private List<UUID> categoryIds;
+    private UUID categoryId;
 
     protected CreatePostApplicationRequest() {
     }
 
-    public CreatePostApplicationRequest(String title, String content, List<UUID> categoryIds) {
+    public CreatePostApplicationRequest(String title, String content, UUID categoryId) {
         this.title = title;
         this.content = content;
-        this.categoryIds = categoryIds;
+        this.categoryId = categoryId;
     }
 
     public String getTitle() {
@@ -33,11 +32,11 @@ public class CreatePostApplicationRequest {
         this.content = content;
     }
 
-    public List<UUID> getCategoryIds() {
-        return categoryIds;
+    public UUID getCategoryId() {
+        return categoryId;
     }
 
-    public void setCategoryIds(List<UUID> categoryIds) {
-        this.categoryIds = categoryIds;
+    public void setCategoryId(UUID categoryId) {
+        this.categoryId = categoryId;
     }
 }

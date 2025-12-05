@@ -6,7 +6,6 @@ import org.example.deuknetapplication.messaging.EventType;
 import org.example.deuknetapplication.port.in.post.PublishPostUseCase;
 import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
 import org.example.deuknetapplication.port.out.repository.CommentRepository;
-import org.example.deuknetapplication.port.out.repository.PostCategoryAssignmentRepository;
 import org.example.deuknetapplication.port.out.repository.PostRepository;
 import org.example.deuknetapplication.port.out.repository.ReactionRepository;
 import org.example.deuknetapplication.port.out.repository.UserRepository;
@@ -15,14 +14,12 @@ import org.example.deuknetapplication.projection.post.PostCountProjection;
 import org.example.deuknetapplication.projection.post.PostDetailProjection;
 import org.example.deuknetapplication.service.reaction.ReactionProjectionFactory;
 import org.example.deuknetdomain.domain.post.Post;
-import org.example.deuknetdomain.domain.post.PostCategoryAssignment;
 import org.example.deuknetdomain.domain.reaction.ReactionType;
 import org.example.deuknetdomain.domain.user.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -38,7 +35,6 @@ import java.util.UUID;
 public class PublishPostService implements PublishPostUseCase {
 
     private final PostRepository postRepository;
-    private final PostCategoryAssignmentRepository postCategoryAssignmentRepository;
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
     private final ReactionRepository reactionRepository;
@@ -48,7 +44,6 @@ public class PublishPostService implements PublishPostUseCase {
 
     public PublishPostService(
             PostRepository postRepository,
-            PostCategoryAssignmentRepository postCategoryAssignmentRepository,
             UserRepository userRepository,
             CommentRepository commentRepository,
             ReactionRepository reactionRepository,
@@ -57,7 +52,6 @@ public class PublishPostService implements PublishPostUseCase {
             DataChangeEventPublisher dataChangeEventPublisher
     ) {
         this.postRepository = postRepository;
-        this.postCategoryAssignmentRepository = postCategoryAssignmentRepository;
         this.userRepository = userRepository;
         this.commentRepository = commentRepository;
         this.reactionRepository = reactionRepository;
@@ -106,8 +100,7 @@ public class PublishPostService implements PublishPostUseCase {
      */
     private void publishPostPublishedEvent(Post post) {
         User author = getAuthor(post.getAuthorId());
-        List<UUID> categoryIds = getCategoryIds(post.getId());
-        publishPostDetailProjection(post, author, categoryIds);
+        publishPostDetailProjection(post, author);
     }
 
     /**
@@ -119,19 +112,9 @@ public class PublishPostService implements PublishPostUseCase {
     }
 
     /**
-     * 카테고리 ID 목록 조회 (SRP: 카테고리 조회 책임 분리)
-     */
-    private List<UUID> getCategoryIds(UUID postId) {
-        return postCategoryAssignmentRepository.findByPostId(postId)
-                .stream()
-                .map(PostCategoryAssignment::getCategoryId)
-                .toList();
-    }
-
-    /**
      * PostDetailProjection 이벤트 발행 (SRP: Detail Projection 발행 책임 분리)
      */
-    private void publishPostDetailProjection(Post post, User author, List<UUID> categoryIds) {
+    private void publishPostDetailProjection(Post post, User author) {
         LocalDateTime now = LocalDateTime.now();
 
         // 현재 통계 조회
@@ -155,8 +138,8 @@ public class PublishPostService implements PublishPostUseCase {
                 .viewCount(viewCount)  // Reaction에서 집계
                 .createdAt(post.getCreatedAt())
                 .updatedAt(now)
-                .categoryIds(categoryIds)
-                .categoryNames(java.util.List.of())  // 빈 카테고리 이름 목록
+                .categoryId(post.getCategoryId())
+                .categoryName(null)  // TODO: 카테고리 이름 조회 필요
                 .commentCount(commentCount)
                 .likeCount(likeCount)
                 .dislikeCount(dislikeCount)

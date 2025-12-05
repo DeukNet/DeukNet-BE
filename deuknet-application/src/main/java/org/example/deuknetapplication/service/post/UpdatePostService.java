@@ -41,7 +41,6 @@ public class UpdatePostService implements UpdatePostUseCase {
     private final CommentRepository commentRepository;
     private final ReactionRepository reactionRepository;
     private final CurrentUserPort currentUserPort;
-    private final PostCategoryAssignmentService categoryAssignmentService;
     private final PostProjectionFactory postProjectionFactory;
     private final ReactionProjectionFactory reactionProjectionFactory;
     private final DataChangeEventPublisher dataChangeEventPublisher;
@@ -52,7 +51,6 @@ public class UpdatePostService implements UpdatePostUseCase {
             CommentRepository commentRepository,
             ReactionRepository reactionRepository,
             CurrentUserPort currentUserPort,
-            PostCategoryAssignmentService categoryAssignmentService,
             PostProjectionFactory postProjectionFactory,
             ReactionProjectionFactory reactionProjectionFactory,
             DataChangeEventPublisher dataChangeEventPublisher
@@ -62,7 +60,6 @@ public class UpdatePostService implements UpdatePostUseCase {
         this.commentRepository = commentRepository;
         this.reactionRepository = reactionRepository;
         this.currentUserPort = currentUserPort;
-        this.categoryAssignmentService = categoryAssignmentService;
         this.postProjectionFactory = postProjectionFactory;
         this.reactionProjectionFactory = reactionProjectionFactory;
         this.dataChangeEventPublisher = dataChangeEventPublisher;
@@ -73,13 +70,10 @@ public class UpdatePostService implements UpdatePostUseCase {
         // 1. Post 조회 및 권한 검증 (핵심 도메인 로직)
         Post post = getPostAndVerifyOwnership(request.getPostId());
 
-        // 2. Post 내용 업데이트 (핵심 도메인 로직)
+        // 2. Post 내용 및 카테고리 업데이트 (핵심 도메인 로직)
         updatePostContent(post, request);
 
-        // 3. 카테고리 재할당 (전문 서비스에 위임)
-        categoryAssignmentService.reassignCategories(request.getPostId(), request.getCategoryIds());
-
-        // 4. 통계 조회
+        // 3. 통계 조회
         User author = getAuthor(post.getAuthorId());
         long commentCount = commentRepository.countByPostId(post.getId());
         long likeCount = reactionRepository.countByTargetIdAndReactionType(
@@ -89,15 +83,15 @@ public class UpdatePostService implements UpdatePostUseCase {
         long viewCount = reactionRepository.countByTargetIdAndReactionType(
                 post.getId(), ReactionType.VIEW);
 
-        // 5. Projection 생성 (전문 팩토리에 위임)
+        // 4. Projection 생성 (전문 팩토리에 위임)
         PostDetailProjection detailProjection = postProjectionFactory.createDetailProjectionForUpdate(
-                post, author, request.getCategoryIds(), java.util.List.of(), commentCount, likeCount, dislikeCount, viewCount
+                post, author, request.getCategoryId(), null, commentCount, likeCount, dislikeCount, viewCount
         );
         PostCountProjection countProjection = reactionProjectionFactory.createCountProjection(
                 post.getId(), commentCount, likeCount, dislikeCount, viewCount
         );
 
-        // 6. 이벤트 발행
+        // 5. 이벤트 발행
         dataChangeEventPublisher.publish(EventType.POST_UPDATED, post.getId(), detailProjection);
         dataChangeEventPublisher.publish(EventType.POST_UPDATED, post.getId(), countProjection);
     }
@@ -118,13 +112,14 @@ public class UpdatePostService implements UpdatePostUseCase {
     }
 
     /**
-     * Post 내용 업데이트
+     * Post 내용 및 카테고리 업데이트
      */
     private void updatePostContent(Post post, UpdatePostApplcationRequest request) {
         post.updateContent(
                 Title.from(request.getTitle()),
                 Content.from(request.getContent())
         );
+        post.updateCategory(request.getCategoryId());
         postRepository.save(post);
     }
 

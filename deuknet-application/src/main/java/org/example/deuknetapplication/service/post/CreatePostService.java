@@ -17,7 +17,6 @@ import org.example.deuknetdomain.domain.user.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -27,7 +26,6 @@ import java.util.UUID;
  *
  * - Post 생성 도메인 로직만 직접 처리
  * - 나머지 책임은 각 전문 서비스에 위임
- *   - PostCategoryAssignmentService: 카테고리 할당
  *   - PostProjectionFactory: Projection 객체 생성
  */
 @Service
@@ -37,7 +35,6 @@ public class CreatePostService implements CreatePostUseCase {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final CurrentUserPort currentUserPort;
-    private final PostCategoryAssignmentService categoryAssignmentService;
     private final PostProjectionFactory projectionFactory;
     private final DataChangeEventPublisher dataChangeEventPublisher;
 
@@ -45,14 +42,12 @@ public class CreatePostService implements CreatePostUseCase {
             PostRepository postRepository,
             UserRepository userRepository,
             CurrentUserPort currentUserPort,
-            PostCategoryAssignmentService categoryAssignmentService,
             PostProjectionFactory projectionFactory,
             DataChangeEventPublisher dataChangeEventPublisher
     ) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.currentUserPort = currentUserPort;
-        this.categoryAssignmentService = categoryAssignmentService;
         this.projectionFactory = projectionFactory;
         this.dataChangeEventPublisher = dataChangeEventPublisher;
     }
@@ -63,14 +58,14 @@ public class CreatePostService implements CreatePostUseCase {
 
         Post post = createAndSavePost(request, author.getId());
 
+        publishPostCreated(post, author);
+
         return post.getId();
     }
 
-    private void publishPostCreated(Post post, List<UUID> categoryIds, User author) {
-        categoryAssignmentService.assignCategories(post.getId(), categoryIds);
-
+    private void publishPostCreated(Post post, User author) {
         PostDetailProjection detailProjection = projectionFactory.createDetailProjectionForCreation(
-                post, author, categoryIds, java.util.List.of()
+                post, author, post.getCategoryId()
         );
         PostCountProjection countProjection = projectionFactory.createCountProjectionForCreation(post.getId());
 
@@ -96,7 +91,8 @@ public class CreatePostService implements CreatePostUseCase {
         Post post = Post.create(
                 Title.from(request.getTitle()),
                 Content.from(request.getContent()),
-                authorId
+                authorId,
+                request.getCategoryId()
         );
         return postRepository.save(post);
     }

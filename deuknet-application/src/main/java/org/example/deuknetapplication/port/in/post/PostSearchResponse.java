@@ -26,8 +26,8 @@ public class PostSearchResponse {
     private String authorUsername;
     private String authorDisplayName;
     private String status;
-    private List<UUID> categoryIds;
-    private List<String> categoryNames;
+    private UUID categoryId;
+    private String categoryName;
     private Long viewCount;
     private Long commentCount;
     private Long likeCount;
@@ -48,8 +48,8 @@ public class PostSearchResponse {
         this.authorUsername = projection.getAuthorUsername();
         this.authorDisplayName = projection.getAuthorDisplayName();
         this.status = projection.getStatus();
-        this.categoryIds = projection.getCategoryIds() != null ? projection.getCategoryIds() : List.of();
-        this.categoryNames = projection.getCategoryNames() != null ? projection.getCategoryNames() : List.of();
+        this.categoryId = projection.getCategoryId();
+        this.categoryName = projection.getCategoryName();
         this.viewCount = projection.getViewCount();
         this.commentCount = projection.getCommentCount();
         this.likeCount = projection.getLikeCount();

@@ -92,16 +92,16 @@ public class PostDetailDocument extends BaseDocument {
     private String status;
 
     /**
-     * 카테고리 ID 목록 (필터링용)
+     * 카테고리 ID (필터링용)
      */
     @Field(type = FieldType.Keyword)
-    private List<String> categoryIds;
+    private String categoryId;
 
     /**
-     * 카테고리 이름 목록 (검색 및 표시용)
+     * 카테고리 이름 (검색 및 표시용)
      */
     @Field(type = FieldType.Text)
-    private List<String> categoryNames;
+    private String categoryName;
 
     /**
      * 조회수 (정렬 및 집계)
@@ -137,7 +137,7 @@ public class PostDetailDocument extends BaseDocument {
 
     public static PostDetailDocument create(UUID id, String title, String content,
                                             UUID authorId, String authorUsername, String authorDisplayName,
-                                            String status, List<UUID> categoryIds, List<String> categoryNames,
+                                            String status, UUID categoryId, String categoryName,
                                             Long viewCount, Long commentCount, Long likeCount, Long dislikeCount,
                                             java.time.LocalDateTime createdAt, java.time.LocalDateTime updatedAt) {
         PostDetailDocument document = new PostDetailDocument(id);
@@ -147,8 +147,8 @@ public class PostDetailDocument extends BaseDocument {
         document.authorUsername = authorUsername;
         document.authorDisplayName = authorDisplayName;
         document.status = status;
-        document.categoryIds = categoryIds != null ? categoryIds.stream().map(UUID::toString).toList() : List.of();
-        document.categoryNames = categoryNames != null ? categoryNames : List.of();
+        document.categoryId = categoryId != null ? categoryId.toString() : null;
+        document.categoryName = categoryName;
         document.viewCount = viewCount;
         document.commentCount = commentCount;
         document.likeCount = likeCount;

@@ -15,42 +15,50 @@ public class Post extends AggregateRoot {
     private Title title;
     private Content content;
     private final UUID authorId;
+    private UUID categoryId;
     private PostStatus status;
     // viewCount 제거 - Reaction 테이블에서 집계
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    private Post(UUID id, Title title, Content content, UUID authorId,
+    private Post(UUID id, Title title, Content content, UUID authorId, UUID categoryId,
                  PostStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
         super(id);
         this.title = title;
         this.content = content;
         this.authorId = authorId;
+        this.categoryId = categoryId;
         this.status = status;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
 
-    public static Post create(Title title, Content content, UUID authorId) {
+    public static Post create(Title title, Content content, UUID authorId, UUID categoryId) {
         return new Post(
                 UUID.randomUUID(),
                 title,
                 content,
                 authorId,
+                categoryId,
                 PostStatus.DRAFT,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
     }
 
-    public static Post restore(UUID id, Title title, Content content, UUID authorId,
+    public static Post restore(UUID id, Title title, Content content, UUID authorId, UUID categoryId,
                                PostStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        return new Post(id, title, content, authorId, status, createdAt, updatedAt);
+        return new Post(id, title, content, authorId, categoryId, status, createdAt, updatedAt);
     }
 
     public void updateContent(Title title, Content content) {
         this.title = title;
         this.content = content;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void updateCategory(UUID categoryId) {
+        this.categoryId = categoryId;
         this.updatedAt = LocalDateTime.now();
     }
 

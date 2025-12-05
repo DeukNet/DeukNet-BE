@@ -3,7 +3,6 @@ package org.example.deuknetpresentation.controller.post.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.example.deuknetapplication.port.in.post.CreatePostApplicationRequest;
 
-import java.util.List;
 import java.util.UUID;
 
 @Schema(description = "게시글 작성 요청")
@@ -13,8 +12,8 @@ public class CreatePostRequest extends CreatePostApplicationRequest {
         super();
     }
 
-    public CreatePostRequest(String title, String content, List<UUID> categoryIds) {
-        super(title, content, categoryIds);
+    public CreatePostRequest(String title, String content, UUID categoryId) {
+        super(title, content, categoryId);
     }
 
     @Override
@@ -30,8 +29,8 @@ public class CreatePostRequest extends CreatePostApplicationRequest {
     }
 
     @Override
-    @Schema(description = "카테고리 ID 목록", example = "[\"123e4567-e89b-12d3-a456-426614174000\"]")
-    public List<UUID> getCategoryIds() {
-        return super.getCategoryIds();
+    @Schema(description = "카테고리 ID", example = "123e4567-e89b-12d3-a456-426614174000")
+    public UUID getCategoryId() {
+        return super.getCategoryId();
     }
 }

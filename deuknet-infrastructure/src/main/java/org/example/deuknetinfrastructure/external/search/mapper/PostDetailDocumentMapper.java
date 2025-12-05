@@ -33,11 +33,8 @@ public class PostDetailDocumentMapper {
                 .viewCount(document.getViewCount())
                 .createdAt(document.getCreatedAt())
                 .updatedAt(document.getUpdatedAt())
-                .categoryIds(document.getCategoryIds() != null ?
-                    document.getCategoryIds().stream()
-                        .map(UUID::fromString)
-                        .toList() : List.of())
-                .categoryNames(document.getCategoryNames())
+                .categoryId(document.getCategoryId() != null ? UUID.fromString(document.getCategoryId()) : null)
+                .categoryName(document.getCategoryName())
                 .commentCount(document.getCommentCount())
                 .likeCount(document.getLikeCount())
                 .dislikeCount(document.getDislikeCount())
@@ -60,8 +57,8 @@ public class PostDetailDocumentMapper {
                 projection.getAuthorUsername(),
                 projection.getAuthorDisplayName(),
                 projection.getStatus(),
-                projection.getCategoryIds(),
-                projection.getCategoryNames(),
+                projection.getCategoryId(),
+                projection.getCategoryName(),
                 projection.getViewCount(),
                 projection.getCommentCount(),
                 projection.getLikeCount(),

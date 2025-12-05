@@ -26,14 +26,17 @@ public class PostEntity {
     
     @Column(name = "author_id", nullable = false, columnDefinition = "UUID")
     private UUID authorId;
-    
+
+    @Column(name = "category_id", columnDefinition = "UUID")
+    private UUID categoryId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private PostStatus status;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
-    
+
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
@@ -43,12 +46,13 @@ public class PostEntity {
     public PostEntity() {
     }
 
-    public PostEntity(UUID id, String title, String content, UUID authorId,
+    public PostEntity(UUID id, String title, String content, UUID authorId, UUID categoryId,
                       PostStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.title = title;
         this.content = content;
         this.authorId = authorId;
+        this.categoryId = categoryId;
         this.status = status;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
