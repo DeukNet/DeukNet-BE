@@ -3,6 +3,7 @@ package org.example.deuknetpresentation.controller.user;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.example.deuknetapplication.port.in.user.UserResponse;
 import org.example.deuknetpresentation.controller.user.dto.UpdateUserProfileRequest;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,5 +37,5 @@ public interface UserApi {
             security = @SecurityRequirement(name = "Bearer Authentication")
     )
     @PutMapping("/me")
-    void updateProfile(@RequestBody UpdateUserProfileRequest request);
+    void updateProfile(@Valid @RequestBody UpdateUserProfileRequest request);
 }
