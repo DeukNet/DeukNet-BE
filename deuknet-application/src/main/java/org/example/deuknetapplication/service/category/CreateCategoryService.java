@@ -22,13 +22,17 @@ public class CreateCategoryService implements CreateCategoryUseCase {
 
     @Override
     public UUID createCategory(CreateCategoryApplicationRequest request) {
-        categoryRepository.findByName(request.getName())
+        // 띄어쓰기 제거 및 정규화
+        String normalizedName = request.getName().replaceAll("\\s+", "");
+
+        // 중복 확인 (띄어쓰기 제거된 이름으로)
+        categoryRepository.findByName(normalizedName)
                 .ifPresent(c -> {
                     throw new CategoryAlreadyExistsException();
                 });
 
         Category category = Category.create(
-                org.example.deuknetdomain.common.vo.CategoryName.of(request.getName()),
+                org.example.deuknetdomain.common.vo.CategoryName.of(normalizedName),
                 request.getParentCategoryId()
         );
 
