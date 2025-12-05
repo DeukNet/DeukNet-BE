@@ -1,10 +1,12 @@
 package org.example.deuknetinfrastructure.security;
 
+import org.example.deuknetdomain.domain.user.Role;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -23,7 +25,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> {})  // Use WebMvcConfigurer CORS configuration
-            .csrf(csrf -> csrf.disable())
+            .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
@@ -69,9 +71,9 @@ public class SecurityConfig {
                 // Category API
                 .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/categories/*").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/categories").authenticated()
-                .requestMatchers(HttpMethod.PUT, "/api/categories/*").authenticated()
-                .requestMatchers(HttpMethod.DELETE, "/api/categories/*").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/categories").hasAuthority(Role.ADMIN.name())
+                .requestMatchers(HttpMethod.PUT, "/api/categories/*").hasAuthority(Role.ADMIN.name())
+                .requestMatchers(HttpMethod.DELETE, "/api/categories/*").hasAuthority(Role.ADMIN.name())
 
                 // User API (더 구체적인 패턴을 먼저 배치)
                 .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
