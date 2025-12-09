@@ -14,7 +14,7 @@ import java.io.IOException;
 
 @Slf4j
 @RequiredArgsConstructor
-@Component // todo 개 병신 코드 리펙토링 꼭 할 것, 직렬화 문제... 이건 진짜 왜 일어나냐?
+@Component
 public class PostProjectionCommandAdapter implements PostProjectionCommandPort {
 
     private static final String INDEX_NAME = "posts-detail";
@@ -28,13 +28,10 @@ public class PostProjectionCommandAdapter implements PostProjectionCommandPort {
     public void indexPostDetail(String payloadJson) {
         try {
             com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            objectMapper.findAndRegisterModules(); // LocalDateTime 등을 위해 필요
+            objectMapper.findAndRegisterModules();
 
-            // JSON을 PostDetailProjection으로 직접 역직렬화 (올바른 타입으로)
             PostDetailProjection projection = objectMapper.readValue(payloadJson, PostDetailProjection.class);
 
-            // Projection을 Document로 변환하여 Elasticsearch에 저장
-            // (User 정보는 제외하고 authorId, authorType만 저장됨)
             save(projection);
         } catch (Exception e) {
             throw new SearchOperationException("Failed to index PostDetail", e);
@@ -91,7 +88,7 @@ public class PostProjectionCommandAdapter implements PostProjectionCommandPort {
             params.put("commentCount", payload.get("commentCount").asLong());
         }
 
-        if (scriptBuilder.length() > 0) {
+        if (!scriptBuilder.isEmpty()) {
             String script = scriptBuilder.toString();
             java.util.Map<String, co.elastic.clients.json.JsonData> paramsMap = new java.util.HashMap<>();
 
@@ -121,8 +118,6 @@ public class PostProjectionCommandAdapter implements PostProjectionCommandPort {
                         PostDetailDocument.class
                 );
             } catch (co.elastic.clients.elasticsearch._types.ElasticsearchException e) {
-                // 문서가 존재하지 않는 경우 (Post가 아직 인덱싱되지 않음)
-                // Eventual consistency를 위해 경고 로그만 남기고 스킵
                 if (e.getMessage() != null && e.getMessage().contains("document_missing_exception")) {
                     log.warn("Post document not yet indexed in Elasticsearch, skipping count update for postId: {}", postId);
                     return;
@@ -149,7 +144,6 @@ public class PostProjectionCommandAdapter implements PostProjectionCommandPort {
     }
 
     private void saveInternal(PostDetailDocument document) throws IOException {
-        ensureIndexExists();
 
         elasticsearchClient.index(i -> i
                 .index(INDEX_NAME)
@@ -158,23 +152,5 @@ public class PostProjectionCommandAdapter implements PostProjectionCommandPort {
         );
 
         elasticsearchClient.indices().refresh(r -> r.index(INDEX_NAME));
-    }
-
-
-    /**
-     * 테스트 환경에서 인덱스가 없으면 생성합니다.
-     * Spring Data Elasticsearch가 PostDetailDocumentRepository를 통해
-     * 자동으로 인덱스를 생성하므로, 여기서는 인덱스 존재 여부만 확인합니다.
-     */
-    private void ensureIndexExists() throws IOException {
-        try {
-            boolean exists = elasticsearchClient.indices().exists(e -> e.index(INDEX_NAME)).value();
-            if (!exists) {
-                // 인덱스가 없으면 동적으로 생성됩니다.
-                // Spring이 @Document 어노테이션을 기반으로 매핑을 관리합니다.
-            }
-        } catch (Exception e) {
-            // 인덱스 확인 중 에러는 무시
-        }
     }
 }
