@@ -6,7 +6,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.deuknetapplication.messaging.EventType;
 import org.example.deuknetapplication.port.out.external.search.PostProjectionCommandPort;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
+
+import java.io.IOException;
 
 /**
  * Post 이벤트 전용 핸들러
@@ -32,6 +36,11 @@ public class PostCDCEventHandler implements CDCEventHandler {
     }
 
     @Override
+    @Retryable(
+            retryFor = {IOException.class},
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 100, multiplier = 2)
+    )
     public void handle(CDCEventMessage message) throws Exception {
 
         EventType eventType = message.eventType();

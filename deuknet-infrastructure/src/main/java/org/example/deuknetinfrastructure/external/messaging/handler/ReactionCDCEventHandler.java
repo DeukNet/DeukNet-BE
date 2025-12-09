@@ -3,7 +3,11 @@ package org.example.deuknetinfrastructure.external.messaging.handler;
 import lombok.extern.slf4j.Slf4j;
 import org.example.deuknetapplication.messaging.EventType;
 import org.example.deuknetapplication.port.out.external.search.PostProjectionCommandPort;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
+
+import java.io.IOException;
 
 /**
  * Reaction 이벤트 전용 핸들러
@@ -29,6 +33,11 @@ public class ReactionCDCEventHandler implements CDCEventHandler {
     }
 
     @Override
+    @Retryable(
+            retryFor = {IOException.class},
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 100, multiplier = 2)
+    )
     public void handle(CDCEventMessage message) throws Exception {
         String payloadJson = message.payloadJson();
         EventType eventType = message.eventType();

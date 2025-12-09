@@ -2,6 +2,7 @@ package org.example.deuknetinfrastructure.external.search.adapter;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.deuknetapplication.port.out.external.search.PostProjectionCommandPort;
 import org.example.deuknetapplication.projection.post.PostDetailProjection;
 import org.example.deuknetinfrastructure.external.search.document.PostDetailDocument;
@@ -11,8 +12,9 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
+@Slf4j
 @RequiredArgsConstructor
-@Component
+@Component // todo 개 병신 코드 리펙토링 꼭 할 것, 직렬화 문제... 이건 진짜 왜 일어나냐?
 public class PostProjectionCommandAdapter implements PostProjectionCommandPort {
 
     private static final String INDEX_NAME = "posts-detail";
@@ -28,12 +30,13 @@ public class PostProjectionCommandAdapter implements PostProjectionCommandPort {
             com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
             objectMapper.findAndRegisterModules(); // LocalDateTime 등을 위해 필요
 
-            PostDetailDocument document = objectMapper.readValue(payloadJson, PostDetailDocument.class);
-            PostDetailProjection projection = mapper.toProjection(document);
+            // JSON을 PostDetailProjection으로 직접 역직렬화 (올바른 타입으로)
+            PostDetailProjection projection = objectMapper.readValue(payloadJson, PostDetailProjection.class);
 
+            // Projection을 Document로 변환하여 Elasticsearch에 저장
+            // (User 정보는 제외하고 authorId, authorType만 저장됨)
             save(projection);
         } catch (Exception e) {
-            e.printStackTrace();
             throw new SearchOperationException("Failed to index PostDetail", e);
         }
     }
@@ -41,37 +44,13 @@ public class PostProjectionCommandAdapter implements PostProjectionCommandPort {
     /**
      * PostCountProjection으로 Elasticsearch 업데이트
      * Debezium에서 호출됩니다.
-     *
-     * Connection is closed 에러를 처리하기 위해 재시도 로직 포함
      */
     public void updatePostCounts(String payloadJson) {
-        int maxRetries = 3;
-        int retryCount = 0;
-        Exception lastException = null;
-
-        while (retryCount < maxRetries) {
-            try {
-                updatePostCountsInternal(payloadJson);
-                return;  // 성공 시 즉시 반환
-            } catch (Exception e) {
-                lastException = e;
-                retryCount++;
-
-                if (isRetriableException(e) && retryCount < maxRetries) {
-                    System.out.println("Elasticsearch 연결 오류 발생, 재시도 " + retryCount + "/" + maxRetries);
-                    try {
-                        Thread.sleep(100 * retryCount);  // Exponential backoff
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        break;
-                    }
-                } else {
-                    break;
-                }
-            }
+        try {
+            updatePostCountsInternal(payloadJson);
+        } catch (Exception e) {
+            throw new SearchOperationException("Failed to update post counts", e);
         }
-
-        throw new SearchOperationException("Failed to update post counts after " + maxRetries + " retries", lastException);
     }
 
     public void deletePost(String postId) {
@@ -129,17 +108,27 @@ public class PostProjectionCommandAdapter implements PostProjectionCommandPort {
                 paramsMap.put("commentCount", co.elastic.clients.json.JsonData.of(payload.get("commentCount").asLong()));
             }
 
-            elasticsearchClient.update(u -> u
-                            .index(INDEX_NAME)
-                            .id(postId)
-                            .script(s -> s
-                                    .inline(i -> i
-                                            .source(script)
-                                            .params(paramsMap)
-                                    )
-                            ),
-                    PostDetailDocument.class
-            );
+            try {
+                elasticsearchClient.update(u -> u
+                                .index(INDEX_NAME)
+                                .id(postId)
+                                .script(s -> s
+                                        .inline(i -> i
+                                                .source(script)
+                                                .params(paramsMap)
+                                        )
+                                ),
+                        PostDetailDocument.class
+                );
+            } catch (co.elastic.clients.elasticsearch._types.ElasticsearchException e) {
+                // 문서가 존재하지 않는 경우 (Post가 아직 인덱싱되지 않음)
+                // Eventual consistency를 위해 경고 로그만 남기고 스킵
+                if (e.getMessage() != null && e.getMessage().contains("document_missing_exception")) {
+                    log.warn("Post document not yet indexed in Elasticsearch, skipping count update for postId: {}", postId);
+                    return;
+                }
+                throw e;
+            }
         }
     }
 
@@ -147,40 +136,16 @@ public class PostProjectionCommandAdapter implements PostProjectionCommandPort {
      * Document 저장 (테스트용)
      * Elasticsearch Client를 사용하여 Document를 저장합니다.
      * 테스트 환경에서 인덱스가 없으면 자동으로 생성합니다.
-     *
-     * Connection is closed 에러를 처리하기 위해 재시도 로직 포함
      */
     @Override
     public void save(PostDetailProjection projection) {
-        int maxRetries = 3;
-        int retryCount = 0;
-        Exception lastException = null;
-
         PostDetailDocument document = mapper.toDocument(projection);
 
-        while (retryCount < maxRetries) {
-            try {
-                saveInternal(document);
-                return;  // 성공 시 즉시 반환
-            } catch (Exception e) {
-                lastException = e;
-                retryCount++;
-
-                if (isRetriableException(e) && retryCount < maxRetries) {
-                    System.out.println("Elasticsearch 연결 오류 발생 (save), 재시도 " + retryCount + "/" + maxRetries);
-                    try {
-                        Thread.sleep(100 * retryCount);  // Exponential backoff
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        break;
-                    }
-                } else {
-                    break;
-                }
-            }
+        try {
+            saveInternal(document);
+        } catch (Exception e) {
+            throw new SearchOperationException("Failed to save document: " + document.getIdAsString(), e);
         }
-
-        throw new SearchOperationException("Failed to save document: " + document.getIdAsString() + " after " + maxRetries + " retries", lastException);
     }
 
     private void saveInternal(PostDetailDocument document) throws IOException {
@@ -195,18 +160,6 @@ public class PostProjectionCommandAdapter implements PostProjectionCommandPort {
         elasticsearchClient.indices().refresh(r -> r.index(INDEX_NAME));
     }
 
-    /**
-     * 재시도 가능한 예외인지 확인
-     */
-    private boolean isRetriableException(Exception e) {
-        String message = e.getMessage();
-        return message != null && (
-                message.contains("Connection is closed") ||
-                        message.contains("Connection reset") ||
-                        message.contains("Broken pipe") ||
-                        message.contains("Connection refused")
-        );
-    }
 
     /**
      * 테스트 환경에서 인덱스가 없으면 생성합니다.
