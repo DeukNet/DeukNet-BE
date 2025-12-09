@@ -47,7 +47,7 @@ public class ReactionRepositoryAdapter implements ReactionRepository {
 
     @Override
     public Optional<Reaction> findByTargetIdAndUserIdAndReactionType(UUID targetId, UUID userId, ReactionType reactionType) {
-        return jpaReactionRepository.findByTargetIdAndUserIdAndReactionType(targetId, userId, reactionType)
+        return jpaReactionRepository.findFirstByTargetIdAndUserIdAndReactionType(targetId, userId, reactionType)
                 .map(mapper::toDomain);
     }
 
