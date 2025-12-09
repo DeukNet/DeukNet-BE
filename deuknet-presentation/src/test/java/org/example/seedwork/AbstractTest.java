@@ -72,14 +72,15 @@ public abstract class AbstractTest {
 
     @BeforeEach
     void setUpTestUser() {
-        // 테스트용 User 생성
+        // 테스트용 User 생성 (ADMIN 권한으로 설정)
         User testUser = User.restore(
                 TestSecurityConfig.TEST_USER_ID,
                 UUID.randomUUID(),
                 "testuser",
                 "Test User",
                 "Test bio",
-                "https://example.com/avatar.jpg"
+                "https://example.com/avatar.jpg",
+                org.example.deuknetdomain.domain.user.UserRole.ADMIN
         );
         userRepository.save(testUser);
     }

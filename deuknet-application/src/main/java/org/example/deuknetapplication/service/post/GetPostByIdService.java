@@ -35,17 +35,20 @@ public class GetPostByIdService implements GetPostByIdUseCase {
     private final PostRepository postRepository;
     private final ReactionRepository reactionRepository;
     private final CurrentUserPort currentUserPort;
+    private final org.example.deuknetapplication.port.out.repository.UserRepository userRepository;
 
     public GetPostByIdService(
             PostSearchPort postSearchPort,
             PostRepository postRepository,
             ReactionRepository reactionRepository,
-            CurrentUserPort currentUserPort
+            CurrentUserPort currentUserPort,
+            org.example.deuknetapplication.port.out.repository.UserRepository userRepository
     ) {
         this.postSearchPort = postSearchPort;
         this.postRepository = postRepository;
         this.reactionRepository = reactionRepository;
         this.currentUserPort = currentUserPort;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -65,7 +68,10 @@ public class GetPostByIdService implements GetPostByIdUseCase {
             response = fetchFromCommandModel(postId);
         }
 
-        // 3. 현재 사용자의 reaction 조회 및 설정
+        // 3. 익명 여부에 따라 User 정보 조회 및 설정
+        enrichWithUserInfo(response);
+
+        // 4. 현재 사용자의 reaction 조회 및 설정
         enrichWithUserReaction(response, postId);
 
         return response;
@@ -87,6 +93,26 @@ public class GetPostByIdService implements GetPostByIdUseCase {
     }
 
     /**
+     * 익명 여부에 따라 User 정보를 조회하여 설정
+     * ANONYMOUS인 경우: "익명"으로 설정, authorId는 null
+     * REAL인 경우: PostgreSQL에서 User 조회하여 설정
+     */
+    private void enrichWithUserInfo(PostSearchResponse response) {
+        if ("ANONYMOUS".equals(response.getAuthorType())) {
+            // 익명 게시물은 User 정보 숨김
+            response.setAuthorId(null);
+            response.setAuthorUsername("익명");
+            response.setAuthorDisplayName("익명");
+        } else if ("REAL".equals(response.getAuthorType()) && response.getAuthorId() != null) {
+            // 실명 게시물은 User 조회
+            userRepository.findById(response.getAuthorId()).ifPresent(user -> {
+                response.setAuthorUsername(user.getUsername());
+                response.setAuthorDisplayName(user.getDisplayName());
+            });
+        }
+    }
+
+    /**
      * 현재 사용자의 reaction 정보 및 작성자 여부를 응답에 추가
      * 인증되지 않은 사용자의 경우 false로 설정
      * 성능 최적화: 1번의 쿼리로 LIKE, DISLIKE 모두 조회
@@ -98,8 +124,8 @@ public class GetPostByIdService implements GetPostByIdUseCase {
         try {
             UUID currentUserId = currentUserPort.getCurrentUserId();
 
-            // 작성자 여부 확인
-            response.setIsAuthor(response.getAuthorId().equals(currentUserId));
+            // 작성자 여부 확인 (익명 게시물의 경우 authorId가 null이므로 false)
+            response.setIsAuthor(response.getAuthorId() != null && response.getAuthorId().equals(currentUserId));
 
             // 한 번의 쿼리로 모든 reaction 조회 (LIKE, DISLIKE 포함)
             java.util.List<org.example.deuknetdomain.domain.reaction.Reaction> reactions =

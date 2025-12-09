@@ -18,6 +18,7 @@ public class PostMapper {
                 entity.getAuthorId(),
                 entity.getCategoryId(),
                 entity.getStatus(),
+                entity.getAuthorType(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );
@@ -33,6 +34,7 @@ public class PostMapper {
                 domain.getAuthorId(),
                 domain.getCategoryId(),
                 domain.getStatus(),
+                domain.getAuthorType(),
                 domain.getCreatedAt(),
                 domain.getUpdatedAt()
         );

@@ -21,7 +21,7 @@ class PostControllerTest extends AbstractTest {
         CreatePostRequest req = new CreatePostRequest();
         req.setTitle("Test Post");
         req.setContent("Test Content");
-        req.setCategoryIds(List.of(UUID.randomUUID()));
+        req.setCategoryId(UUID.randomUUID());
 
         mockMvc.perform(post("/api/posts")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -37,7 +37,7 @@ class PostControllerTest extends AbstractTest {
         UpdatePostRequest req = new UpdatePostRequest();
         req.setTitle("Updated");
         req.setContent("Updated content");
-        req.setCategoryIds(List.of(UUID.randomUUID()));
+        req.setCategoryId(UUID.randomUUID());
 
         mockMvc.perform(put("/api/posts/" + id)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -90,7 +90,7 @@ class PostControllerTest extends AbstractTest {
         CreatePostRequest req = new CreatePostRequest();
         req.setTitle("Test");
         req.setContent("Content");
-        req.setCategoryIds(List.of(UUID.randomUUID()));
+        req.setCategoryId(UUID.randomUUID());
 
         MvcResult r = mockMvc.perform(post("/api/posts")
                 .contentType(MediaType.APPLICATION_JSON)

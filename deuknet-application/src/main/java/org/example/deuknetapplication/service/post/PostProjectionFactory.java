@@ -44,12 +44,12 @@ public class PostProjectionFactory {
                 .authorUsername(author.getUsername())
                 .authorDisplayName(author.getDisplayName())
                 .authorAvatarUrl(author.getAvatarUrl())
+                .authorType(post.getAuthorType().name())
                 .status(post.getStatus().name())
-                .viewCount(0L)  // 초기값 0 (Reaction으로 관리)
+                .viewCount(0L)
                 .createdAt(now)
                 .updatedAt(now)
                 .categoryId(categoryId)
-                .categoryName(null)  // TODO: 카테고리 조회 필요
                 .commentCount(0L)
                 .likeCount(0L)
                 .dislikeCount(0L)
@@ -85,6 +85,7 @@ public class PostProjectionFactory {
                 .authorUsername(author.getUsername())
                 .authorDisplayName(author.getDisplayName())
                 .authorAvatarUrl(author.getAvatarUrl())
+                .authorType(post.getAuthorType().name())
                 .status(post.getStatus().name())
                 .viewCount(viewCount)  // Reaction에서 집계된 값
                 .createdAt(post.getCreatedAt())
@@ -112,6 +113,4 @@ public class PostProjectionFactory {
                 .viewCount(0L)
                 .build();
     }
-
-    // createCountProjection() 제거 - ReactionProjectionFactory로 이동
 }

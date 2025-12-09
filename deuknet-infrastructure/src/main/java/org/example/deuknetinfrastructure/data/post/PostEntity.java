@@ -3,6 +3,7 @@ package org.example.deuknetinfrastructure.data.post;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.example.deuknetdomain.domain.post.AuthorType;
 import org.example.deuknetdomain.domain.post.PostStatus;
 
 import java.time.LocalDateTime;
@@ -34,6 +35,10 @@ public class PostEntity {
     @Column(nullable = false, length = 20)
     private PostStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "author_type", nullable = false, length = 20)
+    private AuthorType authorType;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -47,13 +52,14 @@ public class PostEntity {
     }
 
     public PostEntity(UUID id, String title, String content, UUID authorId, UUID categoryId,
-                      PostStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                      PostStatus status, AuthorType authorType, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.title = title;
         this.content = content;
         this.authorId = authorId;
         this.categoryId = categoryId;
         this.status = status;
+        this.authorType = authorType != null ? authorType : AuthorType.REAL;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.viewCount = 0L;  // 기본값

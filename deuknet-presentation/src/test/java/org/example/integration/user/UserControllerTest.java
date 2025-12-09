@@ -15,7 +15,7 @@ class UserControllerTest extends AbstractTest {
     @WithMockUser
     void updateProfile() throws Exception {
         UpdateUserProfileRequest request = new UpdateUserProfileRequest();
-        request.setDisplayName("Updated Name");
+        request.setDisplayName("Updated");
         request.setBio("Updated Bio");
         request.setAvatarUrl("https://example.com/avatar.jpg");
 
@@ -28,7 +28,7 @@ class UserControllerTest extends AbstractTest {
     @Test
     void updateProfile_withoutAuth() throws Exception {
         UpdateUserProfileRequest request = new UpdateUserProfileRequest();
-        request.setDisplayName("Updated Name");
+        request.setDisplayName("Updated");
         request.setBio("Updated Bio");
         request.setAvatarUrl("https://example.com/avatar.jpg");
 

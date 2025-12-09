@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.example.deuknetapplication.projection.post.PostDetailProjection;
+import org.example.deuknetdomain.domain.post.AuthorType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,6 +26,7 @@ public class PostSearchResponse {
     private UUID authorId;
     private String authorUsername;
     private String authorDisplayName;
+    private String authorType;
     private String status;
     private UUID categoryId;
     private String categoryName;
@@ -44,6 +46,7 @@ public class PostSearchResponse {
         this.id = projection.getId();
         this.title = projection.getTitle();
         this.content = projection.getContent();
+        this.authorType = projection.getAuthorType();
         this.authorId = projection.getAuthorId();
         this.authorUsername = projection.getAuthorUsername();
         this.authorDisplayName = projection.getAuthorDisplayName();

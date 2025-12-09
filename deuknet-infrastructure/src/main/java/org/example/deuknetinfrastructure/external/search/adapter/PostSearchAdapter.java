@@ -47,7 +47,7 @@ public class PostSearchAdapter implements PostSearchPort {
 
             if (document.found()) {
                 return Optional.ofNullable(document.source())
-                        .map(mapper::toProjection)
+                        .map(doc -> mapper.toProjection(doc, null, null, null))
                         .map(PostSearchResponse::new);
             }
             return Optional.empty();
@@ -159,7 +159,7 @@ public class PostSearchAdapter implements PostSearchPort {
 
             List<PostSearchResponse> results = response.hits().hits().stream()
                 .map(Hit::source)
-                .map(mapper::toProjection)
+                .map(doc -> mapper.toProjection(doc, null, null, null))
                 .map(PostSearchResponse::new)
                 .collect(Collectors.toList());
 
@@ -202,7 +202,7 @@ public class PostSearchAdapter implements PostSearchPort {
 
             List<PostSearchResponse> results = response.hits().hits().stream()
                 .map(Hit::source)
-                .map(mapper::toProjection)
+                .map(doc -> mapper.toProjection(doc, null, null, null))
                 .map(PostSearchResponse::new)
                 .collect(Collectors.toList());
 
@@ -252,7 +252,7 @@ public class PostSearchAdapter implements PostSearchPort {
 
             List<PostSearchResponse> results = response.hits().hits().stream()
                 .map(Hit::source)
-                .map(mapper::toProjection)
+                .map(doc -> mapper.toProjection(doc, null, null, null))
                 .map(PostSearchResponse::new)
                 .collect(Collectors.toList());
 

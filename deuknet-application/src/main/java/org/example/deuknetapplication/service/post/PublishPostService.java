@@ -39,6 +39,7 @@ public class PublishPostService implements PublishPostUseCase {
     private final CommentRepository commentRepository;
     private final ReactionRepository reactionRepository;
     private final CurrentUserPort currentUserPort;
+    private final PostProjectionFactory postProjectionFactory;
     private final ReactionProjectionFactory reactionProjectionFactory;
     private final DataChangeEventPublisher dataChangeEventPublisher;
 
@@ -48,6 +49,7 @@ public class PublishPostService implements PublishPostUseCase {
             CommentRepository commentRepository,
             ReactionRepository reactionRepository,
             CurrentUserPort currentUserPort,
+            PostProjectionFactory postProjectionFactory,
             ReactionProjectionFactory reactionProjectionFactory,
             DataChangeEventPublisher dataChangeEventPublisher
     ) {
@@ -56,6 +58,7 @@ public class PublishPostService implements PublishPostUseCase {
         this.commentRepository = commentRepository;
         this.reactionRepository = reactionRepository;
         this.currentUserPort = currentUserPort;
+        this.postProjectionFactory = postProjectionFactory;
         this.reactionProjectionFactory = reactionProjectionFactory;
         this.dataChangeEventPublisher = dataChangeEventPublisher;
     }
@@ -115,8 +118,6 @@ public class PublishPostService implements PublishPostUseCase {
      * PostDetailProjection 이벤트 발행 (SRP: Detail Projection 발행 책임 분리)
      */
     private void publishPostDetailProjection(Post post, User author) {
-        LocalDateTime now = LocalDateTime.now();
-
         // 현재 통계 조회
         long commentCount = commentRepository.countByPostId(post.getId());
         long likeCount = reactionRepository.countByTargetIdAndReactionType(
@@ -126,24 +127,10 @@ public class PublishPostService implements PublishPostUseCase {
         long viewCount = reactionRepository.countByTargetIdAndReactionType(
                 post.getId(), ReactionType.VIEW);
 
-        PostDetailProjection detailProjection = PostDetailProjection.builder()
-                .id(post.getId())
-                .title(post.getTitle().getValue())
-                .content(post.getContent().getValue())
-                .authorId(post.getAuthorId())
-                .authorUsername(author.getUsername())
-                .authorDisplayName(author.getDisplayName())
-                .authorAvatarUrl(author.getAvatarUrl())
-                .status(post.getStatus().name())  // PUBLISHED로 변경됨
-                .viewCount(viewCount)  // Reaction에서 집계
-                .createdAt(post.getCreatedAt())
-                .updatedAt(now)
-                .categoryId(post.getCategoryId())
-                .categoryName(null)  // TODO: 카테고리 이름 조회 필요
-                .commentCount(commentCount)
-                .likeCount(likeCount)
-                .dislikeCount(dislikeCount)
-                .build();
+        // PostProjectionFactory를 사용하여 Projection 생성 (일관성 유지)
+        PostDetailProjection detailProjection = postProjectionFactory.createDetailProjectionForUpdate(
+                post, author, post.getCategoryId(), null, commentCount, likeCount, dislikeCount, viewCount
+        );
 
         PostCountProjection countProjection = reactionProjectionFactory.createCountProjection(
                 post.getId(), commentCount, likeCount, dislikeCount, viewCount

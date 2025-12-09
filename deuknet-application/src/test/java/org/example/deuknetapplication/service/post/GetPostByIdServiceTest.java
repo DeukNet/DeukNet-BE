@@ -29,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("GetPostByIdService 단위 테스트")
@@ -46,6 +47,9 @@ class GetPostByIdServiceTest {
     @Mock
     private CurrentUserPort currentUserPort;
 
+    @Mock
+    private org.example.deuknetapplication.port.out.repository.UserRepository userRepository;
+
     @InjectMocks
     private GetPostByIdService getPostByIdService;
 
@@ -57,17 +61,20 @@ class GetPostByIdServiceTest {
     void setUp() {
         testPostId = UUID.randomUUID();
         testUserId = UUID.randomUUID();
+        UUID otherAuthorId = UUID.randomUUID(); // 다른 사용자 ID
 
         testProjection = PostDetailProjection.builder()
                 .id(testPostId)
                 .title("Test Post")
                 .content("Test Content")
-                .authorId(UUID.randomUUID())
-                .authorUsername("testuser")
-                .authorDisplayName("Test User")
+                .authorId(otherAuthorId)  // testUserId와 다른 ID
+                .authorUsername(null)  // Service에서 User 조회 후 설정
+                .authorDisplayName(null)  // Service에서 User 조회 후 설정
+                .authorAvatarUrl(null)
+                .authorType("REAL")
                 .status(PostStatus.PUBLISHED.name())
-                .categoryIds(List.of())
-                .categoryNames(List.of())
+                .categoryId(null)
+                .categoryName(null)
                 .viewCount(0L)
                 .commentCount(0L)
                 .likeCount(0L)
@@ -75,6 +82,18 @@ class GetPostByIdServiceTest {
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
+
+        // User mock 설정 (lenient로 변경하여 사용되지 않는 경우에도 에러 방지)
+        org.example.deuknetdomain.domain.user.User mockUser = org.example.deuknetdomain.domain.user.User.restore(
+                otherAuthorId,
+                UUID.randomUUID(),
+                "testuser",
+                "Test User",
+                "Test bio",
+                "https://example.com/avatar.jpg",
+                org.example.deuknetdomain.domain.user.UserRole.USER
+        );
+        lenient().when(userRepository.findById(otherAuthorId)).thenReturn(Optional.of(mockUser));
     }
 
     @Test
@@ -159,9 +178,11 @@ class GetPostByIdServiceTest {
                 .authorId(testUserId) // 현재 사용자가 작성자
                 .authorUsername("testuser")
                 .authorDisplayName("Test User")
+                .authorAvatarUrl(null)
+                .authorType("REAL")
                 .status(PostStatus.PUBLISHED.name())
-                .categoryIds(List.of())
-                .categoryNames(List.of())
+                .categoryId(null)
+                .categoryName(null)
                 .viewCount(0L)
                 .commentCount(0L)
                 .likeCount(0L)

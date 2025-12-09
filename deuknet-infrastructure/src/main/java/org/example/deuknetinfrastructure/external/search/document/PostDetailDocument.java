@@ -73,16 +73,11 @@ public class PostDetailDocument extends BaseDocument {
     private String authorId;
 
     /**
-     * 작성자 username (검색 및 필터링)
+     * 작성자 타입 (필터링용)
+     * REAL, ANONYMOUS
      */
     @Field(type = FieldType.Keyword)
-    private String authorUsername;
-
-    /**
-     * 작성자 displayName (검색 대상)
-     */
-    @Field(type = FieldType.Text)
-    private String authorDisplayName;
+    private String authorType;
 
     /**
      * 게시글 상태 (필터링용)
@@ -136,7 +131,7 @@ public class PostDetailDocument extends BaseDocument {
     }
 
     public static PostDetailDocument create(UUID id, String title, String content,
-                                            UUID authorId, String authorUsername, String authorDisplayName,
+                                            UUID authorId, String authorType,
                                             String status, UUID categoryId, String categoryName,
                                             Long viewCount, Long commentCount, Long likeCount, Long dislikeCount,
                                             java.time.LocalDateTime createdAt, java.time.LocalDateTime updatedAt) {
@@ -144,8 +139,7 @@ public class PostDetailDocument extends BaseDocument {
         document.title = title;
         document.content = content;
         document.authorId = authorId.toString();
-        document.authorUsername = authorUsername;
-        document.authorDisplayName = authorDisplayName;
+        document.authorType = authorType;
         document.status = status;
         document.categoryId = categoryId != null ? categoryId.toString() : null;
         document.categoryName = categoryName;

@@ -2,6 +2,7 @@ package org.example.deuknetpresentation.controller.post.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.example.deuknetapplication.port.in.post.CreatePostApplicationRequest;
+import org.example.deuknetdomain.domain.post.AuthorType;
 
 import java.util.UUID;
 
@@ -12,8 +13,8 @@ public class CreatePostRequest extends CreatePostApplicationRequest {
         super();
     }
 
-    public CreatePostRequest(String title, String content, UUID categoryId) {
-        super(title, content, categoryId);
+    public CreatePostRequest(String title, String content, UUID categoryId, AuthorType authorType) {
+        super(title, content, categoryId, authorType);
     }
 
     @Override
@@ -32,5 +33,11 @@ public class CreatePostRequest extends CreatePostApplicationRequest {
     @Schema(description = "카테고리 ID", example = "123e4567-e89b-12d3-a456-426614174000")
     public UUID getCategoryId() {
         return super.getCategoryId();
+    }
+
+    @Override
+    @Schema(description = "작성자 타입 (REAL: 실명, ANONYMOUS: 익명)", example = "REAL", required = true)
+    public AuthorType getAuthorType() {
+        return super.getAuthorType();
     }
 }

@@ -24,7 +24,7 @@ spring:
 logging:
   level:
     org.hibernate.engine.jdbc.spi.SqlExceptionHelper: ERROR
-
+    io.debezium.connector.postgresql.TypeRegistry: ERROR
 
 # JWT Configuration
 jwt:

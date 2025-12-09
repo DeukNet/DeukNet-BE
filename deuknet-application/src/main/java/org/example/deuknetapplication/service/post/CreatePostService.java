@@ -92,7 +92,8 @@ public class CreatePostService implements CreatePostUseCase {
                 Title.from(request.getTitle()),
                 Content.from(request.getContent()),
                 authorId,
-                request.getCategoryId()
+                request.getCategoryId(),
+                request.getAuthorType()
         );
         return postRepository.save(post);
     }

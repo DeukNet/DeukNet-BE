@@ -23,7 +23,7 @@ class PostLifecycleTest extends AbstractTest {
         CreatePostRequest createReq = new CreatePostRequest();
         createReq.setTitle("Post");
         createReq.setContent("Content");
-        createReq.setCategoryIds(List.of(UUID.randomUUID()));
+        createReq.setCategoryId(UUID.randomUUID());
 
         MvcResult createResult = mockMvc.perform(post("/api/posts")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -36,7 +36,7 @@ class PostLifecycleTest extends AbstractTest {
         UpdatePostRequest updateReq = new UpdatePostRequest();
         updateReq.setTitle("Updated");
         updateReq.setContent("Updated");
-        updateReq.setCategoryIds(List.of(UUID.randomUUID()));
+        updateReq.setCategoryId(UUID.randomUUID());
 
         mockMvc.perform(put("/api/posts/" + postId)
                 .contentType(MediaType.APPLICATION_JSON)

@@ -17,23 +17,25 @@ public class Post extends AggregateRoot {
     private final UUID authorId;
     private UUID categoryId;
     private PostStatus status;
+    private final AuthorType authorType;
     // viewCount 제거 - Reaction 테이블에서 집계
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     private Post(UUID id, Title title, Content content, UUID authorId, UUID categoryId,
-                 PostStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                 PostStatus status, AuthorType authorType, LocalDateTime createdAt, LocalDateTime updatedAt) {
         super(id);
         this.title = title;
         this.content = content;
         this.authorId = authorId;
         this.categoryId = categoryId;
         this.status = status;
+        this.authorType = authorType != null ? authorType : AuthorType.REAL;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
 
-    public static Post create(Title title, Content content, UUID authorId, UUID categoryId) {
+    public static Post create(Title title, Content content, UUID authorId, UUID categoryId, AuthorType authorType) {
         return new Post(
                 UUID.randomUUID(),
                 title,
@@ -41,14 +43,15 @@ public class Post extends AggregateRoot {
                 authorId,
                 categoryId,
                 PostStatus.DRAFT,
+                authorType,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
     }
 
     public static Post restore(UUID id, Title title, Content content, UUID authorId, UUID categoryId,
-                               PostStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        return new Post(id, title, content, authorId, categoryId, status, createdAt, updatedAt);
+                               PostStatus status, AuthorType authorType, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        return new Post(id, title, content, authorId, categoryId, status, authorType, createdAt, updatedAt);
     }
 
     public void updateContent(Title title, Content content) {

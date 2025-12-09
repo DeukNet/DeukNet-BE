@@ -17,6 +17,7 @@ import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.convert.ElasticsearchConverter;
 import org.springframework.data.elasticsearch.core.convert.MappingElasticsearchConverter;
 import org.springframework.data.elasticsearch.core.mapping.SimpleElasticsearchMappingContext;
+import org.springframework.retry.annotation.EnableRetry;
 
 /**
  * Elasticsearch 설정
@@ -24,6 +25,7 @@ import org.springframework.data.elasticsearch.core.mapping.SimpleElasticsearchMa
  * LocalDateTime 등 Java 8 Time API 지원을 위해 ObjectMapper를 커스터마이징합니다.
  */
 @Configuration
+@EnableRetry
 public class ElasticsearchConfig {
 
     /**

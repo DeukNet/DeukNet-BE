@@ -121,6 +121,7 @@ public class PostRepositoryAdapter implements PostRepository {
                 .authorUsername(user != null ? user.getUsername() : null)
                 .authorDisplayName(user != null ? user.getDisplayName() : null)
                 .authorAvatarUrl(user != null ? user.getAvatarUrl() : null)
+                .authorType(post.getAuthorType() != null ? post.getAuthorType().name() : null)
                 .status(post.getStatus().name())
                 .viewCount(viewCount != null ? viewCount : 0L)
                 .createdAt(post.getCreatedAt())

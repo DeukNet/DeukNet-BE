@@ -15,7 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class CategoryControllerTest extends AbstractTest {
 
     @Test
-    @WithMockUser
+    @WithMockUser(authorities = "ADMIN")
     void getAllCategories() throws Exception {
         // Given: Create some test categories
         create("카테고리1");
@@ -37,7 +37,7 @@ class CategoryControllerTest extends AbstractTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(authorities = "ADMIN")
     void createCategory() throws Exception {
         CreateCategoryRequest req = new CreateCategoryRequest();
         req.setName("Tech");
@@ -50,7 +50,7 @@ class CategoryControllerTest extends AbstractTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(authorities = "ADMIN")
     void updateCategory() throws Exception {
         UUID id = create("Original");
 
@@ -64,7 +64,7 @@ class CategoryControllerTest extends AbstractTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(authorities = "ADMIN")
     void deleteCategory() throws Exception {
         UUID id = create("ToDelete");
 

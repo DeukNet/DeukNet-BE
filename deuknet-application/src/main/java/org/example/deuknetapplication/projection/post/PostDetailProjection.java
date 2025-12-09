@@ -1,6 +1,9 @@
 package org.example.deuknetapplication.projection.post;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
 import org.example.deuknetdomain.common.seedwork.Projection;
@@ -16,6 +19,7 @@ import java.util.UUID;
  */
 @Getter
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PostDetailProjection extends Projection {
 
     private final String title;
@@ -26,6 +30,7 @@ public class PostDetailProjection extends Projection {
     private final String authorUsername;
     private final String authorDisplayName;
     private final String authorAvatarUrl;
+    private final String authorType;
 
     // 게시글 메타 정보
     private final String status;
@@ -41,10 +46,25 @@ public class PostDetailProjection extends Projection {
     private final Long dislikeCount;
 
     @Builder
-    public PostDetailProjection(UUID id, String title, String content,
-                                UUID authorId, String authorUsername, String authorDisplayName, String authorAvatarUrl,
-                                String status, Long viewCount, LocalDateTime createdAt, LocalDateTime updatedAt,
-                                UUID categoryId, String categoryName, Long commentCount, Long likeCount, Long dislikeCount) {
+    @JsonCreator
+    public PostDetailProjection(
+            @JsonProperty("id") UUID id,
+            @JsonProperty("title") String title,
+            @JsonProperty("content") String content,
+            @JsonProperty("authorId") UUID authorId,
+            @JsonProperty("authorUsername") String authorUsername,
+            @JsonProperty("authorDisplayName") String authorDisplayName,
+            @JsonProperty("authorAvatarUrl") String authorAvatarUrl,
+            @JsonProperty("authorType") String authorType,
+            @JsonProperty("status") String status,
+            @JsonProperty("viewCount") Long viewCount,
+            @JsonProperty("createdAt") LocalDateTime createdAt,
+            @JsonProperty("updatedAt") LocalDateTime updatedAt,
+            @JsonProperty("categoryId") UUID categoryId,
+            @JsonProperty("categoryName") String categoryName,
+            @JsonProperty("commentCount") Long commentCount,
+            @JsonProperty("likeCount") Long likeCount,
+            @JsonProperty("dislikeCount") Long dislikeCount) {
         super(id);
         this.title = title;
         this.content = content;
@@ -52,6 +72,7 @@ public class PostDetailProjection extends Projection {
         this.authorUsername = authorUsername;
         this.authorDisplayName = authorDisplayName;
         this.authorAvatarUrl = authorAvatarUrl;
+        this.authorType = authorType;
         this.status = status;
         this.viewCount = viewCount;
         this.createdAt = createdAt;

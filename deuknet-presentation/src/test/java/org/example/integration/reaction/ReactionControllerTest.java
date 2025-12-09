@@ -58,7 +58,7 @@ class ReactionControllerTest extends AbstractTest {
         CreatePostRequest req = new CreatePostRequest();
         req.setTitle("Post");
         req.setContent("Content");
-        req.setCategoryIds(List.of(UUID.randomUUID()));
+        req.setCategoryId(UUID.randomUUID());
 
         MvcResult r = mockMvc.perform(post("/api/posts")
                 .contentType(MediaType.APPLICATION_JSON)

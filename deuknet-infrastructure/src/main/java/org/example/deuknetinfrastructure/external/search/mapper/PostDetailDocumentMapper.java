@@ -15,8 +15,9 @@ public class PostDetailDocumentMapper {
 
     /**
      * PostDetailDocument를 PostDetailProjection으로 변환
+     * User 정보는 Service Layer에서 별도로 조회하여 설정해야 함
      */
-    public PostDetailProjection toProjection(PostDetailDocument document) {
+    public PostDetailProjection toProjection(PostDetailDocument document, String authorUsername, String authorDisplayName, String authorAvatarUrl) {
         if (document == null) {
             return null;
         }
@@ -26,9 +27,10 @@ public class PostDetailDocumentMapper {
                 .title(document.getTitle())
                 .content(document.getContent())
                 .authorId(document.getAuthorId() != null ? UUID.fromString(document.getAuthorId()) : null)
-                .authorUsername(document.getAuthorUsername())
-                .authorDisplayName(document.getAuthorDisplayName())
-                .authorAvatarUrl(null) // Document에는 없는 필드
+                .authorUsername(authorUsername)
+                .authorDisplayName(authorDisplayName)
+                .authorAvatarUrl(authorAvatarUrl)
+                .authorType(document.getAuthorType())
                 .status(document.getStatus())
                 .viewCount(document.getViewCount())
                 .createdAt(document.getCreatedAt())
@@ -43,6 +45,7 @@ public class PostDetailDocumentMapper {
 
     /**
      * PostDetailProjection을 PostDetailDocument로 변환
+     * User 정보는 Document에 저장하지 않음 (authorId, authorType만 저장)
      */
     public PostDetailDocument toDocument(PostDetailProjection projection) {
         if (projection == null) {
@@ -54,8 +57,7 @@ public class PostDetailDocumentMapper {
                 projection.getTitle(),
                 projection.getContent(),
                 projection.getAuthorId(),
-                projection.getAuthorUsername(),
-                projection.getAuthorDisplayName(),
+                projection.getAuthorType(),
                 projection.getStatus(),
                 projection.getCategoryId(),
                 projection.getCategoryName(),
