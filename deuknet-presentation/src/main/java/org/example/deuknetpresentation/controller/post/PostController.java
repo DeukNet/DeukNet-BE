@@ -68,8 +68,11 @@ public class PostController implements PostApi {
     @Override
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<PostSearchResponse> getPostById(@PathVariable UUID id) {
-        PostSearchResponse response = getPostByIdUseCase.getPostById(id);
+    public ResponseEntity<PostSearchResponse> getPostById(
+            @PathVariable UUID id,
+            @RequestParam(required = false, defaultValue = "false") boolean forceCommandModel
+    ) {
+        PostSearchResponse response = getPostByIdUseCase.getPostById(id, forceCommandModel);
         return ResponseEntity.ok(response);
     }
 

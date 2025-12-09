@@ -98,7 +98,7 @@ public interface PostApi {
 
     @Operation(
             summary = "게시글 ID로 조회",
-            description = "특정 게시글을 ID로 조회합니다."
+            description = "특정 게시글을 ID로 조회합니다. forceCommandModel=true로 설정하면 PostgreSQL에서 직접 조회하여 최신 데이터를 보장합니다 (생성/수정 직후 사용)."
     )
     @ApiResponses({
             @ApiResponse(
@@ -110,7 +110,9 @@ public interface PostApi {
     })
     ResponseEntity<PostSearchResponse> getPostById(
             @Parameter(description = "게시글 ID", required = true)
-            @PathVariable UUID id
+            @PathVariable UUID id,
+            @Parameter(description = "PostgreSQL 직접 조회 여부 (기본값: false, Elasticsearch 우선 조회)", required = false)
+            @RequestParam(required = false, defaultValue = "false") boolean forceCommandModel
     );
 
     @Operation(

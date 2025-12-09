@@ -52,40 +52,53 @@ public class GetPostByIdService implements GetPostByIdUseCase {
     }
 
     @Override
-    public PostSearchResponse getPostById(UUID postId) {
-        // Phase 2 전략: Elasticsearch 우선 조회 + PostgreSQL 폴백
+    public PostSearchResponse getPostById(UUID postId, boolean forceCommandModel) {
+        // 조회 전략 선택:
+        // - forceCommandModel=true: PostgreSQL 직접 조회 (생성/수정 직후, CDC 동기화 전)
+        // - forceCommandModel=false: Elasticsearch 우선 조회 (일반 조회, 성능 최적화)
 
-        // 1. Elasticsearch에서 조회 시도
-        Optional<PostSearchResponse> elasticsearchResult = postSearchPort.findById(postId);
+        PostSearchResponse response = forceCommandModel
+                ? fetchFromPostgreSQL(postId)
+                : fetchFromElasticsearchOrPostgreSQL(postId);
 
-        PostSearchResponse response;
-        if (elasticsearchResult.isPresent()) {
-            log.debug("Post found in Elasticsearch: postId={}", postId);
-            response = elasticsearchResult.get();
-        } else {
-            // 2. PostgreSQL에서 조회 (폴백)
-            log.debug("Fetching post from PostgreSQL: postId={}", postId);
-            response = fetchFromCommandModel(postId);
-        }
-
-        // 3. 익명 여부에 따라 User 정보 조회 및 설정
+        // 익명 여부에 따라 User 정보 조회 및 설정
         enrichWithUserInfo(response);
 
-        // 4. 현재 사용자의 reaction 조회 및 설정
+        // 현재 사용자의 reaction 조회 및 설정
         enrichWithUserReaction(response, postId);
 
         return response;
     }
 
     /**
-     * PostgreSQL에서 게시글 상세 정보를 QueryDSL로 조회
-     * 현재 CDC 구조에서 데이터 동기화 지연시간 때문에 조회 불가능한 문제를 해결하기 위해 Command에서 조회
+     * Elasticsearch 우선 조회 + PostgreSQL 폴백 전략
+     * 일반 조회 시 사용 (성능 최적화)
+     *
+     * @param postId 조회할 게시글 ID
+     * @return 게시글 상세 정보
+     */
+    private PostSearchResponse fetchFromElasticsearchOrPostgreSQL(UUID postId) {
+        return postSearchPort.findById(postId)
+                .map(response -> {
+                    log.debug("Post found in Elasticsearch: postId={}", postId);
+                    return response;
+                })
+                .orElseGet(() -> {
+                    log.debug("Post not found in Elasticsearch, fetching from PostgreSQL: postId={}", postId);
+                    return fetchFromPostgreSQL(postId);
+                });
+    }
+
+    /**
+     * PostgreSQL에서 게시글 상세 정보를 QueryDSL로 직접 조회
+     * 생성/수정 직후 또는 CDC 동기화 지연 시 사용
      *
      * @param postId 조회할 게시글 ID
      * @return 게시글 상세 정보
      * @throws PostNotFoundException 게시글이 존재하지 않는 경우
      */
-    private PostSearchResponse fetchFromCommandModel(UUID postId) {
+    private PostSearchResponse fetchFromPostgreSQL(UUID postId) {
+        log.debug("Fetching post directly from PostgreSQL: postId={}", postId);
         PostDetailProjection projection = postRepository.findDetailById(postId)
                 .orElseThrow(PostNotFoundException::new);
 
@@ -94,13 +107,12 @@ public class GetPostByIdService implements GetPostByIdUseCase {
 
     /**
      * 익명 여부에 따라 User 정보를 조회하여 설정
-     * ANONYMOUS인 경우: "익명"으로 설정, authorId는 null
+     * ANONYMOUS인 경우: username/displayName만 "익명"으로 설정 (authorId는 유지하여 작성자 본인은 확인 가능)
      * REAL인 경우: PostgreSQL에서 User 조회하여 설정
      */
     private void enrichWithUserInfo(PostSearchResponse response) {
         if ("ANONYMOUS".equals(response.getAuthorType())) {
-            // 익명 게시물은 User 정보 숨김
-            response.setAuthorId(null);
+            // 익명 게시물은 User 정보만 숨김 (authorId는 유지하여 작성자 확인 가능)
             response.setAuthorUsername("익명");
             response.setAuthorDisplayName("익명");
         } else if ("REAL".equals(response.getAuthorType()) && response.getAuthorId() != null) {
@@ -112,48 +124,63 @@ public class GetPostByIdService implements GetPostByIdUseCase {
         }
     }
 
-    /**
-     * 현재 사용자의 reaction 정보 및 작성자 여부를 응답에 추가
-     * 인증되지 않은 사용자의 경우 false로 설정
-     * 성능 최적화: 1번의 쿼리로 LIKE, DISLIKE 모두 조회
-     *
-     * @param response 응답 객체
-     * @param postId 게시글 ID
-     */
     private void enrichWithUserReaction(PostSearchResponse response, UUID postId) {
         try {
             UUID currentUserId = currentUserPort.getCurrentUserId();
 
-            // 작성자 여부 확인 (익명 게시물의 경우 authorId가 null이므로 false)
-            response.setIsAuthor(response.getAuthorId() != null && response.getAuthorId().equals(currentUserId));
+            // 작성자 여부 확인 (익명 게시물도 authorId로 확인 가능)
+            response.setIsAuthor(
+                    Optional.ofNullable(response.getAuthorId())
+                            .map(authorId -> authorId.equals(currentUserId))
+                            .orElse(false)
+            );
 
             // 한 번의 쿼리로 모든 reaction 조회 (LIKE, DISLIKE 포함)
-            java.util.List<org.example.deuknetdomain.domain.reaction.Reaction> reactions =
-                    reactionRepository.findByTargetIdAndUserId(postId, currentUserId);
+            var reactions = reactionRepository.findByTargetIdAndUserId(postId, currentUserId);
 
-            // 기본값 설정
-            response.setHasUserLiked(false);
-            response.setUserLikeReactionId(null);
-            response.setHasUserDisliked(false);
-            response.setUserDislikeReactionId(null);
+            // LIKE reaction 처리
+            reactions.stream()
+                    .filter(reaction -> reaction.getReactionType() == ReactionType.LIKE)
+                    .findFirst()
+                    .ifPresentOrElse(
+                            like -> {
+                                response.setHasUserLiked(true);
+                                response.setUserLikeReactionId(like.getId());
+                            },
+                            () -> {
+                                response.setHasUserLiked(false);
+                                response.setUserLikeReactionId(null);
+                            }
+                    );
 
-            // reaction 타입별로 분류
-            for (var reaction : reactions) {
-                if (reaction.getReactionType() == ReactionType.LIKE) {
-                    response.setHasUserLiked(true);
-                    response.setUserLikeReactionId(reaction.getId());
-                } else if (reaction.getReactionType() == ReactionType.DISLIKE) {
-                    response.setHasUserDisliked(true);
-                    response.setUserDislikeReactionId(reaction.getId());
-                }
-            }
+            // DISLIKE reaction 처리
+            reactions.stream()
+                    .filter(reaction -> reaction.getReactionType() == ReactionType.DISLIKE)
+                    .findFirst()
+                    .ifPresentOrElse(
+                            dislike -> {
+                                response.setHasUserDisliked(true);
+                                response.setUserDislikeReactionId(dislike.getId());
+                            },
+                            () -> {
+                                response.setHasUserDisliked(false);
+                                response.setUserDislikeReactionId(null);
+                            }
+                    );
         } catch (Exception e) {
             // 인증되지 않은 사용자 (ForbiddenException 등)
-            response.setIsAuthor(false);
-            response.setHasUserLiked(false);
-            response.setHasUserDisliked(false);
-            response.setUserLikeReactionId(null);
-            response.setUserDislikeReactionId(null);
+            setUnauthenticatedUserDefaults(response);
         }
+    }
+
+    /**
+     * 인증되지 않은 사용자의 기본값 설정
+     */
+    private void setUnauthenticatedUserDefaults(PostSearchResponse response) {
+        response.setIsAuthor(false);
+        response.setHasUserLiked(false);
+        response.setUserLikeReactionId(null);
+        response.setHasUserDisliked(false);
+        response.setUserDislikeReactionId(null);
     }
 }

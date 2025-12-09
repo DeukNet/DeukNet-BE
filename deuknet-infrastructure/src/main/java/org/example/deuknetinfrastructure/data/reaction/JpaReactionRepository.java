@@ -15,8 +15,9 @@ public interface JpaReactionRepository extends JpaRepository<ReactionEntity, UUI
 
     /**
      * 특정 사용자가 특정 타겟에 특정 타입의 반응을 이미 했는지 조회
+     * 중복 데이터가 있을 경우 첫 번째 것만 반환
      */
-    java.util.Optional<ReactionEntity> findByTargetIdAndUserIdAndReactionType(
+    java.util.Optional<ReactionEntity> findFirstByTargetIdAndUserIdAndReactionType(
             UUID targetId, UUID userId, ReactionType reactionType);
 
     /**
