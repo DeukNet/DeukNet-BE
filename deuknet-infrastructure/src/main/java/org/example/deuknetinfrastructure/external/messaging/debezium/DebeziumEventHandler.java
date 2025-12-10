@@ -88,7 +88,6 @@ public class DebeziumEventHandler {
             log.error("Invalid CDC event key: {} value: {}", key, value, e);
         } catch (Exception e) {
             log.error("Failed to process Debezium event. key={}, value={}", key, value, e);
-            // TODO: DLQ(Dead Letter Queue) 또는 재시도 로직 구현
         }
     }
 }

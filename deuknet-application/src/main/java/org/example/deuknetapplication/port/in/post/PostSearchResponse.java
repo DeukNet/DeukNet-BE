@@ -48,11 +48,9 @@ public class PostSearchResponse {
         this.content = projection.getContent();
         this.authorType = projection.getAuthorType();
         this.authorId = projection.getAuthorId();
-        this.authorUsername = projection.getAuthorUsername();
-        this.authorDisplayName = projection.getAuthorDisplayName();
+        // authorUsername, authorDisplayName, categoryName은 별도 조회
         this.status = projection.getStatus();
         this.categoryId = projection.getCategoryId();
-        this.categoryName = projection.getCategoryName();
         this.viewCount = projection.getViewCount();
         this.commentCount = projection.getCommentCount();
         this.likeCount = projection.getLikeCount();

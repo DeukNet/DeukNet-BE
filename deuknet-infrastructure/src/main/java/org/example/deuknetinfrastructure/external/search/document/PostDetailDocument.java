@@ -87,16 +87,10 @@ public class PostDetailDocument extends BaseDocument {
     private String status;
 
     /**
-     * 카테고리 ID (필터링용)
+     * 카테고리 ID (필터링용, 이름은 별도 조회)
      */
     @Field(type = FieldType.Keyword)
     private String categoryId;
-
-    /**
-     * 카테고리 이름 (검색 및 표시용)
-     */
-    @Field(type = FieldType.Text)
-    private String categoryName;
 
     /**
      * 조회수 (정렬 및 집계)
@@ -132,7 +126,7 @@ public class PostDetailDocument extends BaseDocument {
 
     public static PostDetailDocument create(UUID id, String title, String content,
                                             UUID authorId, String authorType,
-                                            String status, UUID categoryId, String categoryName,
+                                            String status, UUID categoryId,
                                             Long viewCount, Long commentCount, Long likeCount, Long dislikeCount,
                                             java.time.LocalDateTime createdAt, java.time.LocalDateTime updatedAt) {
         PostDetailDocument document = new PostDetailDocument(id);
@@ -142,7 +136,6 @@ public class PostDetailDocument extends BaseDocument {
         document.authorType = authorType;
         document.status = status;
         document.categoryId = categoryId != null ? categoryId.toString() : null;
-        document.categoryName = categoryName;
         document.viewCount = viewCount;
         document.commentCount = commentCount;
         document.likeCount = likeCount;

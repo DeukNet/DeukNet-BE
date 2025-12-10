@@ -10,9 +10,7 @@ import org.example.deuknetapplication.port.out.repository.PostRepository;
 import org.example.deuknetapplication.port.out.repository.ReactionRepository;
 import org.example.deuknetapplication.port.out.repository.UserRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
-import org.example.deuknetapplication.projection.post.PostCountProjection;
 import org.example.deuknetapplication.projection.post.PostDetailProjection;
-import org.example.deuknetapplication.service.reaction.ReactionProjectionFactory;
 import org.example.deuknetdomain.domain.post.Post;
 import org.example.deuknetdomain.domain.reaction.ReactionType;
 import org.example.deuknetdomain.domain.user.User;
@@ -40,7 +38,6 @@ public class PublishPostService implements PublishPostUseCase {
     private final ReactionRepository reactionRepository;
     private final CurrentUserPort currentUserPort;
     private final PostProjectionFactory postProjectionFactory;
-    private final ReactionProjectionFactory reactionProjectionFactory;
     private final DataChangeEventPublisher dataChangeEventPublisher;
 
     public PublishPostService(
@@ -50,7 +47,6 @@ public class PublishPostService implements PublishPostUseCase {
             ReactionRepository reactionRepository,
             CurrentUserPort currentUserPort,
             PostProjectionFactory postProjectionFactory,
-            ReactionProjectionFactory reactionProjectionFactory,
             DataChangeEventPublisher dataChangeEventPublisher
     ) {
         this.postRepository = postRepository;
@@ -59,7 +55,6 @@ public class PublishPostService implements PublishPostUseCase {
         this.reactionRepository = reactionRepository;
         this.currentUserPort = currentUserPort;
         this.postProjectionFactory = postProjectionFactory;
-        this.reactionProjectionFactory = reactionProjectionFactory;
         this.dataChangeEventPublisher = dataChangeEventPublisher;
     }
 
@@ -102,22 +97,6 @@ public class PublishPostService implements PublishPostUseCase {
      * PostPublished 이벤트 발행 (SRP: 이벤트 발행 책임 분리)
      */
     private void publishPostPublishedEvent(Post post) {
-        User author = getAuthor(post.getAuthorId());
-        publishPostDetailProjection(post, author);
-    }
-
-    /**
-     * 작성자 조회 (SRP: 사용자 조회 책임 분리)
-     */
-    private User getAuthor(UUID authorId) {
-        return userRepository.findById(authorId)
-                .orElseThrow(ResourceNotFoundException::new);
-    }
-
-    /**
-     * PostDetailProjection 이벤트 발행 (SRP: Detail Projection 발행 책임 분리)
-     */
-    private void publishPostDetailProjection(Post post, User author) {
         // 현재 통계 조회
         long commentCount = commentRepository.countByPostId(post.getId());
         long likeCount = reactionRepository.countByTargetIdAndReactionType(
@@ -129,14 +108,9 @@ public class PublishPostService implements PublishPostUseCase {
 
         // PostProjectionFactory를 사용하여 Projection 생성 (일관성 유지)
         PostDetailProjection detailProjection = postProjectionFactory.createDetailProjectionForUpdate(
-                post, author, post.getCategoryId(), null, commentCount, likeCount, dislikeCount, viewCount
-        );
-
-        PostCountProjection countProjection = reactionProjectionFactory.createCountProjection(
-                post.getId(), commentCount, likeCount, dislikeCount, viewCount
+                post, post.getCategoryId(), commentCount, likeCount, dislikeCount, viewCount
         );
 
         dataChangeEventPublisher.publish(EventType.POST_PUBLISHED, post.getId(), detailProjection);
-        dataChangeEventPublisher.publish(EventType.POST_PUBLISHED, post.getId(), countProjection);
     }
 }

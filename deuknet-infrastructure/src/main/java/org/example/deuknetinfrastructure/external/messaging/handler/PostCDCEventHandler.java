@@ -17,7 +17,7 @@ import java.io.IOException;
  *
  * 책임:
  * - POST_CREATED, POST_UPDATED, POST_PUBLISHED, POST_DELETED 이벤트 처리
- * - PostDetailProjection, PostCountProjection 구분 및 Elasticsearch 동기화
+ * - PostDetailProjection Elasticsearch 동기화
  */
 @Slf4j
 @Component
@@ -62,21 +62,11 @@ public class PostCDCEventHandler implements CDCEventHandler {
 
     /**
      * Post 이벤트 처리
-     * PostDetailProjection과 PostCountProjection을 구분하여 처리
+     * PostDetailProjection을 Elasticsearch에 인덱싱
      */
     private void handlePostEvent(String payloadJson, EventType eventType) throws Exception {
-        JsonNode payload = objectMapper.readTree(payloadJson);
-
-        // PostDetailProjection인지 PostCountProjection인지 구분
-        if (payload.has("title")) {
-            // PostDetailProjection
-            postProjectionCommandPort.indexPostDetail(payloadJson);
-            log.info("{} - PostDetailProjection indexed", eventType);
-        } else if (payload.has("viewCount") || payload.has("commentCount") ||
-                   payload.has("likeCount") || payload.has("dislikeCount")) {
-            // PostCountProjection (count 필드 중 하나라도 있으면 PostCountProjection)
-            postProjectionCommandPort.updatePostCounts(payloadJson);
-            log.info("{} - PostCountProjection updated", eventType);
-        }
+        // 모든 Post 이벤트는 PostDetailProjection을 포함
+        postProjectionCommandPort.indexPostDetail(payloadJson);
+        log.info("{} - PostDetailProjection indexed", eventType);
     }
 }

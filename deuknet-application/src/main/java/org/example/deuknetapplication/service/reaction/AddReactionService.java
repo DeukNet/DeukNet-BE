@@ -1,11 +1,16 @@
 package org.example.deuknetapplication.service.reaction;
 
+import org.example.deuknetapplication.common.exception.ResourceNotFoundException;
 import org.example.deuknetapplication.messaging.EventType;
 import org.example.deuknetapplication.port.in.reaction.AddReactionUseCase;
 import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
+import org.example.deuknetapplication.port.out.repository.CommentRepository;
+import org.example.deuknetapplication.port.out.repository.PostRepository;
 import org.example.deuknetapplication.port.out.repository.ReactionRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
-import org.example.deuknetapplication.projection.post.PostCountProjection;
+import org.example.deuknetapplication.projection.post.PostDetailProjection;
+import org.example.deuknetapplication.service.post.PostProjectionFactory;
+import org.example.deuknetdomain.domain.post.Post;
 import org.example.deuknetdomain.domain.reaction.Reaction;
 import org.example.deuknetdomain.domain.reaction.ReactionType;
 import org.example.deuknetdomain.domain.reaction.TargetType;
@@ -21,7 +26,7 @@ import java.util.UUID;
  * 책임:
  * - Reaction 생성 (LIKE, DISLIKE, VIEW)
  * - LIKE/DISLIKE 배타적 처리 (둘 중 하나만 가능)
- * - PostCountProjection 업데이트 이벤트 발행
+ * - PostDetailProjection 업데이트 이벤트 발행
 
  * 참고:
  * - VIEW(조회수)는 중복이 허용됩니다 (동시 요청 시 여러 개 생성 가능)
@@ -32,16 +37,22 @@ import java.util.UUID;
 public class AddReactionService implements AddReactionUseCase {
 
     private final ReactionRepository reactionRepository;
+    private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
     private final CurrentUserPort currentUserPort;
     private final DataChangeEventPublisher dataChangeEventPublisher;
-    private final ReactionProjectionFactory projectionFactory;
+    private final PostProjectionFactory projectionFactory;
 
     public AddReactionService(
             ReactionRepository reactionRepository,
+            PostRepository postRepository,
+            CommentRepository commentRepository,
             CurrentUserPort currentUserPort,
             DataChangeEventPublisher dataChangeEventPublisher,
-            ReactionProjectionFactory projectionFactory) {
+            PostProjectionFactory projectionFactory) {
         this.reactionRepository = reactionRepository;
+        this.postRepository = postRepository;
+        this.commentRepository = commentRepository;
         this.currentUserPort = currentUserPort;
         this.dataChangeEventPublisher = dataChangeEventPublisher;
         this.projectionFactory = projectionFactory;
@@ -116,15 +127,29 @@ public class AddReactionService implements AddReactionUseCase {
     }
 
     /**
-     * Reaction 타입에 따라 적절한 PostCountProjection 생성 및 이벤트 발행
+     * PostDetailProjection 생성 및 이벤트 발행
+     * Reaction 변경 시 전체 통계를 업데이트
      */
     private void publishReactionEvent(UUID targetId, ReactionType reactionType) {
-        long count = reactionRepository.countByTargetIdAndReactionType(targetId, reactionType);
-        PostCountProjection projection = switch (reactionType) {
-            case VIEW -> projectionFactory.createCountProjectionForView(targetId, count);
-            case LIKE -> projectionFactory.createCountProjectionForLike(targetId, count);
-            case DISLIKE -> projectionFactory.createCountProjectionForDislike(targetId, count);
-        };
+        // Post 조회
+        Post post = postRepository.findById(targetId)
+                .orElseThrow(ResourceNotFoundException::new);
+
+        // 모든 통계 조회
+        long commentCount = commentRepository.countByPostId(targetId);
+        long likeCount = reactionRepository.countByTargetIdAndReactionType(targetId, ReactionType.LIKE);
+        long dislikeCount = reactionRepository.countByTargetIdAndReactionType(targetId, ReactionType.DISLIKE);
+        long viewCount = reactionRepository.countByTargetIdAndReactionType(targetId, ReactionType.VIEW);
+
+        // PostDetailProjection 생성
+        PostDetailProjection projection = projectionFactory.createDetailProjectionForUpdate(
+                post,
+                post.getCategoryId(),
+                commentCount,
+                likeCount,
+                dislikeCount,
+                viewCount
+        );
 
         dataChangeEventPublisher.publish(EventType.REACTION_ADDED, targetId, projection);
     }

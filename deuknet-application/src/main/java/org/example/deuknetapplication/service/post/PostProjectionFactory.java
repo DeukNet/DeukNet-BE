@@ -1,9 +1,7 @@
 package org.example.deuknetapplication.service.post;
 
-import org.example.deuknetapplication.projection.post.PostCountProjection;
 import org.example.deuknetapplication.projection.post.PostDetailProjection;
 import org.example.deuknetdomain.domain.post.Post;
-import org.example.deuknetdomain.domain.user.User;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -17,6 +15,8 @@ import java.util.UUID;
  * - Projection 생성 로직 캡슐화
  *
  * SRP 준수: Projection 객체 생성이라는 단일 책임만 가짐
+ *
+ * ⚠️ 중요: PostDetailProjection과 PostDetailDocument는 동일한 필드 구조를 유지합니다.
  */
 @Component
 public class PostProjectionFactory {
@@ -25,13 +25,11 @@ public class PostProjectionFactory {
      * Post 생성 시 PostDetailProjection 생성
      *
      * @param post Post 엔티티
-     * @param author 작성자 정보
      * @param categoryId 카테고리 ID
-     * @return PostDetailProjection
+     * @return PostDetailProjection (카운트 초기값 0)
      */
     public PostDetailProjection createDetailProjectionForCreation(
             Post post,
-            User author,
             UUID categoryId
     ) {
         LocalDateTime now = LocalDateTime.now();
@@ -41,9 +39,6 @@ public class PostProjectionFactory {
                 .title(post.getTitle().getValue())
                 .content(post.getContent().getValue())
                 .authorId(post.getAuthorId())
-                .authorUsername(author.getUsername())
-                .authorDisplayName(author.getDisplayName())
-                .authorAvatarUrl(author.getAvatarUrl())
                 .authorType(post.getAuthorType().name())
                 .status(post.getStatus().name())
                 .viewCount(0L)
@@ -60,18 +55,16 @@ public class PostProjectionFactory {
      * Post 수정 시 PostDetailProjection 생성
      *
      * @param post Post 엔티티
-     * @param author 작성자 정보
      * @param categoryId 카테고리 ID
      * @param commentCount 댓글 수
      * @param likeCount 좋아요 수
+     * @param dislikeCount 싫어요 수
      * @param viewCount 조회수
      * @return PostDetailProjection
      */
     public PostDetailProjection createDetailProjectionForUpdate(
             Post post,
-            User author,
             UUID categoryId,
-            String categoryName,
             Long commentCount,
             Long likeCount,
             Long dislikeCount,
@@ -82,35 +75,15 @@ public class PostProjectionFactory {
                 .title(post.getTitle().getValue())
                 .content(post.getContent().getValue())
                 .authorId(post.getAuthorId())
-                .authorUsername(author.getUsername())
-                .authorDisplayName(author.getDisplayName())
-                .authorAvatarUrl(author.getAvatarUrl())
                 .authorType(post.getAuthorType().name())
                 .status(post.getStatus().name())
-                .viewCount(viewCount)  // Reaction에서 집계된 값
+                .viewCount(viewCount)
                 .createdAt(post.getCreatedAt())
                 .updatedAt(LocalDateTime.now())
                 .categoryId(categoryId)
-                .categoryName(categoryName)
                 .commentCount(commentCount)
                 .likeCount(likeCount)
                 .dislikeCount(dislikeCount)
-                .build();
-    }
-
-    /**
-     * Post 생성 시 PostCountProjection 생성
-     *
-     * @param postId Post ID
-     * @return PostCountProjection (초기값 0)
-     */
-    public PostCountProjection createCountProjectionForCreation(UUID postId) {
-        return PostCountProjection.builder()
-                .id(postId)
-                .commentCount(0L)
-                .likeCount(0L)
-                .dislikeCount(0L)
-                .viewCount(0L)
                 .build();
     }
 }

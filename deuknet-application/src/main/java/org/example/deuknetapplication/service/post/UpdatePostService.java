@@ -11,9 +11,7 @@ import org.example.deuknetapplication.port.out.repository.PostRepository;
 import org.example.deuknetapplication.port.out.repository.ReactionRepository;
 import org.example.deuknetapplication.port.out.repository.UserRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
-import org.example.deuknetapplication.projection.post.PostCountProjection;
 import org.example.deuknetapplication.projection.post.PostDetailProjection;
-import org.example.deuknetapplication.service.reaction.ReactionProjectionFactory;
 import org.example.deuknetdomain.common.vo.Content;
 import org.example.deuknetdomain.common.vo.Title;
 import org.example.deuknetdomain.domain.post.Post;
@@ -42,7 +40,6 @@ public class UpdatePostService implements UpdatePostUseCase {
     private final ReactionRepository reactionRepository;
     private final CurrentUserPort currentUserPort;
     private final PostProjectionFactory postProjectionFactory;
-    private final ReactionProjectionFactory reactionProjectionFactory;
     private final DataChangeEventPublisher dataChangeEventPublisher;
 
     public UpdatePostService(
@@ -52,7 +49,6 @@ public class UpdatePostService implements UpdatePostUseCase {
             ReactionRepository reactionRepository,
             CurrentUserPort currentUserPort,
             PostProjectionFactory postProjectionFactory,
-            ReactionProjectionFactory reactionProjectionFactory,
             DataChangeEventPublisher dataChangeEventPublisher
     ) {
         this.postRepository = postRepository;
@@ -61,7 +57,6 @@ public class UpdatePostService implements UpdatePostUseCase {
         this.reactionRepository = reactionRepository;
         this.currentUserPort = currentUserPort;
         this.postProjectionFactory = postProjectionFactory;
-        this.reactionProjectionFactory = reactionProjectionFactory;
         this.dataChangeEventPublisher = dataChangeEventPublisher;
     }
 
@@ -74,7 +69,6 @@ public class UpdatePostService implements UpdatePostUseCase {
         updatePostContent(post, request);
 
         // 3. 통계 조회
-        User author = getAuthor(post.getAuthorId());
         long commentCount = commentRepository.countByPostId(post.getId());
         long likeCount = reactionRepository.countByTargetIdAndReactionType(
                 post.getId(), ReactionType.LIKE);
@@ -85,15 +79,11 @@ public class UpdatePostService implements UpdatePostUseCase {
 
         // 4. Projection 생성 (전문 팩토리에 위임)
         PostDetailProjection detailProjection = postProjectionFactory.createDetailProjectionForUpdate(
-                post, author, request.getCategoryId(), null, commentCount, likeCount, dislikeCount, viewCount
-        );
-        PostCountProjection countProjection = reactionProjectionFactory.createCountProjection(
-                post.getId(), commentCount, likeCount, dislikeCount, viewCount
+                post, request.getCategoryId(), commentCount, likeCount, dislikeCount, viewCount
         );
 
         // 5. 이벤트 발행
         dataChangeEventPublisher.publish(EventType.POST_UPDATED, post.getId(), detailProjection);
-        dataChangeEventPublisher.publish(EventType.POST_UPDATED, post.getId(), countProjection);
     }
 
     /**

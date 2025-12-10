@@ -8,7 +8,6 @@ import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
 import org.example.deuknetapplication.port.out.repository.PostRepository;
 import org.example.deuknetapplication.port.out.repository.UserRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
-import org.example.deuknetapplication.projection.post.PostCountProjection;
 import org.example.deuknetapplication.projection.post.PostDetailProjection;
 import org.example.deuknetdomain.common.vo.Content;
 import org.example.deuknetdomain.common.vo.Title;
@@ -65,12 +64,10 @@ public class CreatePostService implements CreatePostUseCase {
 
     private void publishPostCreated(Post post, User author) {
         PostDetailProjection detailProjection = projectionFactory.createDetailProjectionForCreation(
-                post, author, post.getCategoryId()
+                post, post.getCategoryId()
         );
-        PostCountProjection countProjection = projectionFactory.createCountProjectionForCreation(post.getId());
 
         dataChangeEventPublisher.publish(EventType.POST_CREATED, post.getId(), detailProjection);
-        dataChangeEventPublisher.publish(EventType.POST_CREATED, post.getId(), countProjection);
     }
 
     /**

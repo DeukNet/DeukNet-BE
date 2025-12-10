@@ -112,22 +112,18 @@ public class PostRepositoryAdapter implements PostRepository {
                     .fetchOne();
         }
 
-        // 7. Projection 생성
+        // 7. Projection 생성 (Document와 동일한 필드만 포함)
         PostDetailProjection result = PostDetailProjection.builder()
                 .id(post.getId())
                 .title(post.getTitle())
                 .content(post.getContent())
                 .authorId(post.getAuthorId())
-                .authorUsername(user != null ? user.getUsername() : null)
-                .authorDisplayName(user != null ? user.getDisplayName() : null)
-                .authorAvatarUrl(user != null ? user.getAvatarUrl() : null)
                 .authorType(post.getAuthorType() != null ? post.getAuthorType().name() : null)
                 .status(post.getStatus().name())
                 .viewCount(viewCount != null ? viewCount : 0L)
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .categoryId(post.getCategoryId())
-                .categoryName(categoryName)
                 .commentCount(commentCount != null ? commentCount : 0L)
                 .likeCount(likeCount != null ? likeCount : 0L)
                 .dislikeCount(dislikeCount != null ? dislikeCount : 0L)

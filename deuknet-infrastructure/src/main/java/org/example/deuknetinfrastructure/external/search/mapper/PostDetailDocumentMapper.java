@@ -15,9 +15,9 @@ public class PostDetailDocumentMapper {
 
     /**
      * PostDetailDocument를 PostDetailProjection으로 변환
-     * User 정보는 Service Layer에서 별도로 조회하여 설정해야 함
+     * Document와 Projection은 동일한 필드 구조를 유지
      */
-    public PostDetailProjection toProjection(PostDetailDocument document, String authorUsername, String authorDisplayName, String authorAvatarUrl) {
+    public PostDetailProjection toProjection(PostDetailDocument document, String unused1, String unused2, String unused3) {
         if (document == null) {
             return null;
         }
@@ -27,16 +27,12 @@ public class PostDetailDocumentMapper {
                 .title(document.getTitle())
                 .content(document.getContent())
                 .authorId(document.getAuthorId() != null ? UUID.fromString(document.getAuthorId()) : null)
-                .authorUsername(authorUsername)
-                .authorDisplayName(authorDisplayName)
-                .authorAvatarUrl(authorAvatarUrl)
                 .authorType(document.getAuthorType())
                 .status(document.getStatus())
                 .viewCount(document.getViewCount())
                 .createdAt(document.getCreatedAt())
                 .updatedAt(document.getUpdatedAt())
                 .categoryId(document.getCategoryId() != null ? UUID.fromString(document.getCategoryId()) : null)
-                .categoryName(document.getCategoryName())
                 .commentCount(document.getCommentCount())
                 .likeCount(document.getLikeCount())
                 .dislikeCount(document.getDislikeCount())
@@ -45,7 +41,7 @@ public class PostDetailDocumentMapper {
 
     /**
      * PostDetailProjection을 PostDetailDocument로 변환
-     * User 정보는 Document에 저장하지 않음 (authorId, authorType만 저장)
+     * Document와 Projection은 동일한 필드 구조를 유지
      */
     public PostDetailDocument toDocument(PostDetailProjection projection) {
         if (projection == null) {
@@ -60,7 +56,6 @@ public class PostDetailDocumentMapper {
                 projection.getAuthorType(),
                 projection.getStatus(),
                 projection.getCategoryId(),
-                projection.getCategoryName(),
                 projection.getViewCount(),
                 projection.getCommentCount(),
                 projection.getLikeCount(),

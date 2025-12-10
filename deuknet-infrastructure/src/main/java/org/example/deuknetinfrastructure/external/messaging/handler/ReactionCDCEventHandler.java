@@ -14,7 +14,7 @@ import java.io.IOException;
  *
  * 책임:
  * - REACTION_ADDED, REACTION_REMOVED 이벤트 처리
- * - PostCountProjection 업데이트 (좋아요, 싫어요, 조회수)
+ * - PostDetailProjection 업데이트 (좋아요, 싫어요, 조회수 포함)
  */
 @Slf4j
 @Component
@@ -42,7 +42,8 @@ public class ReactionCDCEventHandler implements CDCEventHandler {
         String payloadJson = message.payloadJson();
         EventType eventType = message.eventType();
 
-        postProjectionCommandPort.updatePostCounts(payloadJson);
-        log.info("{} - Reaction count updated", eventType);
+        // Reaction 변경 시 전체 PostDetailProjection 업데이트
+        postProjectionCommandPort.indexPostDetail(payloadJson);
+        log.info("{} - PostDetailProjection updated with reaction counts", eventType);
     }
 }

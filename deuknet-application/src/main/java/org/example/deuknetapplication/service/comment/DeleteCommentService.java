@@ -6,9 +6,14 @@ import org.example.deuknetapplication.messaging.EventType;
 import org.example.deuknetapplication.port.in.comment.DeleteCommentUseCase;
 import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
 import org.example.deuknetapplication.port.out.repository.CommentRepository;
+import org.example.deuknetapplication.port.out.repository.PostRepository;
+import org.example.deuknetapplication.port.out.repository.ReactionRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
-import org.example.deuknetapplication.projection.post.PostCountProjection;
+import org.example.deuknetapplication.projection.post.PostDetailProjection;
+import org.example.deuknetapplication.service.post.PostProjectionFactory;
 import org.example.deuknetdomain.domain.comment.Comment;
+import org.example.deuknetdomain.domain.post.Post;
+import org.example.deuknetdomain.domain.reaction.ReactionType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,17 +32,26 @@ import java.util.UUID;
 public class DeleteCommentService implements DeleteCommentUseCase {
 
     private final CommentRepository commentRepository;
+    private final PostRepository postRepository;
+    private final ReactionRepository reactionRepository;
     private final CurrentUserPort currentUserPort;
     private final DataChangeEventPublisher dataChangeEventPublisher;
+    private final PostProjectionFactory projectionFactory;
 
     public DeleteCommentService(
             CommentRepository commentRepository,
+            PostRepository postRepository,
+            ReactionRepository reactionRepository,
             CurrentUserPort currentUserPort,
-            DataChangeEventPublisher dataChangeEventPublisher
+            DataChangeEventPublisher dataChangeEventPublisher,
+            PostProjectionFactory projectionFactory
     ) {
         this.commentRepository = commentRepository;
+        this.postRepository = postRepository;
+        this.reactionRepository = reactionRepository;
         this.currentUserPort = currentUserPort;
         this.dataChangeEventPublisher = dataChangeEventPublisher;
+        this.projectionFactory = projectionFactory;
     }
 
     @Override
@@ -85,15 +99,23 @@ public class DeleteCommentService implements DeleteCommentUseCase {
         // 1. CommentDeleted 이벤트 발행
         dataChangeEventPublisher.publish(EventType.COMMENT_DELETED, commentId);
 
-        // 2. PostCountProjection 발행 (commentCount 업데이트)
-        Long commentCount = commentRepository.countByPostId(postId);
-        PostCountProjection countProjection = PostCountProjection.builder()
-                .id(postId)
-                .commentCount(commentCount)
-                .viewCount(null)      // null은 변경하지 않음
-                .likeCount(null)      // null은 변경하지 않음
-                .dislikeCount(null)   // null은 변경하지 않음
-                .build();
-        dataChangeEventPublisher.publish(EventType.POST_UPDATED, postId, countProjection);
+        // 2. PostDetailProjection 발행 (전체 통계 업데이트)
+        Post post = postRepository.findById(postId)
+                .orElseThrow(ResourceNotFoundException::new);
+
+        long commentCount = commentRepository.countByPostId(postId);
+        long likeCount = reactionRepository.countByTargetIdAndReactionType(postId, ReactionType.LIKE);
+        long dislikeCount = reactionRepository.countByTargetIdAndReactionType(postId, ReactionType.DISLIKE);
+        long viewCount = reactionRepository.countByTargetIdAndReactionType(postId, ReactionType.VIEW);
+
+        PostDetailProjection detailProjection = projectionFactory.createDetailProjectionForUpdate(
+                post,
+                post.getCategoryId(),
+                commentCount,
+                likeCount,
+                dislikeCount,
+                viewCount
+        );
+        dataChangeEventPublisher.publish(EventType.POST_UPDATED, postId, detailProjection);
     }
 }

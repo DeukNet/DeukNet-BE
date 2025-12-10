@@ -66,6 +66,95 @@ deuknet-presentation    (REST API, Controllers, DTOs)
 - **Clear transaction boundaries**: One aggregate per transaction
 - **Eventual consistency**: Between aggregates via domain events
 
+### 5. Document/Projection 동일성 원칙 (Critical for CQRS)
+
+**⚠️ 매우 중요: Elasticsearch Document와 Application Projection은 동일한 필드 구조를 유지해야 합니다.**
+
+#### 원칙
+
+1. **필드 구조 동일성**
+   - `PostDetailDocument` (Elasticsearch)와 `PostDetailProjection` (Application)은 **정확히 동일한 필드**를 가져야 합니다
+   - 필드 추가/제거 시 **반드시 양쪽 모두 수정**해야 합니다
+   - 타입도 호환 가능해야 합니다 (UUID ↔ String 변환은 Mapper에서 처리)
+
+2. **ID만 저장, 상세 정보는 별도 조회**
+   - ❌ **저장하지 않음**: `authorUsername`, `authorDisplayName`, `authorAvatarUrl`, `categoryName`
+   - ✅ **저장함**: `authorId`, `authorType`, `categoryId`
+   - 이유: 사용자/카테고리 정보 변경 시 모든 게시글 Document를 업데이트할 필요 없음
+   - 상세 정보는 조회 시 별도로 join하거나 Service Layer에서 enrichment
+
+3. **Count 필드는 Projection에 통합**
+   - ~~`PostCountProjection` (제거됨)~~
+   - `PostDetailProjection`에 `commentCount`, `likeCount`, `dislikeCount`, `viewCount` 포함
+   - 이벤트 발행 시 `PostDetailProjection` 하나만 발행
+
+#### 예시: 필드 추가 시
+
+```java
+// 1. PostDetailDocument에 필드 추가
+@Field(type = FieldType.Keyword)
+private String newField;
+
+// 2. PostDetailProjection에도 동일하게 추가
+private final String newField;
+
+// 3. PostDetailDocument.create() 메서드 파라미터 추가
+public static PostDetailDocument create(..., String newField) {
+    document.newField = newField;
+}
+
+// 4. PostDetailProjection.Builder에 파라미터 추가
+@Builder
+public PostDetailProjection(..., String newField) {
+    this.newField = newField;
+}
+
+// 5. PostDetailDocumentMapper 양방향 변환 수정
+// toProjection()과 toDocument() 모두 수정
+```
+
+#### 잘못된 예시 (절대 금지)
+
+```java
+// ❌ Document에만 필드 추가
+@Document
+class PostDetailDocument {
+    private String onlyInDocument;  // 동기화 실패 원인!
+}
+
+// ❌ Projection에만 필드 추가
+class PostDetailProjection {
+    private String onlyInProjection;  // CDC 이벤트 시 누락!
+}
+
+// ❌ 상세 정보 저장 (User/Category 변경 시 업데이트 부담)
+class PostDetailDocument {
+    private String authorUsername;  // ID만 저장해야 함
+    private String categoryName;    // ID만 저장해야 함
+}
+```
+
+#### 체크리스트
+
+필드 추가/제거 시 다음을 모두 확인하세요:
+
+- [ ] `PostDetailDocument` 필드 수정
+- [ ] `PostDetailProjection` 필드 수정
+- [ ] `PostDetailDocument.create()` 메서드 수정
+- [ ] `PostDetailProjection.Builder` 생성자 수정
+- [ ] `PostDetailDocumentMapper.toProjection()` 수정
+- [ ] `PostDetailDocumentMapper.toDocument()` 수정
+- [ ] `PostProjectionFactory` 메서드들 수정
+- [ ] `PostRepositoryAdapter.findDetailById()` 수정 (QueryDSL Projection)
+- [ ] Elasticsearch 인덱스 매핑 재생성 (필요 시)
+
+#### 이 원칙을 지켜야 하는 이유
+
+1. **CDC 동기화 보장**: Command Model → Event → Elasticsearch 흐름에서 데이터 누락 방지
+2. **일관성**: PostgreSQL과 Elasticsearch 간 데이터 불일치 방지
+3. **유지보수성**: 필드 변경 시 체계적으로 추적 가능
+4. **성능**: 불필요한 JOIN 없이 Document만으로 조회 가능 (ID만 저장하되, 필수 검색 필드는 비정규화)
+
 ## Common Commands
 
 ### Build & Test
