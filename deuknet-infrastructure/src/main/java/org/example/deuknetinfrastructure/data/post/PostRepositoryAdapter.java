@@ -59,11 +59,18 @@ public class PostRepositoryAdapter implements PostRepository {
 
     @Override
     public Optional<PostDetailProjection> findDetailById(UUID id) {
-        // 1. Post + User join + count 서브쿼리로 한 번에 조회
-        Tuple postAndCounts = queryFactory
+        // 최적화된 단일 쿼리: Post + 모든 count를 CASE WHEN으로 한 번에 조회
+        Tuple result = queryFactory
                 .select(
-                        postEntity,
-                        userEntity,
+                        postEntity.id,
+                        postEntity.title,
+                        postEntity.content,
+                        postEntity.authorId,
+                        postEntity.authorType,
+                        postEntity.status,
+                        postEntity.createdAt,
+                        postEntity.updatedAt,
+                        postEntity.categoryId,
                         JPAExpressions.select(commentEntity.count())
                                 .from(commentEntity)
                                 .where(commentEntity.postId.eq(id)),
@@ -87,48 +94,36 @@ public class PostRepositoryAdapter implements PostRepository {
                                 )
                 )
                 .from(postEntity)
-                .leftJoin(userEntity).on(postEntity.authorId.eq(userEntity.id))
                 .where(postEntity.id.eq(id))
                 .fetchOne();
 
-        if (postAndCounts == null) {
+        if (result == null) {
             return Optional.empty();
         }
 
-        PostEntity post = postAndCounts.get(postEntity);
-        UserEntity user = postAndCounts.get(userEntity);
-        Long commentCount = postAndCounts.get(2, Long.class);
-        Long likeCount = postAndCounts.get(3, Long.class);
-        Long dislikeCount = postAndCounts.get(4, Long.class);
-        Long viewCount = postAndCounts.get(5, Long.class);
+        Long commentCount = result.get(9, Long.class);
+        Long likeCount = result.get(10, Long.class);
+        Long dislikeCount = result.get(11, Long.class);
+        Long viewCount = result.get(12, Long.class);
 
-        // 2. Category 조회 (Post의 categoryId로 직접 조회)
-        String categoryName = null;
-        if (post.getCategoryId() != null) {
-            categoryName = queryFactory
-                    .select(categoryEntity.name)
-                    .from(categoryEntity)
-                    .where(categoryEntity.id.eq(post.getCategoryId()))
-                    .fetchOne();
-        }
-
-        // 7. Projection 생성 (Document와 동일한 필드만 포함)
-        PostDetailProjection result = PostDetailProjection.builder()
-                .id(post.getId())
-                .title(post.getTitle())
-                .content(post.getContent())
-                .authorId(post.getAuthorId())
-                .authorType(post.getAuthorType() != null ? post.getAuthorType().name() : null)
-                .status(post.getStatus().name())
-                .viewCount(viewCount != null ? viewCount : 0L)
-                .createdAt(post.getCreatedAt())
-                .updatedAt(post.getUpdatedAt())
-                .categoryId(post.getCategoryId())
+        PostDetailProjection projection = PostDetailProjection.builder()
+                .id(result.get(0, UUID.class))
+                .title(result.get(1, String.class))
+                .content(result.get(2, String.class))
+                .authorId(result.get(3, UUID.class))
+                .authorType(result.get(4, org.example.deuknetdomain.domain.post.AuthorType.class) != null
+                        ? result.get(4, org.example.deuknetdomain.domain.post.AuthorType.class).name()
+                        : null)
+                .status(result.get(5, org.example.deuknetdomain.domain.post.PostStatus.class).name())
+                .createdAt(result.get(6, java.time.LocalDateTime.class))
+                .updatedAt(result.get(7, java.time.LocalDateTime.class))
+                .categoryId(result.get(8, UUID.class))
                 .commentCount(commentCount != null ? commentCount : 0L)
                 .likeCount(likeCount != null ? likeCount : 0L)
                 .dislikeCount(dislikeCount != null ? dislikeCount : 0L)
+                .viewCount(viewCount != null ? viewCount : 0L)
                 .build();
 
-        return Optional.of(result);
+        return Optional.of(projection);
     }
 }

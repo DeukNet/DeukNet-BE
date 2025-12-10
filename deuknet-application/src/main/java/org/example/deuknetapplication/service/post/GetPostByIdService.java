@@ -109,6 +109,8 @@ public class GetPostByIdService implements GetPostByIdUseCase {
      * 익명 여부에 따라 User 정보를 조회하여 설정
      * ANONYMOUS인 경우: username/displayName만 "익명"으로 설정 (authorId는 유지하여 작성자 본인은 확인 가능)
      * REAL인 경우: PostgreSQL에서 User 조회하여 설정
+     *
+     * 최적화: Elasticsearch에서 조회한 경우 이미 User 정보가 있을 수 있으므로 체크
      */
     private void enrichWithUserInfo(PostSearchResponse response) {
         if ("ANONYMOUS".equals(response.getAuthorType())) {
@@ -116,11 +118,14 @@ public class GetPostByIdService implements GetPostByIdUseCase {
             response.setAuthorUsername("익명");
             response.setAuthorDisplayName("익명");
         } else if ("REAL".equals(response.getAuthorType()) && response.getAuthorId() != null) {
-            // 실명 게시물은 User 조회
-            userRepository.findById(response.getAuthorId()).ifPresent(user -> {
-                response.setAuthorUsername(user.getUsername());
-                response.setAuthorDisplayName(user.getDisplayName());
-            });
+            // User 정보가 이미 있으면 스킵 (Elasticsearch에서 이미 조회된 경우)
+            if (response.getAuthorUsername() == null || response.getAuthorDisplayName() == null) {
+                // PostgreSQL에서 User 조회 (폴백 케이스)
+                userRepository.findById(response.getAuthorId()).ifPresent(user -> {
+                    response.setAuthorUsername(user.getUsername());
+                    response.setAuthorDisplayName(user.getDisplayName());
+                });
+            }
         }
     }
 
