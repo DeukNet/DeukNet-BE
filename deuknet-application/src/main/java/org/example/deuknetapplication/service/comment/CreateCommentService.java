@@ -2,7 +2,7 @@ package org.example.deuknetapplication.service.comment;
 
 import org.example.deuknetapplication.common.exception.ResourceNotFoundException;
 import org.example.deuknetapplication.messaging.EventType;
-import org.example.deuknetapplication.port.in.comment.CreateCommentAppliationRequest;
+import org.example.deuknetapplication.port.in.comment.CreateCommentApplicationRequest;
 import org.example.deuknetapplication.port.in.comment.CreateCommentUseCase;
 import org.example.deuknetapplication.port.out.event.DataChangeEventPublisher;
 import org.example.deuknetapplication.port.out.repository.CommentRepository;
@@ -61,7 +61,7 @@ public class CreateCommentService implements CreateCommentUseCase {
     }
 
     @Override
-    public UUID createComment(CreateCommentAppliationRequest request) {
+    public UUID createComment(CreateCommentApplicationRequest request) {
         // 1. 현재 사용자 조회
         User author = getCurrentUser();
 
@@ -86,7 +86,7 @@ public class CreateCommentService implements CreateCommentUseCase {
     /**
      * Comment Aggregate 생성 및 저장 (SRP: Comment 생성 책임 분리)
      */
-    private Comment createCommentAggregate(CreateCommentAppliationRequest request, UUID authorId) {
+    private Comment createCommentAggregate(CreateCommentApplicationRequest request, UUID authorId) {
         Comment comment = Comment.create(
                 request.getPostId(),
                 authorId,
