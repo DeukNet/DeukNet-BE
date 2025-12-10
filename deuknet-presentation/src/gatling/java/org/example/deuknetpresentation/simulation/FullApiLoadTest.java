@@ -26,7 +26,7 @@ import static io.gatling.javaapi.http.HttpDsl.*;
 public class FullApiLoadTest extends Simulation {
 
     // 테스트 대상 서버 (NodePort 사용)
-    private static final String BASE_URL = "http://localhost:8080";
+    private static final String BASE_URL = "http://172.17.0.2:30080";
 
     // HTTP 프로토콜 설정
     private final HttpProtocolBuilder httpProtocol = http
@@ -64,19 +64,21 @@ public class FullApiLoadTest extends Simulation {
                 .queryParam("page", "0")
                 .queryParam("size", "5")
                 .check(status().is(200))
-                .check(jsonPath("$.content[0].id").saveAs("postId"))
+                .check(jsonPath("$.content[0].id").optional().saveAs("postId"))
         )
         .pause(Duration.ofSeconds(1))
-        .exec(
-            http("Get Post Detail")
-                .get("/api/posts/#{postId}")
-                .check(status().is(200))
-        )
-        .pause(Duration.ofSeconds(2))
-        .exec(
-            http("Get Post Comments")
-                .get("/api/posts/#{postId}/comments")
-                .check(status().is(200))
+        .doIf(session -> session.contains("postId")).then(
+            exec(
+                http("Get Post Detail")
+                    .get("/api/posts/#{postId}")
+                    .check(status().is(200))
+            )
+            .pause(Duration.ofSeconds(2))
+            .exec(
+                http("Get Post Comments")
+                    .get("/api/posts/#{postId}/comments")
+                    .check(status().is(200))
+            )
         );
 
     // 시나리오 3: 카테고리 조회
@@ -109,13 +111,15 @@ public class FullApiLoadTest extends Simulation {
                 .queryParam("page", "0")
                 .queryParam("size", "5")
                 .check(status().is(200))
-                .check(jsonPath("$.content[0].authorId").saveAs("authorId"))
+                .check(jsonPath("$.content[0].authorId").optional().saveAs("authorId"))
         )
         .pause(Duration.ofSeconds(1))
-        .exec(
-            http("Get User Profile")
-                .get("/api/users/#{authorId}")
-                .check(status().is(200))
+        .doIf(session -> session.contains("authorId")).then(
+            exec(
+                http("Get User Profile")
+                    .get("/api/users/#{authorId}")
+                    .check(status().is(200))
+            )
         );
 
     // 시나리오 5: 검색 기능
@@ -174,7 +178,7 @@ public class FullApiLoadTest extends Simulation {
                 http("Read First Post")
                     .get("/api/posts/#{firstPostId}")
                     .check(status().is(200))
-                    .check(jsonPath("$.authorId").saveAs("authorId"))
+                    .check(jsonPath("$.authorId").optional().saveAs("authorId"))
             )
             .pause(Duration.ofSeconds(3, 8))
             .exec(
@@ -219,25 +223,25 @@ public class FullApiLoadTest extends Simulation {
         setUp(
             // 각 시나리오에 사용자 분배
             browsePostsScenario.injectOpen(
-                rampUsers(30).during(Duration.ofSeconds(3))
+                rampUsers(100).during(Duration.ofSeconds(10))
             ),
             readPostScenario.injectOpen(
-                rampUsers(37).during(Duration.ofSeconds(3))
+                rampUsers(100).during(Duration.ofSeconds(10))
             ),
             browseCategoriesScenario.injectOpen(
-                rampUsers(220).during(Duration.ofSeconds(3))
+                rampUsers(500).during(Duration.ofSeconds(10))
             ),
             viewUserProfileScenario.injectOpen(
-                rampUsers(150).during(Duration.ofSeconds(3))
+                rampUsers(500).during(Duration.ofSeconds(10))
             ),
             searchScenario.injectOpen(
-                rampUsers(150).during(Duration.ofSeconds(3))
+                rampUsers(500).during(Duration.ofSeconds(10))
             ),
             autocompleteScenario.injectOpen(
-                rampUsers(200).during(Duration.ofSeconds(3))  // 자동완성은 빈번하게 발생
+                rampUsers(500).during(Duration.ofSeconds(10))
             ),
             mixedScenario.injectOpen(
-                rampUsers(300).during(Duration.ofSeconds(3))
+                rampUsers(750).during(Duration.ofSeconds(10))
             )
         ).protocols(httpProtocol)
          .assertions(

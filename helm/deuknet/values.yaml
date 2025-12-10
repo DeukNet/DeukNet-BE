@@ -25,36 +25,20 @@ postgres:
   password: app_pass
   port: 5432
 
-kafka:
-  image: apache/kafka:3.8.1
-  port: 9092
-  brokerId: 1
-  kraftMode: true
-  clusterId: "MkU3OEVBNTcwNTJENDM2Qk"
-
-kafkaConnect:
-  enabled: false  # Debezium Embedded Engine 사용으로 비활성화
-  image: debezium/connect:2.5
-  port: 8083
-  groupId: 1
+# Kafka와 Kafka Connect는 제거됨 (Debezium Embedded Engine 사용)
 
 elasticsearch:
   image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
   port: 9200
   javaOpts: "-Xms512m -Xmx512m"
+  resources:
+    requests:
+      memory: "1Gi"
+    limits:
+      memory: "2Gi"
 
-debezium:
-  connector:
-    name: debezium-postgres-source
-    serverName: dbserver1
-    slotName: debezium_slot
-    tableIncludeList: public.outbox_events
-
-elasticsearchSink:
-  connector:
-    name: elasticsearch-sink-post-detail
-    topics: outbox.events.PostDetail
-    indexName: posts-detail
+# debezium과 elasticsearchSink는 Kafka Connect용이므로 제거됨
+# 현재는 Debezium Embedded Engine을 애플리케이션 내부에서 사용
 
 minio:
   image: minio/minio:latest

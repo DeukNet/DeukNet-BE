@@ -4,14 +4,23 @@ spring:
     username: app_user
     password: app_pass
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 10
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     open-in-view: false
     properties:
-      hibernate.format_sql: true
+      hibernate.format_sql: false
       hibernate.hbm2ddl.auto: update
+      hibernate.jdbc.batch_size: 20
+      hibernate.order_inserts: true
+      hibernate.order_updates: true
   elasticsearch:
     uris: http://localhost:9200
   servlet:

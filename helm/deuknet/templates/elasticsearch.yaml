@@ -36,6 +36,10 @@ spec:
           value: "false"
         - name: ES_JAVA_OPTS
           value: {{ .Values.elasticsearch.javaOpts | quote }}
+        {{- if .Values.elasticsearch.resources }}
+        resources:
+          {{- toYaml .Values.elasticsearch.resources | nindent 10 }}
+        {{- end }}
         volumeMounts:
         - name: es-data
           mountPath: /usr/share/elasticsearch/data
