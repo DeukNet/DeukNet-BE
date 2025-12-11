@@ -6,7 +6,7 @@ import java.util.Objects;
  * Value Object의 기반 클래스
  * Value Object는 불변이며 속성 기반 동등성을 갖습니다.
  */
-public abstract class ValueObject implements Immutable {
+public abstract class ValueObject {
 
     /**
      * Value Object는 모든 속성 기반으로 동등성을 판단해야 합니다.

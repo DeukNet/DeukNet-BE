@@ -10,7 +10,7 @@ import java.util.UUID;
  * Entity와 달리 모든 필드를 final로 선언하여 불변성을 보장해야 합니다.
  */
 @Getter
-public abstract class Projection implements Persistable, Immutable {
+public abstract class Projection implements Persistable {
 
     private final UUID id;
 
