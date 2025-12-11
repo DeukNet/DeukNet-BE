@@ -130,7 +130,9 @@ public class PostSearchAdapter implements PostSearchPort {
     }
 
     /**
-     * 인기 게시물 검색 (추천수 * 3 + 조회수 * 1)
+     * 인기 게시물 검색
+     * 인기도 = (likeCount * 3 + viewCount * 1)
+     * 시간 감쇠 = 30일 이상 경과 시 0.75배
      */
     private PageResponse<PostSearchResponse> executePopularSearch(Query query, int page, int size) {
         try {
@@ -144,7 +146,16 @@ public class PostSearchAdapter implements PostSearchPort {
                         .type(co.elastic.clients.elasticsearch._types.ScriptSortType.Number)
                         .script(sc -> sc
                             .inline(inline -> inline
-                                .source("(doc['likeCount'].value * 3) + (doc['viewCount'].value * 1)")
+                                .source("""
+                                    long now = new Date().getTime();
+                                    long created = doc['createdAt'].value.toInstant().toEpochMilli();
+                                    long daysDiff = (now - created) / (1000L * 60 * 60 * 24);
+
+                                    double timeDecay = daysDiff > 30 ? 0.75 : 1.0;
+                                    double popularity = (doc['likeCount'].value * 3) + (doc['viewCount'].value * 1);
+
+                                    return popularity * timeDecay;
+                                """)
                             )
                         )
                         .order(SortOrder.Desc)
@@ -180,6 +191,7 @@ public class PostSearchAdapter implements PostSearchPort {
 
     /**
      * 관련성 점수(_score) 기준 검색 실행 메서드
+     * 스코어 1.5 이상만 반환 (검색 품질 향상)
      */
     private PageResponse<PostSearchResponse> executeSearchByRelevance(
             Query query,
@@ -192,6 +204,7 @@ public class PostSearchAdapter implements PostSearchPort {
                 .query(query)
                 .from(page * size)
                 .size(size)
+                .minScore(1.5)  // 스코어 1.5 이상만 반환
                 // _score 기준 내림차순 정렬 (관련성이 높은 순)
             );
 
@@ -321,9 +334,67 @@ public class PostSearchAdapter implements PostSearchPort {
         }
     }
 
+    @Override
+    public PageResponse<PostSearchResponse> findFeaturedPosts(UUID categoryId, int page, int size) {
+        BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
+
+        // PUBLISHED 상태 필터링 (필수)
+        boolQueryBuilder.filter(Query.of(q -> q
+            .term(t -> t.field("status").value("PUBLISHED"))
+        ));
+
+        // 카테고리 필터링
+        if (categoryId != null) {
+            boolQueryBuilder.filter(Query.of(q -> q
+                .term(t -> t.field("categoryId").value(categoryId.toString()))
+            ));
+        }
+
+        Query query = Query.of(q -> q.bool(boolQueryBuilder.build()));
+
+        try {
+            SearchRequest searchRequest = SearchRequest.of(s -> s
+                .index(INDEX_NAME)
+                .query(query)
+                .from(page * size)
+                .size(Math.min(size, 20))  // 최대 20개
+                .sort(sort -> sort
+                    .field(f -> f
+                        .field("likeCount")
+                        .order(SortOrder.Desc)
+                    )
+                )
+            );
+
+            SearchResponse<PostDetailDocument> response = elasticsearchClient.search(
+                searchRequest,
+                PostDetailDocument.class
+            );
+
+            List<PostSearchResponse> results = response.hits().hits().stream()
+                .map(Hit::source)
+                .map(doc -> mapper.toProjection(doc, null, null, null))
+                .map(PostSearchResponse::new)
+                .collect(Collectors.toList());
+
+            long totalElements = response.hits().total() != null ? response.hits().total().value() : 0;
+            return new PageResponse<>(results, totalElements, page, size);
+
+        } catch (ElasticsearchException e) {
+            if (e.getMessage() != null && (e.getMessage().contains("index_not_found_exception")
+                    || e.getMessage().contains("all shards failed"))) {
+                return new PageResponse<>(List.of(), 0, page, size);
+            }
+            throw new SearchOperationException("Failed to find featured posts", e);
+        } catch (IOException e) {
+            throw new SearchOperationException("Failed to find featured posts", e);
+        }
+    }
+
     /**
      * 검색어 필터링을 BoolQuery에 적용하는 공통 메서드
-     * Nori 형태소 분석 + edge nGram 자동완성 지원
+     * Nori 형태소 분석 기반 검색 (fuzziness 제거, 스코어 품질 향상)
+     * 제목 가중치 2.0, 내용 가중치 0.8
      */
     private void applyKeywordFilter(BoolQuery.Builder boolQueryBuilder, String keyword) {
         if (keyword != null && !keyword.isBlank()) {
@@ -334,18 +405,12 @@ public class PostSearchAdapter implements PostSearchPort {
                     .toList();
 
             boolQueryBuilder.must(b -> b.bool(inner -> {
-                // multi_match: Nori 형태소 분석 + autocomplete edge nGram
+                // multi_match: title(가중치 2.0) + content(가중치 0.8)
                 keywords.forEach(kw -> inner.should(s ->
                         s.multiMatch(m -> m
                                 .query(kw)
-                                .fields(
-                                    "title^3",              // Nori 형태소 분석 (가중치 3)
-                                    "title.autocomplete^2", // edge nGram 자동완성 (가중치 2)
-                                    "content^1.5",          // Nori 형태소 분석 (가중치 1.5)
-                                    "content.autocomplete^1" // edge nGram 자동완성 (가중치 1)
-                                )
-                                .fuzziness("AUTO")     // 오타 허용
-                                .operator(Operator.Or) // 여러 단어 OR 매칭
+                                .fields("title^2.0", "content^0.8")
+                                .operator(Operator.Or)
                         )
                 ));
 

@@ -39,4 +39,14 @@ public interface PostSearchPort {
      * @return 제안된 검색어 목록
      */
     List<String> suggestKeywords(String prefix, int size);
+
+    /**
+     * 카테고리별 개념글 조회 (높은 스코어 + 좋아요 많은 글)
+     *
+     * @param categoryId 카테고리 ID (null이면 전체)
+     * @param page 페이지 번호
+     * @param size 페이지 크기
+     * @return 개념글 목록
+     */
+    PageResponse<PostSearchResponse> findFeaturedPosts(UUID categoryId, int page, int size);
 }
