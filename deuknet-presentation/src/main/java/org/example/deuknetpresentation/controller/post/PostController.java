@@ -19,6 +19,7 @@ public class PostController implements PostApi {
     private final DeletePostUseCase deletePostUseCase;
     private final GetPostByIdUseCase getPostByIdUseCase;
     private final SearchPostUseCase searchPostUseCase;
+    private final org.example.deuknetapplication.port.out.security.CurrentUserPort currentUserPort;
 
     public PostController(
             CreatePostUseCase createPostUseCase,
@@ -26,7 +27,8 @@ public class PostController implements PostApi {
             PublishPostUseCase publishPostUseCase,
             DeletePostUseCase deletePostUseCase,
             GetPostByIdUseCase getPostByIdUseCase,
-            SearchPostUseCase searchPostUseCase
+            SearchPostUseCase searchPostUseCase,
+            org.example.deuknetapplication.port.out.security.CurrentUserPort currentUserPort
     ) {
         this.createPostUseCase = createPostUseCase;
         this.updatePostUseCase = updatePostUseCase;
@@ -34,6 +36,7 @@ public class PostController implements PostApi {
         this.deletePostUseCase = deletePostUseCase;
         this.getPostByIdUseCase = getPostByIdUseCase;
         this.searchPostUseCase = searchPostUseCase;
+        this.currentUserPort = currentUserPort;
     }
 
     @Override
@@ -81,49 +84,75 @@ public class PostController implements PostApi {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<PageResponse<PostSearchResponse>> searchPosts(
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) UUID authorId,
             @RequestParam(required = false) UUID categoryId,
-            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "RECENT") String sortType,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortOrder
+            @RequestParam(defaultValue = "20") int size
     ){
         // 페이지 크기 제한: 최대 100
         if (size > 100) {
             size = 100;
         }
 
+        // String sortType을 SortType enum으로 변환
+        SortType sortTypeEnum;
+        try {
+            sortTypeEnum = SortType.valueOf(sortType.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            // 잘못된 값이면 기본값(RECENT) 사용
+            sortTypeEnum = SortType.RECENT;
+        }
+
         PostSearchRequest request = PostSearchRequest.builder()
                 .keyword(keyword)
-                .authorId(authorId)
                 .categoryId(categoryId)
-                .status(status)
+                .sortType(sortTypeEnum)
                 .page(page)
                 .size(size)
-                .sortBy(sortBy)
-                .sortOrder(sortOrder)
                 .build();
 
         PageResponse<PostSearchResponse> results = searchPostUseCase.search(request);
         return ResponseEntity.ok(results);
     }
 
-    @Override
-    @GetMapping("/popular")
+    @GetMapping("/my")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<PageResponse<PostSearchResponse>> getPopularPosts(
+    public ResponseEntity<PageResponse<PostSearchResponse>> getMyPosts(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) UUID categoryId,
-            @RequestParam(required = false) String keyword
+            @RequestParam(defaultValue = "20") int size
     ) {
         // 페이지 크기 제한: 최대 100
         if (size > 100) {
             size = 100;
         }
 
-        PageResponse<PostSearchResponse> results = searchPostUseCase.findPopularPosts(page, size, categoryId, keyword);
+        // 현재 사용자 ID로 조회 (익명 게시물 포함)
+        UUID currentUserId = currentUserPort.getCurrentUserId();
+
+        PostSearchRequest request = PostSearchRequest.builder()
+                .authorId(currentUserId)
+                .sortType(SortType.RECENT)
+                .page(page)
+                .size(size)
+                .build();
+
+        PageResponse<PostSearchResponse> results = searchPostUseCase.search(request);
+        return ResponseEntity.ok(results);
+    }
+
+    @GetMapping("/featured")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<PageResponse<PostSearchResponse>> getFeaturedPosts(
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        // 페이지 크기 제한: 최대 20
+        if (size > 20) {
+            size = 20;
+        }
+
+        PageResponse<PostSearchResponse> results = searchPostUseCase.findFeaturedPosts(categoryId, page, size);
         return ResponseEntity.ok(results);
     }
 

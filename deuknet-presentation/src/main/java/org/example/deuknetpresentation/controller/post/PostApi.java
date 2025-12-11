@@ -116,8 +116,8 @@ public interface PostApi {
     );
 
     @Operation(
-            summary = "게시글 검색",
-            description = "여러 조건으로 게시글을 검색합니다. 모든 필터는 AND로 결합됩니다. 페이지네이션 정보를 포함하여 반환합니다."
+            summary = "게시글 검색 (통합)",
+            description = "게시글을 검색합니다. sortType으로 최신순/인기순을 선택할 수 있습니다. 항상 PUBLISHED 상태만 조회됩니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -128,18 +128,32 @@ public interface PostApi {
     })
     ResponseEntity<PageResponse<PostSearchResponse>> searchPosts(
             @Parameter(description = "검색 키워드 (제목 + 내용)") @RequestParam(required = false) String keyword,
-            @Parameter(description = "작성자 ID") @RequestParam(required = false) UUID authorId,
             @Parameter(description = "카테고리 ID") @RequestParam(required = false) UUID categoryId,
-            @Parameter(description = "게시글 상태 (DRAFT, PUBLISHED, DELETED)") @RequestParam(required = false) String status,
+            @Parameter(description = "정렬 타입 (RECENT: 최신순, POPULAR: 인기순)") @RequestParam(defaultValue = "RECENT") String sortType,
             @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "페이지 크기 (최대 100)") @RequestParam(defaultValue = "20") int size,
-            @Parameter(description = "정렬 기준 (createdAt, viewCount 등)") @RequestParam(defaultValue = "createdAt") String sortBy,
-            @Parameter(description = "정렬 순서 (asc, desc)") @RequestParam(defaultValue = "desc") String sortOrder
+            @Parameter(description = "페이지 크기 (최대 100)") @RequestParam(defaultValue = "20") int size
     );
 
     @Operation(
-            summary = "인기 게시글 조회",
-            description = "추천수 기준으로 인기 게시글을 조회합니다. 카테고리를 지정하면 해당 카테고리의 인기 게시글만 조회합니다. 페이지네이션 정보를 포함하여 반환합니다."
+            summary = "내 게시물 조회",
+            description = "현재 로그인한 사용자가 작성한 게시물을 조회합니다. 익명 게시물도 포함됩니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = PageResponse.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    ResponseEntity<PageResponse<PostSearchResponse>> getMyPosts(
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기 (최대 100)") @RequestParam(defaultValue = "20") int size
+    );
+
+    @Operation(
+            summary = "개념글 조회",
+            description = "좋아요가 많은 게시글 상위 20개를 조회합니다. 카테고리별 필터링이 가능합니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -148,10 +162,9 @@ public interface PostApi {
                     content = @Content(schema = @Schema(implementation = PageResponse.class))
             )
     })
-    ResponseEntity<PageResponse<PostSearchResponse>> getPopularPosts(
-            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "페이지 크기 (최대 100)") @RequestParam(defaultValue = "20") int size,
+    ResponseEntity<PageResponse<PostSearchResponse>> getFeaturedPosts(
             @Parameter(description = "카테고리 ID (선택사항)") @RequestParam(required = false) UUID categoryId,
-            @Parameter(description = "검색어 (선택사항)") @RequestParam(required = false) String keyword
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기 (최대 20)") @RequestParam(defaultValue = "20") int size
     );
 }

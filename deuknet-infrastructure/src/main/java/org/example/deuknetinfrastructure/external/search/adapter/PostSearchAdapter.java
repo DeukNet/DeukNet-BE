@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
  * <br>
  * PostSearchPort 구현 (out port)
  * - SearchPostService, GetPostByIdService가 사용
+ * todo 리펙토링 합시다.
  */
 @Component
 @RequiredArgsConstructor
@@ -62,72 +63,92 @@ public class PostSearchAdapter implements PostSearchPort {
     }
 
     @Override
+    @Deprecated
     public PageResponse<PostSearchResponse> search(PostSearchRequest request) {
-        BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
-
-        // 검색어 필터링
-
-        applyKeywordFilter(boolQueryBuilder, request.getKeyword());
-
-        // 작성자 필터
-        if (request.getAuthorId() != null) {
-            boolQueryBuilder.filter(Query.of(q -> q
-                .term(t -> t.field("authorId").value(request.getAuthorId().toString()))
-            ));
-        }
-
-        // 카테고리 필터
-        if (request.getCategoryId() != null) {
-            boolQueryBuilder.filter(Query.of(q -> q
-                .term(t -> t.field("categoryIds").value(request.getCategoryId().toString()))
-            ));
-        }
-
-        // 상태 필터
-        if (request.getStatus() != null && !request.getStatus().isBlank()) {
-            boolQueryBuilder.filter(Query.of(q -> q
-                .term(t -> t.field("status").value(request.getStatus()))
-            ));
-        }
-
-        Query boolQuery = Query.of(q -> q.bool(boolQueryBuilder.build()));
-
-        // 검색어가 있을 때는 관련성 점수로 정렬, 없으면 지정된 필드로 정렬
-        if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
-            // 관련성 점수(_score) 기준 정렬 (내림차순)
-            return executeSearchByRelevance(boolQuery, request.getPage(), request.getSize());
-        } else {
-            // 일반 필드 기준 정렬
-            SortOrder sortOrder = "asc".equalsIgnoreCase(request.getSortOrder())
-                    ? SortOrder.Asc
-                    : SortOrder.Desc;
-            return executeSearch(boolQuery, request.getPage(), request.getSize(), request.getSortBy(), sortOrder);
-        }
+        // Deprecated: Service 레이어에서 sortType별 메서드를 직접 호출
+        throw new UnsupportedOperationException("Use sortType-specific methods instead");
     }
 
     @Override
-    public PageResponse<PostSearchResponse> findPopularPosts(int page, int size, UUID categoryId, String keyword) {
+    public PageResponse<PostSearchResponse> searchByPopular(String keyword, UUID authorId, UUID categoryId, int page, int size) {
+        Query boolQuery = buildBoolQuery(keyword, authorId, categoryId);
+        return executePopularSearch(boolQuery, page, size);
+    }
+
+    @Override
+    public PageResponse<PostSearchResponse> searchByRelevance(String keyword, UUID authorId, UUID categoryId, int page, int size) {
+        Query boolQuery = buildBoolQueryForRelevance(keyword, authorId, categoryId);
+        return executeSearchByRelevance(boolQuery, page, size);
+    }
+
+    @Override
+    public PageResponse<PostSearchResponse> searchByRecent(String keyword, UUID authorId, UUID categoryId, int page, int size) {
+        Query boolQuery = buildBoolQuery(keyword, authorId, categoryId);
+        return executeSearch(boolQuery, page, size, "createdAt", SortOrder.Desc);
+    }
+
+    /**
+     * BoolQuery 생성 공통 메서드
+     */
+    private Query buildBoolQuery(String keyword, UUID authorId, UUID categoryId) {
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
-        // PUBLISHED 상태 필터링 (필수)
+        // PUBLISHED 상태 필터링 (고정)
         boolQueryBuilder.filter(Query.of(q -> q
             .term(t -> t.field("status").value("PUBLISHED"))
         ));
 
-        // 카테고리 필터링
-        if (categoryId != null) {
-            boolQueryBuilder.filter(Query.of(q -> q
-                .term(t -> t.field("categoryIds").value(categoryId.toString()))
-            ));
-        }
-
         // 검색어 필터링
         applyKeywordFilter(boolQueryBuilder, keyword);
 
-        Query query = Query.of(q -> q.bool(boolQueryBuilder.build()));
+        // 작성자 필터
+        if (authorId != null) {
+            boolQueryBuilder.filter(Query.of(q -> q
+                .term(t -> t.field("authorId").value(authorId.toString()))
+            ));
+        }
 
-        return executePopularSearch(query, page, size);
+        // 카테고리 필터
+        if (categoryId != null) {
+            boolQueryBuilder.filter(Query.of(q -> q
+                .term(t -> t.field("categoryId").value(categoryId.toString()))
+            ));
+        }
+
+        return Query.of(q -> q.bool(boolQueryBuilder.build()));
     }
+
+    /**
+     * 관련성 검색용 BoolQuery 생성 (높은 가중치 적용)
+     */
+    private Query buildBoolQueryForRelevance(String keyword, UUID authorId, UUID categoryId) {
+        BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
+
+        // PUBLISHED 상태 필터링 (고정)
+        boolQueryBuilder.filter(Query.of(q -> q
+            .term(t -> t.field("status").value("PUBLISHED"))
+        ));
+
+        // 검색어 필터링 (높은 가중치)
+        applyKeywordFilterForRelevance(boolQueryBuilder, keyword);
+
+        // 작성자 필터
+        if (authorId != null) {
+            boolQueryBuilder.filter(Query.of(q -> q
+                .term(t -> t.field("authorId").value(authorId.toString()))
+            ));
+        }
+
+        // 카테고리 필터
+        if (categoryId != null) {
+            boolQueryBuilder.filter(Query.of(q -> q
+                .term(t -> t.field("categoryId").value(categoryId.toString()))
+            ));
+        }
+
+        return Query.of(q -> q.bool(boolQueryBuilder.build()));
+    }
+
 
     /**
      * 인기 게시물 검색
@@ -397,6 +418,33 @@ public class PostSearchAdapter implements PostSearchPort {
      * 제목 가중치 2.0, 내용 가중치 0.8
      */
     private void applyKeywordFilter(BoolQuery.Builder boolQueryBuilder, String keyword) {
+        applyKeywordFilterWithBoost(boolQueryBuilder, keyword, 2.0, 0.8);
+    }
+
+    /**
+     * 관련성 검색용 검색어 필터링 (세밀한 검색을 위한 균형잡힌 가중치)
+     * minScore 1.5를 통과하면서도 내용 검색을 잘 반영하도록 조정
+     * 제목 가중치 3.0, 내용 가중치 2.0 (비율 1.5:1)
+     */
+    private void applyKeywordFilterForRelevance(BoolQuery.Builder boolQueryBuilder, String keyword) {
+        applyKeywordFilterWithBoost(boolQueryBuilder, keyword, 3.0, 2.0);
+    }
+
+    /**
+     * 검색어 필터링을 BoolQuery에 적용하는 공통 메서드 (가중치 커스터마이징 가능)
+     * Nori 형태소 분석 기반 검색
+     *
+     * @param boolQueryBuilder BoolQuery 빌더
+     * @param keyword 검색 키워드
+     * @param titleBoost 제목 필드 가중치
+     * @param contentBoost 내용 필드 가중치
+     */
+    private void applyKeywordFilterWithBoost(
+            BoolQuery.Builder boolQueryBuilder,
+            String keyword,
+            double titleBoost,
+            double contentBoost
+    ) {
         if (keyword != null && !keyword.isBlank()) {
             String trimmedKeyword = keyword.trim();
 
@@ -405,11 +453,11 @@ public class PostSearchAdapter implements PostSearchPort {
                     .toList();
 
             boolQueryBuilder.must(b -> b.bool(inner -> {
-                // multi_match: title(가중치 2.0) + content(가중치 0.8)
+                // multi_match: title + content (커스터마이징 가능한 가중치)
                 keywords.forEach(kw -> inner.should(s ->
                         s.multiMatch(m -> m
                                 .query(kw)
-                                .fields("title^2.0", "content^0.8")
+                                .fields("title^" + titleBoost, "content^" + contentBoost)
                                 .operator(Operator.Or)
                         )
                 ));

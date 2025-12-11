@@ -9,6 +9,7 @@ import java.util.UUID;
 
 /**
  * 게시글 검색 요청 (모든 조건은 AND로 결합)
+ * 항상 PUBLISHED 상태만 조회
  */
 @Getter
 @Builder
@@ -32,9 +33,10 @@ public class PostSearchRequest {
     private UUID categoryId;
 
     /**
-     * 게시글 상태 (PUBLISHED, DRAFT 등)
+     * 정렬 타입 (RECENT: 최신순, POPULAR: 인기순)
      */
-    private String status;
+    @Builder.Default
+    private SortType sortType = SortType.RECENT;
 
     /**
      * 페이지 번호 (0부터 시작)
@@ -47,16 +49,4 @@ public class PostSearchRequest {
      */
     @Builder.Default
     private int size = 10;
-
-    /**
-     * 정렬 필드 (createdAt, viewCount, likeCount 등)
-     */
-    @Builder.Default
-    private String sortBy = "createdAt";
-
-    /**
-     * 정렬 순서 (asc, desc)
-     */
-    @Builder.Default
-    private String sortOrder = "desc";
 }
