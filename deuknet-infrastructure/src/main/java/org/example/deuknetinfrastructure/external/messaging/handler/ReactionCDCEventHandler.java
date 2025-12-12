@@ -38,7 +38,7 @@ public class ReactionCDCEventHandler implements CDCEventHandler {
             maxAttempts = 3,
             backoff = @Backoff(delay = 100, multiplier = 2)
     )
-    public void handle(CDCEventMessage message) throws Exception {
+    public void handle(CDCEventMessage message) {
         String payloadJson = message.payloadJson();
         EventType eventType = message.eventType();
 

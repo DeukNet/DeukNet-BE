@@ -85,6 +85,7 @@ public class PostController implements PostApi {
     public ResponseEntity<PageResponse<PostSearchResponse>> searchPosts(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) UUID authorId,
             @RequestParam(defaultValue = "RECENT") String sortType,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
@@ -106,6 +107,7 @@ public class PostController implements PostApi {
         PostSearchRequest request = PostSearchRequest.builder()
                 .keyword(keyword)
                 .categoryId(categoryId)
+                .authorId(authorId)
                 .sortType(sortTypeEnum)
                 .page(page)
                 .size(size)

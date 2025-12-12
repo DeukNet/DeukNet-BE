@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.example.deuknetapplication.port.out.repository.AuthorInfoEnrichable;
 import org.example.deuknetapplication.projection.post.PostDetailProjection;
 import org.example.deuknetdomain.domain.post.AuthorType;
 
@@ -18,7 +19,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PostSearchResponse {
+public class PostSearchResponse implements AuthorInfoEnrichable {
 
     private UUID id;
     private String title;
@@ -26,7 +27,7 @@ public class PostSearchResponse {
     private UUID authorId;
     private String authorUsername;
     private String authorDisplayName;
-    private String authorType;
+    private AuthorType authorType;
     private String status;
     private UUID categoryId;
     private String categoryName;
@@ -46,7 +47,7 @@ public class PostSearchResponse {
         this.id = projection.getId();
         this.title = projection.getTitle();
         this.content = projection.getContent();
-        this.authorType = projection.getAuthorType();
+        this.authorType = AuthorType.valueOf(projection.getAuthorType());
         this.authorId = projection.getAuthorId();
         // authorUsername, authorDisplayName, categoryName은 별도 조회
         this.status = projection.getStatus();
