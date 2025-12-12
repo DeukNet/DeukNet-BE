@@ -92,6 +92,10 @@ public class DebeziumEngineConfig {
                         String key = record.key();
                         String value = record.value();
 
+                        log.info("===== Debezium Record Received =====");
+                        log.info("Key: {}", key);
+                        log.info("Value: {}", value);
+
                         if (value != null) {
                             eventHandler.handleEvent(key, value);
                         }
