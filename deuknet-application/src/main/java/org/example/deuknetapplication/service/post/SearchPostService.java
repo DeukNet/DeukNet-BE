@@ -47,7 +47,8 @@ public class SearchPostService implements SearchPostUseCase {
                     request.getAuthorId(),
                     request.getCategoryId(),
                     request.getPage(),
-                    request.getSize()
+                    request.getSize(),
+                    request.isIncludeAnonymous()
             );
             case RECENT -> {
                 // 검색어가 있으면 관련성 검색, 없으면 최신순 검색
@@ -57,7 +58,8 @@ public class SearchPostService implements SearchPostUseCase {
                             request.getAuthorId(),
                             request.getCategoryId(),
                             request.getPage(),
-                            request.getSize()
+                            request.getSize(),
+                            request.isIncludeAnonymous()
                     );
                 } else {
                     yield postSearchPort.searchByRecent(
@@ -65,14 +67,37 @@ public class SearchPostService implements SearchPostUseCase {
                             request.getAuthorId(),
                             request.getCategoryId(),
                             request.getPage(),
-                            request.getSize()
+                            request.getSize(),
+                            request.isIncludeAnonymous()
                     );
                 }
             }
         };
 
-        response.getContent().forEach(userRepository::enrichWithUserInfo);
+        response.getContent().forEach(this::enrichPostResponse);
         return response;
+    }
+
+    /**
+     * 게시물 응답 enrichment (isAuthor 체크 → User 정보 설정)
+     * isAuthor는 마스킹 전에 체크해야 함
+     */
+    private void enrichPostResponse(PostSearchResponse response) {
+        // 1. 인증된 사용자인 경우 isAuthor 체크 (마스킹 전)
+        try {
+            UUID currentUserId = currentUserPort.getCurrentUserId();
+            response.setIsAuthor(
+                    Optional.ofNullable(response.getAuthorId())
+                            .map(authorId -> authorId.equals(currentUserId))
+                            .orElse(false)
+            );
+        } catch (Exception e) {
+            // 인증되지 않은 사용자
+            response.setIsAuthor(false);
+        }
+
+        // 2. User 정보 enrichment (익명이면 authorId를 null로 마스킹)
+        userRepository.enrichWithUserInfo(response);
     }
 
     @Override
@@ -82,8 +107,9 @@ public class SearchPostService implements SearchPostUseCase {
 
     @Override
     public PageResponse<PostSearchResponse> findFeaturedPosts(UUID categoryId, int page, int size) {
-        PageResponse<PostSearchResponse> response = postSearchPort.findFeaturedPosts(categoryId, page, size);
-        response.getContent().forEach(userRepository::enrichWithUserInfo);
+        // 개념글은 익명 게시물 제외 (실명만 표시)
+        PageResponse<PostSearchResponse> response = postSearchPort.findFeaturedPosts(categoryId, page, size, false);
+        response.getContent().forEach(this::enrichPostResponse);
         return response;
     }
 
@@ -104,7 +130,7 @@ public class SearchPostService implements SearchPostUseCase {
     @Override
     public List<PostSearchResponse> findTrendingPosts(int size) {
         List<PostSearchResponse> results = postSearchPort.findTrendingPosts(size);
-        results.forEach(userRepository::enrichWithUserInfo);
+        results.forEach(this::enrichPostResponse);
         return results;
     }
 }

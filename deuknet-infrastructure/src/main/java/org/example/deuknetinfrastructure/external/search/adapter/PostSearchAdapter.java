@@ -70,27 +70,27 @@ public class PostSearchAdapter implements PostSearchPort {
     }
 
     @Override
-    public PageResponse<PostSearchResponse> searchByPopular(String keyword, UUID authorId, UUID categoryId, int page, int size) {
-        Query boolQuery = buildBoolQuery(keyword, authorId, categoryId);
+    public PageResponse<PostSearchResponse> searchByPopular(String keyword, UUID authorId, UUID categoryId, int page, int size, boolean includeAnonymous) {
+        Query boolQuery = buildBoolQuery(keyword, authorId, categoryId, includeAnonymous);
         return executePopularSearch(boolQuery, page, size);
     }
 
     @Override
-    public PageResponse<PostSearchResponse> searchByRelevance(String keyword, UUID authorId, UUID categoryId, int page, int size) {
-        Query boolQuery = buildBoolQueryForRelevance(keyword, authorId, categoryId);
+    public PageResponse<PostSearchResponse> searchByRelevance(String keyword, UUID authorId, UUID categoryId, int page, int size, boolean includeAnonymous) {
+        Query boolQuery = buildBoolQueryForRelevance(keyword, authorId, categoryId, includeAnonymous);
         return executeSearchByRelevance(boolQuery, page, size);
     }
 
     @Override
-    public PageResponse<PostSearchResponse> searchByRecent(String keyword, UUID authorId, UUID categoryId, int page, int size) {
-        Query boolQuery = buildBoolQuery(keyword, authorId, categoryId);
+    public PageResponse<PostSearchResponse> searchByRecent(String keyword, UUID authorId, UUID categoryId, int page, int size, boolean includeAnonymous) {
+        Query boolQuery = buildBoolQuery(keyword, authorId, categoryId, includeAnonymous);
         return executeSearch(boolQuery, page, size, "createdAt", SortOrder.Desc);
     }
 
     /**
      * BoolQuery 생성 공통 메서드
      */
-    private Query buildBoolQuery(String keyword, UUID authorId, UUID categoryId) {
+    private Query buildBoolQuery(String keyword, UUID authorId, UUID categoryId, boolean includeAnonymous) {
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
         // PUBLISHED 상태 필터링 (고정)
@@ -115,13 +115,20 @@ public class PostSearchAdapter implements PostSearchPort {
             ));
         }
 
+        // 익명 게시물 필터링
+        if (!includeAnonymous) {
+            boolQueryBuilder.filter(Query.of(q -> q
+                .term(t -> t.field("authorType").value("REAL"))
+            ));
+        }
+
         return Query.of(q -> q.bool(boolQueryBuilder.build()));
     }
 
     /**
      * 관련성 검색용 BoolQuery 생성 (높은 가중치 적용)
      */
-    private Query buildBoolQueryForRelevance(String keyword, UUID authorId, UUID categoryId) {
+    private Query buildBoolQueryForRelevance(String keyword, UUID authorId, UUID categoryId, boolean includeAnonymous) {
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
         // PUBLISHED 상태 필터링 (고정)
@@ -143,6 +150,13 @@ public class PostSearchAdapter implements PostSearchPort {
         if (categoryId != null) {
             boolQueryBuilder.filter(Query.of(q -> q
                 .term(t -> t.field("categoryId").value(categoryId.toString()))
+            ));
+        }
+
+        // 익명 게시물 필터링
+        if (!includeAnonymous) {
+            boolQueryBuilder.filter(Query.of(q -> q
+                .term(t -> t.field("authorType").value("REAL"))
             ));
         }
 
@@ -356,7 +370,7 @@ public class PostSearchAdapter implements PostSearchPort {
     }
 
     @Override
-    public PageResponse<PostSearchResponse> findFeaturedPosts(UUID categoryId, int page, int size) {
+    public PageResponse<PostSearchResponse> findFeaturedPosts(UUID categoryId, int page, int size, boolean includeAnonymous) {
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
         // PUBLISHED 상태 필터링 (필수)
@@ -368,6 +382,13 @@ public class PostSearchAdapter implements PostSearchPort {
         if (categoryId != null) {
             boolQueryBuilder.filter(Query.of(q -> q
                 .term(t -> t.field("categoryId").value(categoryId.toString()))
+            ));
+        }
+
+        // 익명 게시물 필터링
+        if (!includeAnonymous) {
+            boolQueryBuilder.filter(Query.of(q -> q
+                .term(t -> t.field("authorType").value("REAL"))
             ));
         }
 

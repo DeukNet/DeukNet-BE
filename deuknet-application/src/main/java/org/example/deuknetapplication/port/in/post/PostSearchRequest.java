@@ -49,4 +49,12 @@ public class PostSearchRequest {
      */
     @Builder.Default
     private int size = 10;
+
+    /**
+     * 익명 게시물 포함 여부
+     * - true: 익명 게시물 포함 (본인 글 조회 시)
+     * - false: 실명 게시물만 조회 (다른 유저 글 조회 시)
+     */
+    @Builder.Default
+    private boolean includeAnonymous = false;
 }

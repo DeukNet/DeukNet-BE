@@ -111,6 +111,7 @@ public class PostController implements PostApi {
                 .sortType(sortTypeEnum)
                 .page(page)
                 .size(size)
+                .includeAnonymous(authorId == null)  // authorId 지정 시에만 익명 제외
                 .build();
 
         PageResponse<PostSearchResponse> results = searchPostUseCase.search(request);
@@ -136,6 +137,7 @@ public class PostController implements PostApi {
                 .sortType(SortType.RECENT)
                 .page(page)
                 .size(size)
+                .includeAnonymous(true)  // 내 게시물 조회 시 익명 포함
                 .build();
 
         PageResponse<PostSearchResponse> results = searchPostUseCase.search(request);

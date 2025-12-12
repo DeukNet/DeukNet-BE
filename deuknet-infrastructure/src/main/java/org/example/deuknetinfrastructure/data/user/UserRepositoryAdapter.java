@@ -48,7 +48,8 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     public void enrichWithUserInfo(AuthorInfoEnrichable response) {
         if (AuthorType.ANONYMOUS.equals(response.getAuthorType())) {
-            // Post용: authorId 유지 (프론트엔드에서 isAuthor 체크용)
+            // 익명 작성물: authorId를 null로 마스킹
+            response.setAuthorId(null);
             response.setAuthorUsername("익명");
             response.setAuthorDisplayName("익명");
         } else if (AuthorType.REAL.equals(response.getAuthorType())) {

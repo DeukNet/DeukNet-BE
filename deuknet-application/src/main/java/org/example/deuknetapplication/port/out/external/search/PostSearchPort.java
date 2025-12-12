@@ -39,9 +39,10 @@ public interface PostSearchPort {
      * @param categoryId 카테고리 ID
      * @param page 페이지 번호
      * @param size 페이지 크기
+     * @param includeAnonymous 익명 게시물 포함 여부
      * @return 인기순 정렬된 검색 결과
      */
-    PageResponse<PostSearchResponse> searchByPopular(String keyword, UUID authorId, UUID categoryId, int page, int size);
+    PageResponse<PostSearchResponse> searchByPopular(String keyword, UUID authorId, UUID categoryId, int page, int size, boolean includeAnonymous);
 
     /**
      * 관련성 검색 (검색어 기반 스코어 정렬)
@@ -52,9 +53,10 @@ public interface PostSearchPort {
      * @param categoryId 카테고리 ID
      * @param page 페이지 번호
      * @param size 페이지 크기
+     * @param includeAnonymous 익명 게시물 포함 여부
      * @return 관련성 높은 순으로 정렬된 검색 결과
      */
-    PageResponse<PostSearchResponse> searchByRelevance(String keyword, UUID authorId, UUID categoryId, int page, int size);
+    PageResponse<PostSearchResponse> searchByRelevance(String keyword, UUID authorId, UUID categoryId, int page, int size, boolean includeAnonymous);
 
     /**
      * 최신순 검색 (createdAt 내림차순)
@@ -64,9 +66,10 @@ public interface PostSearchPort {
      * @param categoryId 카테고리 ID
      * @param page 페이지 번호
      * @param size 페이지 크기
+     * @param includeAnonymous 익명 게시물 포함 여부
      * @return 최신순 정렬된 검색 결과
      */
-    PageResponse<PostSearchResponse> searchByRecent(String keyword, UUID authorId, UUID categoryId, int page, int size);
+    PageResponse<PostSearchResponse> searchByRecent(String keyword, UUID authorId, UUID categoryId, int page, int size, boolean includeAnonymous);
 
     /**
      * 검색어 자동완성 제안
@@ -83,9 +86,10 @@ public interface PostSearchPort {
      * @param categoryId 카테고리 ID (null이면 전체)
      * @param page 페이지 번호
      * @param size 페이지 크기
+     * @param includeAnonymous 익명 게시물 포함 여부
      * @return 개념글 목록
      */
-    PageResponse<PostSearchResponse> findFeaturedPosts(UUID categoryId, int page, int size);
+    PageResponse<PostSearchResponse> findFeaturedPosts(UUID categoryId, int page, int size, boolean includeAnonymous);
 
     /**
      * 실시간 검색어 (실검) Top 10
