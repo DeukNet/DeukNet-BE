@@ -83,6 +83,7 @@ public class CommentRepositoryAdapter implements CommentRepository {
                             user != null ? user.getAvatarUrl() : null,
                             comment.getParentCommentId(),
                             comment.getParentCommentId() != null,  // isReply: parentCommentId가 있으면 true
+                            comment.getAuthorType() != null ? comment.getAuthorType().name() : "REAL",
                             comment.getCreatedAt(),
                             comment.getUpdatedAt()
                     );

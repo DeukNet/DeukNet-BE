@@ -91,7 +91,8 @@ public class CreateCommentService implements CreateCommentUseCase {
                 request.getPostId(),
                 authorId,
                 Content.from(request.getContent()),
-                request.getParentCommentId()
+                request.getParentCommentId(),
+                request.getAuthorType()
         );
         return commentRepository.save(comment);
     }
@@ -113,6 +114,7 @@ public class CreateCommentService implements CreateCommentUseCase {
                 author.getAvatarUrl(),
                 comment.getParentCommentId().orElse(null),
                 comment.isReply(),
+                comment.getAuthorType().name(),
                 now,
                 now
         );

@@ -3,6 +3,7 @@ package org.example.deuknetdomain.domain.comment;
 import lombok.Getter;
 import org.example.deuknetdomain.common.seedwork.AggregateRoot;
 import org.example.deuknetdomain.common.vo.Content;
+import org.example.deuknetdomain.domain.post.AuthorType;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,38 +15,38 @@ public class Comment extends AggregateRoot {
     private final UUID authorId;
     private Content content;
     private final UUID parentCommentId;
-    private final boolean isAnonymous;
+    private final AuthorType authorType;
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     private Comment(UUID id, UUID postId, UUID authorId, Content content,
-                   UUID parentCommentId, boolean isAnonymous, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                   UUID parentCommentId, AuthorType authorType, LocalDateTime createdAt, LocalDateTime updatedAt) {
         super(id);
         this.postId = postId;
         this.authorId = authorId;
         this.content = content;
         this.parentCommentId = parentCommentId;
-        this.isAnonymous = isAnonymous;
+        this.authorType = authorType != null ? authorType : AuthorType.REAL;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
 
-    public static Comment create(UUID postId, UUID authorId, Content content, UUID parentCommentId, boolean isAnonymous) {
+    public static Comment create(UUID postId, UUID authorId, Content content, UUID parentCommentId, AuthorType authorType) {
         return new Comment(
                 UUID.randomUUID(),
                 postId,
                 authorId,
                 content,
                 parentCommentId,
-                isAnonymous,
+                authorType,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
     }
 
     public static Comment restore(UUID id, UUID postId, UUID authorId, Content content,
-                                 UUID parentCommentId, boolean isAnonymous, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        return new Comment(id, postId, authorId, content, parentCommentId, isAnonymous, createdAt, updatedAt);
+                                 UUID parentCommentId, AuthorType authorType, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        return new Comment(id, postId, authorId, content, parentCommentId, authorType, createdAt, updatedAt);
     }
 
     public void updateContent(Content content) {

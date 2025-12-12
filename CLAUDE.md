@@ -155,6 +155,135 @@ class PostDetailDocument {
 3. **유지보수성**: 필드 변경 시 체계적으로 추적 가능
 4. **성능**: 불필요한 JOIN 없이 Document만으로 조회 가능 (ID만 저장하되, 필수 검색 필드는 비정규화)
 
+### 6. 익명 처리 패턴 (AuthorType Enum 기반)
+
+**⚠️ 매우 중요: Post와 Comment의 익명 처리는 AuthorType Enum을 기반으로 통일되어야 합니다.**
+
+#### 원칙
+
+1. **AuthorType Enum 사용**
+   - `AuthorType.REAL`: 실명 작성
+   - `AuthorType.ANONYMOUS`: 익명 작성
+   - Domain Entity (Post, Comment)에서 `AuthorType` 필드 사용
+   - Database에는 `VARCHAR(20)` 타입으로 저장 (`@Enumerated(EnumType.STRING)`)
+
+2. **Projection은 String 타입으로 전달**
+   - Projection은 Document와 1:1 매핑되는 개념
+   - `PostDetailProjection`, `CommentProjection`에서는 `authorType`을 `String`으로 저장
+   - CDC 이벤트 발행 시 `comment.getAuthorType().name()`으로 변환
+
+3. **Response DTO는 Enum 타입 사용**
+   - `PostSearchResponse`, `CommentResponse`에서는 `AuthorType` Enum 타입 사용
+   - Projection에서 Response 생성 시 `AuthorType.valueOf(projection.getAuthorType())`로 변환
+   - `AuthorInfoEnrichable` 인터페이스 구현하여 익명 처리 통일
+
+4. **UserRepository를 통한 익명 처리**
+   - `UserRepository.enrichWithUserInfo(AuthorInfoEnrichable response)` 메서드 사용
+   - `ANONYMOUS`: authorId를 null로 설정, username/displayName을 "익명"으로 설정
+   - `REAL`: DB에서 User 조회하여 실제 정보 설정
+
+#### 구현 예시
+
+```java
+// Domain Entity
+@Getter
+public class Comment extends AggregateRoot {
+    private final AuthorType authorType;  // Enum 사용
+
+    public static Comment create(..., AuthorType authorType) {
+        return new Comment(..., authorType, ...);
+    }
+}
+
+// Entity (Persistence)
+@Entity
+public class CommentEntity {
+    @Enumerated(EnumType.STRING)
+    @Column(name = "author_type", nullable = false, length = 20)
+    private AuthorType authorType;  // DB에 "REAL" 또는 "ANONYMOUS" 문자열로 저장
+}
+
+// Projection (Document와 1:1)
+public class CommentProjection extends Projection {
+    private final String authorType;  // String 타입
+
+    public CommentProjection(..., String authorType, ...) {
+        this.authorType = authorType;
+    }
+}
+
+// Service - Projection 생성 시
+CommentProjection projection = new CommentProjection(
+    ...,
+    comment.getAuthorType().name(),  // Enum → String 변환
+    ...
+);
+
+// Response DTO
+public class CommentResponse implements AuthorInfoEnrichable {
+    private AuthorType authorType;  // Enum 타입
+
+    public CommentResponse(CommentProjection projection) {
+        this.authorType = AuthorType.valueOf(projection.getAuthorType());  // String → Enum 변환
+    }
+}
+
+// UserRepository 인터페이스
+public interface AuthorInfoEnrichable {
+    UUID getAuthorId();
+    void setAuthorId(UUID authorId);
+    AuthorType getAuthorType();
+    void setAuthorUsername(String username);
+    void setAuthorDisplayName(String displayName);
+}
+
+public interface UserRepository {
+    void enrichWithUserInfo(AuthorInfoEnrichable response);
+}
+
+// UserRepositoryAdapter 구현
+@Override
+public void enrichWithUserInfo(AuthorInfoEnrichable response) {
+    if (AuthorType.ANONYMOUS.equals(response.getAuthorType())) {
+        // 익명 작성물은 User 정보 숨김
+        response.setAuthorId(null);
+        response.setAuthorUsername("익명");
+        response.setAuthorDisplayName("익명");
+    } else if (AuthorType.REAL.equals(response.getAuthorType())) {
+        // 실명 작성물은 User 조회
+        findById(response.getAuthorId()).ifPresent(user -> {
+            response.setAuthorUsername(user.getUsername());
+            response.setAuthorDisplayName(user.getDisplayName());
+        });
+    }
+}
+
+// Service - 익명 처리
+private void enrichWithUserInfo(CommentResponse response) {
+    userRepository.enrichWithUserInfo(response);  // 통일된 익명 처리
+}
+```
+
+#### 체크리스트
+
+익명 기능 추가 시 다음을 모두 확인하세요:
+
+- [ ] Domain Entity에 `AuthorType` 필드 추가 (`Comment`, `Post`)
+- [ ] Entity에 `@Enumerated(EnumType.STRING)` 컬럼 추가
+- [ ] Mapper에서 `AuthorType` 변환 처리
+- [ ] Projection에 `String authorType` 필드 추가
+- [ ] Service에서 Projection 생성 시 `.name()` 변환
+- [ ] Response DTO에 `AuthorType` 필드 추가 및 `AuthorInfoEnrichable` 구현
+- [ ] Response 생성자에서 `AuthorType.valueOf()` 변환
+- [ ] Service에서 `userRepository.enrichWithUserInfo()` 호출
+
+#### 이 패턴을 지켜야 하는 이유
+
+1. **통일성**: Post와 Comment가 동일한 익명 처리 로직 사용
+2. **타입 안정성**: Enum을 사용하여 컴파일 타임에 오류 방지
+3. **유지보수성**: 익명 처리 로직이 UserRepository에 집중되어 수정이 용이
+4. **확장성**: 새로운 작성물 타입(Reply 등) 추가 시 동일한 패턴 적용 가능
+
 ## Common Commands
 
 ### Build & Test

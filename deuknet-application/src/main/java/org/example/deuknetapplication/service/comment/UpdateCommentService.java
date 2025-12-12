@@ -99,6 +99,7 @@ public class UpdateCommentService implements UpdateCommentUseCase {
                 author.getAvatarUrl(),
                 comment.getParentCommentId().orElse(null),
                 comment.isReply(),
+                comment.getAuthorType().name(),
                 comment.getCreatedAt(),
                 now
         );

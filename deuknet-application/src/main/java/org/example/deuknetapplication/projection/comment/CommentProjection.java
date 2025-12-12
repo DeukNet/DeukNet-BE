@@ -28,13 +28,16 @@ public class CommentProjection extends Projection {
     private final UUID parentCommentId;
     private final boolean isReply;
 
+    // 작성자 타입 (REAL/ANONYMOUS)
+    private final String authorType;
+
     // 메타 정보
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
     public CommentProjection(UUID id, UUID postId, String content,
                              UUID authorId, String authorUsername, String authorDisplayName, String authorAvatarUrl,
-                             UUID parentCommentId, boolean isReply,
+                             UUID parentCommentId, boolean isReply, String authorType,
                              LocalDateTime createdAt, LocalDateTime updatedAt) {
         super(id);
         this.postId = postId;
@@ -45,6 +48,7 @@ public class CommentProjection extends Projection {
         this.authorAvatarUrl = authorAvatarUrl;
         this.parentCommentId = parentCommentId;
         this.isReply = isReply;
+        this.authorType = authorType;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
