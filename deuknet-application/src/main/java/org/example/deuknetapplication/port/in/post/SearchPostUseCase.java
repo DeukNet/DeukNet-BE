@@ -34,4 +34,9 @@ public interface SearchPostUseCase {
      * 현재 로그인한 사용자의 게시글 조회 (익명 게시글 포함)
      */
     PageResponse<PostSearchResponse> findMyPosts(int page, int size);
+
+    /**
+     * 실시간 검색어 (실검) Top 10
+     */
+    List<PostSearchResponse> findTrendingPosts(int size);
 }

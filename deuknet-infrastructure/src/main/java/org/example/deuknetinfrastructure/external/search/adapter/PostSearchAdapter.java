@@ -466,4 +466,69 @@ public class PostSearchAdapter implements PostSearchPort {
             }));
         }
     }
+
+    @Override
+    public List<PostSearchResponse> findTrendingPosts(int size) {
+        try {
+            // 24시간 이내 게시글만 대상
+            long oneDayAgo = System.currentTimeMillis() - (24 * 60 * 60 * 1000);
+
+            SearchRequest searchRequest = SearchRequest.of(s -> s
+                .index(INDEX_NAME)
+                .query(q -> q
+                    .bool(b -> b
+                        .filter(f -> f.term(t -> t.field("status").value("PUBLISHED")))
+                        .filter(f -> f.range(r -> r
+                            .field("createdAt")
+                            .gte(co.elastic.clients.json.JsonData.of(oneDayAgo))
+                        ))
+                    )
+                )
+                .size(size)
+                .sort(sort -> sort
+                    .script(script -> script
+                        .type(co.elastic.clients.elasticsearch._types.ScriptSortType.Number)
+                        .script(sc -> sc
+                            .inline(inline -> inline
+                                .source("""
+                                    long now = new Date().getTime();
+                                    long created = doc['createdAt'].value.toInstant().toEpochMilli();
+                                    double hoursOld = (now - created) / (1000.0 * 60 * 60);
+
+                                    // age_decay = 1 + (hours_old / 24)^2
+                                    double ageDecay = 1.0 + Math.pow(hoursOld / 24.0, 2);
+
+                                    // score = (viewCount * 0.3 + likeCount * 0.7) / age_decay
+                                    double rawScore = (doc['viewCount'].value * 0.3) + (doc['likeCount'].value * 0.7);
+
+                                    return rawScore / ageDecay;
+                                """)
+                            )
+                        )
+                        .order(SortOrder.Desc)
+                    )
+                )
+            );
+
+            SearchResponse<PostDetailDocument> response = elasticsearchClient.search(
+                searchRequest,
+                PostDetailDocument.class
+            );
+
+            return response.hits().hits().stream()
+                .map(Hit::source)
+                .map(doc -> mapper.toProjection(doc, null, null, null))
+                .map(PostSearchResponse::new)
+                .collect(Collectors.toList());
+
+        } catch (ElasticsearchException e) {
+            if (e.getMessage() != null && (e.getMessage().contains("index_not_found_exception")
+                    || e.getMessage().contains("all shards failed"))) {
+                return List.of();
+            }
+            throw new SearchOperationException("Failed to find trending posts", e);
+        } catch (IOException e) {
+            throw new SearchOperationException("Failed to find trending posts", e);
+        }
+    }
 }

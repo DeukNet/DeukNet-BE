@@ -100,4 +100,11 @@ public class SearchPostService implements SearchPostUseCase {
 
         return search(request);
     }
+
+    @Override
+    public List<PostSearchResponse> findTrendingPosts(int size) {
+        List<PostSearchResponse> results = postSearchPort.findTrendingPosts(size);
+        results.forEach(userRepository::enrichWithUserInfo);
+        return results;
+    }
 }

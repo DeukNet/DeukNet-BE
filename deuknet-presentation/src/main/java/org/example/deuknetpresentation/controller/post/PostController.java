@@ -172,4 +172,11 @@ public class PostController implements PostApi {
         List<String> suggestions = searchPostUseCase.suggestKeywords(q, size);
         return ResponseEntity.ok(suggestions);
     }
+
+    @GetMapping("/trending")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<List<PostSearchResponse>> getTrendingPosts() {
+        List<PostSearchResponse> results = searchPostUseCase.findTrendingPosts(10);
+        return ResponseEntity.ok(results);
+    }
 }

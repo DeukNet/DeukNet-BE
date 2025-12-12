@@ -86,4 +86,16 @@ public interface PostSearchPort {
      * @return 개념글 목록
      */
     PageResponse<PostSearchResponse> findFeaturedPosts(UUID categoryId, int page, int size);
+
+    /**
+     * 실시간 검색어 (실검) Top 10
+     * 시간 가중치 스코어링: score = (viewCount * 0.3 + likeCount * 0.7) / age_decay
+     * age_decay = 1 + (hours_old / 24)^2
+     *
+     * 최근 24시간 이내 게시글만 대상
+     *
+     * @param size 조회할 개수 (기본 10)
+     * @return 실시간 인기 게시글 목록
+     */
+    List<PostSearchResponse> findTrendingPosts(int size);
 }

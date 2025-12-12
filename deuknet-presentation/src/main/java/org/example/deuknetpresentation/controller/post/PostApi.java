@@ -129,6 +129,7 @@ public interface PostApi {
     ResponseEntity<PageResponse<PostSearchResponse>> searchPosts(
             @Parameter(description = "검색 키워드 (제목 + 내용)") @RequestParam(required = false) String keyword,
             @Parameter(description = "카테고리 ID") @RequestParam(required = false) UUID categoryId,
+            @Parameter(description = "작성자 ID") @RequestParam(required = false) UUID authorId,
             @Parameter(description = "정렬 타입 (RECENT: 최신순, POPULAR: 인기순)") @RequestParam(defaultValue = "RECENT") String sortType,
             @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기 (최대 100)") @RequestParam(defaultValue = "20") int size
