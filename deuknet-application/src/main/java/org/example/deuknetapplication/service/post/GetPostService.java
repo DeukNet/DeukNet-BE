@@ -1,10 +1,11 @@
 package org.example.deuknetapplication.service.post;
 
-import org.example.deuknetapplication.port.in.post.GetPostByIdUseCase;
+import org.example.deuknetapplication.port.in.post.GetPostUseCase;
 import org.example.deuknetapplication.port.in.post.PostSearchResponse;
 import org.example.deuknetapplication.port.out.external.search.PostSearchPort;
 import org.example.deuknetapplication.port.out.repository.PostRepository;
 import org.example.deuknetapplication.port.out.repository.ReactionRepository;
+import org.example.deuknetapplication.port.out.repository.UserRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
 import org.example.deuknetapplication.projection.post.PostDetailProjection;
 import org.example.deuknetdomain.domain.post.exception.PostNotFoundException;
@@ -18,31 +19,31 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * 게시글 ID로 단일 게시글을 조회하는 유스케이스 구현
+ * 게시글 단일 조회 유스케이스 구현
  * SRP: Elasticsearch 우선 조회 전략 + PostgreSQL 폴백 담당
  *
  * 조회 전략:
- * 1. Elasticsearch에서 먼저 조회 (빠른 성능)
- * 2. 없으면 PostgreSQL에서 QueryDSL로 조회 (정합성 보장)
+ * - forceCommandModel=false: Elasticsearch 우선 조회 → PostgreSQL 폴백 (일반 조회)
+ * - forceCommandModel=true: PostgreSQL 직접 조회 (생성/수정 직후)
  */
 @Service
 @Transactional(readOnly = true)
-public class GetPostByIdService implements GetPostByIdUseCase {
+public class GetPostService implements GetPostUseCase {
 
-    private static final Logger log = LoggerFactory.getLogger(GetPostByIdService.class);
+    private static final Logger log = LoggerFactory.getLogger(GetPostService.class);
 
     private final PostSearchPort postSearchPort;
     private final PostRepository postRepository;
     private final ReactionRepository reactionRepository;
     private final CurrentUserPort currentUserPort;
-    private final org.example.deuknetapplication.port.out.repository.UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    public GetPostByIdService(
+    public GetPostService(
             PostSearchPort postSearchPort,
             PostRepository postRepository,
             ReactionRepository reactionRepository,
             CurrentUserPort currentUserPort,
-            org.example.deuknetapplication.port.out.repository.UserRepository userRepository
+            UserRepository userRepository
     ) {
         this.postSearchPort = postSearchPort;
         this.postRepository = postRepository;
@@ -53,19 +54,16 @@ public class GetPostByIdService implements GetPostByIdUseCase {
 
     @Override
     public PostSearchResponse getPostById(UUID postId, boolean forceCommandModel) {
-        // 조회 전략 선택:
-        // - forceCommandModel=true: PostgreSQL 직접 조회 (생성/수정 직후, CDC 동기화 전)
-        // - forceCommandModel=false: Elasticsearch 우선 조회 (일반 조회, 성능 최적화)
 
         PostSearchResponse response = forceCommandModel
                 ? fetchFromPostgreSQL(postId)
                 : fetchFromElasticsearchOrPostgreSQL(postId);
 
-        // 익명 여부에 따라 User 정보 조회 및 설정
-        enrichWithUserInfo(response);
-
-        // 현재 사용자의 reaction 조회 및 설정
+        // 현재 사용자 정보 enrichment (isAuthor, reaction 등) - 익명 마스킹 전에 수행
         enrichWithUserReaction(response, postId);
+
+        // User 정보 enrichment (익명이면 authorId를 null로 마스킹)
+        enrichWithUserInfo(response);
 
         return response;
     }

@@ -32,13 +32,6 @@ public class SearchPostService implements SearchPostUseCase {
     }
 
     @Override
-    public Optional<PostSearchResponse> findById(UUID postId) {
-        Optional<PostSearchResponse> response = postSearchPort.findById(postId);
-        response.ifPresent(userRepository::enrichWithUserInfo);
-        return response;
-    }
-
-    @Override
     public PageResponse<PostSearchResponse> search(PostSearchRequest request) {
         // sortType에 따라 적절한 검색 메서드 호출
         PageResponse<PostSearchResponse> response = switch (request.getSortType()) {

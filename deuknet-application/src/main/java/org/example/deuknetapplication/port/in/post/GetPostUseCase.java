@@ -2,7 +2,10 @@ package org.example.deuknetapplication.port.in.post;
 
 import java.util.UUID;
 
-public interface GetPostByIdUseCase {
+/**
+ * 게시글 단일 조회 UseCase
+ */
+public interface GetPostUseCase {
     /**
      * 게시글 ID로 게시글을 조회
      *

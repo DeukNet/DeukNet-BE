@@ -17,7 +17,7 @@ public class PostController implements PostApi {
     private final UpdatePostUseCase updatePostUseCase;
     private final PublishPostUseCase publishPostUseCase;
     private final DeletePostUseCase deletePostUseCase;
-    private final GetPostByIdUseCase getPostByIdUseCase;
+    private final GetPostUseCase getPostUseCase;
     private final SearchPostUseCase searchPostUseCase;
     private final org.example.deuknetapplication.port.out.security.CurrentUserPort currentUserPort;
 
@@ -26,7 +26,7 @@ public class PostController implements PostApi {
             UpdatePostUseCase updatePostUseCase,
             PublishPostUseCase publishPostUseCase,
             DeletePostUseCase deletePostUseCase,
-            GetPostByIdUseCase getPostByIdUseCase,
+            GetPostUseCase getPostUseCase,
             SearchPostUseCase searchPostUseCase,
             org.example.deuknetapplication.port.out.security.CurrentUserPort currentUserPort
     ) {
@@ -34,7 +34,7 @@ public class PostController implements PostApi {
         this.updatePostUseCase = updatePostUseCase;
         this.publishPostUseCase = publishPostUseCase;
         this.deletePostUseCase = deletePostUseCase;
-        this.getPostByIdUseCase = getPostByIdUseCase;
+        this.getPostUseCase = getPostUseCase;
         this.searchPostUseCase = searchPostUseCase;
         this.currentUserPort = currentUserPort;
     }
@@ -75,7 +75,7 @@ public class PostController implements PostApi {
             @PathVariable UUID id,
             @RequestParam(required = false, defaultValue = "false") boolean forceCommandModel
     ) {
-        PostSearchResponse response = getPostByIdUseCase.getPostById(id, forceCommandModel);
+        PostSearchResponse response = getPostUseCase.getPostById(id, forceCommandModel);
         return ResponseEntity.ok(response);
     }
 

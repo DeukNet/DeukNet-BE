@@ -32,8 +32,8 @@ import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("GetPostByIdService 단위 테스트")
-class GetPostByIdServiceTest {
+@DisplayName("GetPostService 단위 테스트")
+class GetPostServiceTest {
 
     @Mock
     private PostSearchPort postSearchPort;
@@ -51,7 +51,7 @@ class GetPostByIdServiceTest {
     private org.example.deuknetapplication.port.out.repository.UserRepository userRepository;
 
     @InjectMocks
-    private GetPostByIdService getPostByIdService;
+    private GetPostService getPostService;
 
     private UUID testPostId;
     private UUID testUserId;
@@ -68,13 +68,9 @@ class GetPostByIdServiceTest {
                 .title("Test Post")
                 .content("Test Content")
                 .authorId(otherAuthorId)  // testUserId와 다른 ID
-                .authorUsername(null)  // Service에서 User 조회 후 설정
-                .authorDisplayName(null)  // Service에서 User 조회 후 설정
-                .authorAvatarUrl(null)
                 .authorType("REAL")
                 .status(PostStatus.PUBLISHED.name())
                 .categoryId(null)
-                .categoryName(null)
                 .viewCount(0L)
                 .commentCount(0L)
                 .likeCount(0L)
@@ -107,7 +103,7 @@ class GetPostByIdServiceTest {
                 .thenReturn(List.of());
 
         // When
-        PostSearchResponse result = getPostByIdService.getPostById(testPostId);
+        PostSearchResponse result = getPostService.getPostById(testPostId, false);
 
         // Then
         assertThat(result).isNotNull();
@@ -126,7 +122,7 @@ class GetPostByIdServiceTest {
                 .thenReturn(List.of());
 
         // When
-        PostSearchResponse result = getPostByIdService.getPostById(testPostId);
+        PostSearchResponse result = getPostService.getPostById(testPostId, false);
 
         // Then
         assertThat(result).isNotNull();
@@ -142,7 +138,7 @@ class GetPostByIdServiceTest {
         when(postRepository.findDetailById(testPostId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThatThrownBy(() -> getPostByIdService.getPostById(testPostId))
+        assertThatThrownBy(() -> getPostService.getPostById(testPostId, false))
                 .isInstanceOf(PostNotFoundException.class);
     }
 
@@ -159,7 +155,7 @@ class GetPostByIdServiceTest {
                 .thenReturn(List.of(likeReaction));
 
         // When
-        PostSearchResponse result = getPostByIdService.getPostById(testPostId);
+        PostSearchResponse result = getPostService.getPostById(testPostId, false);
 
         // Then
         assertThat(result.getHasUserLiked()).isTrue();
@@ -176,13 +172,9 @@ class GetPostByIdServiceTest {
                 .title("Test Post")
                 .content("Test Content")
                 .authorId(testUserId) // 현재 사용자가 작성자
-                .authorUsername("testuser")
-                .authorDisplayName("Test User")
-                .authorAvatarUrl(null)
                 .authorType("REAL")
                 .status(PostStatus.PUBLISHED.name())
                 .categoryId(null)
-                .categoryName(null)
                 .viewCount(0L)
                 .commentCount(0L)
                 .likeCount(0L)
@@ -198,7 +190,7 @@ class GetPostByIdServiceTest {
                 .thenReturn(List.of());
 
         // When
-        PostSearchResponse result = getPostByIdService.getPostById(testPostId);
+        PostSearchResponse result = getPostService.getPostById(testPostId, false);
 
         // Then
         assertThat(result.getIsAuthor()).isTrue();
@@ -218,7 +210,7 @@ class GetPostByIdServiceTest {
                 .thenReturn(List.of(dislikeReaction));
 
         // When
-        PostSearchResponse result = getPostByIdService.getPostById(testPostId);
+        PostSearchResponse result = getPostService.getPostById(testPostId, false);
 
         // Then
         assertThat(result.getHasUserLiked()).isFalse();
@@ -236,7 +228,7 @@ class GetPostByIdServiceTest {
                 .thenReturn(List.of());
 
         // When
-        PostSearchResponse result = getPostByIdService.getPostById(testPostId);
+        PostSearchResponse result = getPostService.getPostById(testPostId, false);
 
         // Then
         assertThat(result.getHasUserLiked()).isFalse();
@@ -252,7 +244,7 @@ class GetPostByIdServiceTest {
         when(currentUserPort.getCurrentUserId()).thenThrow(new RuntimeException("Not authenticated"));
 
         // When
-        PostSearchResponse result = getPostByIdService.getPostById(testPostId);
+        PostSearchResponse result = getPostService.getPostById(testPostId, false);
 
         // Then
         assertThat(result.getHasUserLiked()).isFalse();
@@ -274,7 +266,7 @@ class GetPostByIdServiceTest {
                 .thenReturn(List.of(likeReaction));
 
         // When
-        PostSearchResponse result = getPostByIdService.getPostById(testPostId);
+        PostSearchResponse result = getPostService.getPostById(testPostId, false);
 
         // Then
         assertThat(result.getHasUserLiked()).isTrue();
