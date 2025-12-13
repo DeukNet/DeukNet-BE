@@ -4,6 +4,9 @@
 
 DeukNet-BE is a Spring Boot backend service implementing **Hexagonal Architecture** with **CQRS pattern** and **Event Sourcing** using CDC (Change Data Capture).
 
+### Related Projects
+- **Frontend**: `/home/kkm06100/frontend` (Frontend application repository)
+
 ### Tech Stack
 - **Language**: Java 17
 - **Framework**: Spring Boot 3.3.5
