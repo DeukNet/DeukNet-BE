@@ -1,5 +1,6 @@
 package org.example.deuknetdomain.common.seedwork;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -36,6 +37,6 @@ public abstract class ValueObject {
     protected boolean equalsByProperties(Object o, Object... properties) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        return Objects.hash(properties) == properties.hashCode();
+        return Objects.hash(properties) == Arrays.hashCode(properties);
     }
 }

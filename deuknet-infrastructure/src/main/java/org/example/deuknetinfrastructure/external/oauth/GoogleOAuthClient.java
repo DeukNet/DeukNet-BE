@@ -18,8 +18,6 @@ public class GoogleOAuthClient implements OAuthClient {
     private final String clientId;
     private final String clientSecret;
     private final String redirectUri;
-    private final String tokenUri = "https://oauth2.googleapis.com/token";
-    private final String userInfoUri = "https://www.googleapis.com/oauth2/v2/userinfo";
 
     public GoogleOAuthClient(
             RestTemplate restTemplate,
@@ -52,7 +50,8 @@ public class GoogleOAuthClient implements OAuthClient {
         params.add("grant_type", "authorization_code");
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
-        
+
+        String tokenUri = "https://oauth2.googleapis.com/token";
         ResponseEntity<Map> response = restTemplate.postForEntity(tokenUri, request, Map.class);
         
         if (response.getBody() == null || !response.getBody().containsKey("access_token")) {
@@ -67,7 +66,8 @@ public class GoogleOAuthClient implements OAuthClient {
         headers.setBearerAuth(accessToken);
         
         HttpEntity<Void> request = new HttpEntity<>(headers);
-        
+
+        String userInfoUri = "https://www.googleapis.com/oauth2/v2/userinfo";
         ResponseEntity<Map> response = restTemplate.exchange(
                 userInfoUri,
                 HttpMethod.GET,

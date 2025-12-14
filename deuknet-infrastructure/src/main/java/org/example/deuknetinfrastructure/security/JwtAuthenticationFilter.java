@@ -6,8 +6,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.example.deuknetapplication.port.out.repository.UserRepository;
 import org.example.deuknetapplication.port.out.security.JwtPort;
-import org.example.deuknetdomain.domain.user.User;
 import org.example.deuknetpresentation.security.UserPrincipal;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -37,14 +37,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
+            @NotNull HttpServletResponse response,
+            @NotNull FilterChain filterChain
     ) throws ServletException, IOException {
 
         String requestURI = request.getRequestURI();
         String authHeader = request.getHeader("Authorization");
-
-        log.info("JWT Filter - URI: {}, Auth header present: {}", requestURI, authHeader != null);
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             log.info("No valid Authorization header found for URI: {}", requestURI);
@@ -57,13 +55,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             UUID userId = jwtPort.validateToken(token);
 
             if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                log.info("JWT validation successful, userId: {}", userId);
 
                 // User 조회하여 role 기반 권한 설정
                 List<SimpleGrantedAuthority> authorities = new ArrayList<>();
                 userRepository.findById(userId).ifPresent(user -> {
                     authorities.add(new SimpleGrantedAuthority(user.getRole().name()));
-                    log.info("User role: {}", user.getRole().name());
+                    log.info("User role: {}, User id: {}", user.getRole().name(), userId);
                 });
 
                 UserPrincipal principal = new UserPrincipal(userId);
@@ -75,8 +72,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 log.info("JWT validation failed or authentication already set");
             }
         } catch (Exception e) {
-            log.error("JWT validation error for URI: {}, Error: {}", requestURI, e.getMessage(), e);
-            // 토큰 검증 실패 시 인증 정보 설정하지 않음
+            log.error("JWT validation error for URI: {}, Error: {}, uri: {}", requestURI, e.getMessage(), requestURI);
         }
 
         filterChain.doFilter(request, response);

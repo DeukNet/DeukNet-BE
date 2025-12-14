@@ -25,8 +25,7 @@ public abstract class Entity implements Persistable {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Entity)) return false;
-        Entity entity = (Entity) o;
+        if (!(o instanceof Entity entity)) return false;
         return Objects.equals(id, entity.id);
     }
 

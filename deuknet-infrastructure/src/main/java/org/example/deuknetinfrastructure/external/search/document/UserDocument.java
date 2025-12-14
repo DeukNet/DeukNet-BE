@@ -11,7 +11,7 @@ import java.util.UUID;
 
 /**
  * 사용자 검색용 Elasticsearch Document
- *
+ * <br>
  * 사용자 검색 및 프로필 조회에 최적화되었습니다.
  * - username, displayName: 검색 대상
  * - bio: 검색 대상

@@ -22,7 +22,7 @@ public class SecurityUtil implements CurrentUserPort {
         
         Object principal = authentication.getPrincipal();
         if (principal instanceof UserPrincipal) {
-            return ((UserPrincipal) principal).getUserId();
+            return ((UserPrincipal) principal).userId();
         }
         
         throw new ForbiddenException("Invalid authentication principal");

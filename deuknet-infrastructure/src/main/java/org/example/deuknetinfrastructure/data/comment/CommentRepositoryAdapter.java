@@ -73,6 +73,7 @@ public class CommentRepositoryAdapter implements CommentRepository {
                     CommentEntity comment = tuple.get(commentEntity);
                     UserEntity user = tuple.get(userEntity);
 
+                    assert comment != null;
                     return new CommentProjection(
                             comment.getId(),
                             comment.getPostId(),

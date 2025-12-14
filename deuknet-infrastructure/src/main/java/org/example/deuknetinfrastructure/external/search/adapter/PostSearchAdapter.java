@@ -17,6 +17,7 @@ import org.example.deuknetapplication.port.out.external.search.PostSearchPort;
 import org.example.deuknetinfrastructure.external.search.document.PostDetailDocument;
 import org.example.deuknetinfrastructure.external.search.exception.SearchOperationException;
 import org.example.deuknetinfrastructure.external.search.mapper.PostDetailDocumentMapper;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.*;
@@ -198,19 +199,7 @@ public class PostSearchAdapter implements PostSearchPort {
                 )
             );
 
-            SearchResponse<PostDetailDocument> response = elasticsearchClient.search(
-                searchRequest,
-                PostDetailDocument.class
-            );
-
-            List<PostSearchResponse> results = response.hits().hits().stream()
-                .map(Hit::source)
-                .map(doc -> mapper.toProjection(doc, null, null, null))
-                .map(PostSearchResponse::new)
-                .collect(Collectors.toList());
-
-            long totalElements = response.hits().total() != null ? response.hits().total().value() : 0;
-            return new PageResponse<>(results, totalElements, page, size);
+            return getPostSearchResponsePageResponse(page, size, searchRequest);
 
         } catch (co.elastic.clients.elasticsearch._types.ElasticsearchException e) {
             // 인덱스가 없는 경우 빈 페이지 반환
@@ -243,19 +232,7 @@ public class PostSearchAdapter implements PostSearchPort {
                 // _score 기준 내림차순 정렬 (관련성이 높은 순)
             );
 
-            SearchResponse<PostDetailDocument> response = elasticsearchClient.search(
-                searchRequest,
-                PostDetailDocument.class
-            );
-
-            List<PostSearchResponse> results = response.hits().hits().stream()
-                .map(Hit::source)
-                .map(doc -> mapper.toProjection(doc, null, null, null))
-                .map(PostSearchResponse::new)
-                .collect(Collectors.toList());
-
-            long totalElements = response.hits().total() != null ? response.hits().total().value() : 0;
-            return new PageResponse<>(results, totalElements, page, size);
+            return getPostSearchResponsePageResponse(page, size, searchRequest);
 
         } catch (co.elastic.clients.elasticsearch._types.ElasticsearchException e) {
             // 인덱스가 없는 경우 빈 페이지 반환
@@ -293,21 +270,9 @@ public class PostSearchAdapter implements PostSearchPort {
                 )
             );
 
-            SearchResponse<PostDetailDocument> response = elasticsearchClient.search(
-                searchRequest,
-                PostDetailDocument.class
-            );
+            return getPostSearchResponsePageResponse(page, size, searchRequest);
 
-            List<PostSearchResponse> results = response.hits().hits().stream()
-                .map(Hit::source)
-                .map(doc -> mapper.toProjection(doc, null, null, null))
-                .map(PostSearchResponse::new)
-                .collect(Collectors.toList());
-
-            long totalElements = response.hits().total() != null ? response.hits().total().value() : 0;
-            return new PageResponse<>(results, totalElements, page, size);
-
-        } catch (co.elastic.clients.elasticsearch._types.ElasticsearchException e) {
+        } catch (ElasticsearchException e) {
             // 인덱스가 없는 경우 빈 페이지 반환
             if (e.getMessage() != null && (e.getMessage().contains("index_not_found_exception")
                     || e.getMessage().contains("all shards failed"))) {
@@ -317,6 +282,23 @@ public class PostSearchAdapter implements PostSearchPort {
         } catch (IOException e) {
             throw new SearchOperationException("Failed to execute search", e);
         }
+    }
+
+    @NotNull
+    private PageResponse<PostSearchResponse> getPostSearchResponsePageResponse(int page, int size, SearchRequest searchRequest) throws IOException {
+        SearchResponse<PostDetailDocument> response = elasticsearchClient.search(
+            searchRequest,
+            PostDetailDocument.class
+        );
+
+        List<PostSearchResponse> results = response.hits().hits().stream()
+            .map(Hit::source)
+            .map(doc -> mapper.toProjection(doc, null, null, null))
+            .map(PostSearchResponse::new)
+            .collect(Collectors.toList());
+
+        long totalElements = response.hits().total() != null ? response.hits().total().value() : 0;
+        return new PageResponse<>(results, totalElements, page, size);
     }
 
     @Override
@@ -408,19 +390,7 @@ public class PostSearchAdapter implements PostSearchPort {
                 )
             );
 
-            SearchResponse<PostDetailDocument> response = elasticsearchClient.search(
-                searchRequest,
-                PostDetailDocument.class
-            );
-
-            List<PostSearchResponse> results = response.hits().hits().stream()
-                .map(Hit::source)
-                .map(doc -> mapper.toProjection(doc, null, null, null))
-                .map(PostSearchResponse::new)
-                .collect(Collectors.toList());
-
-            long totalElements = response.hits().total() != null ? response.hits().total().value() : 0;
-            return new PageResponse<>(results, totalElements, page, size);
+            return getPostSearchResponsePageResponse(page, size, searchRequest);
 
         } catch (ElasticsearchException e) {
             if (e.getMessage() != null && (e.getMessage().contains("index_not_found_exception")

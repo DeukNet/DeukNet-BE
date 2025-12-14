@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  * Outbox 이벤트 조회 어댑터
- *
+ * <br>
  * Debezium CDC 방식에서는 이벤트 폴링이 필요 없지만,
  * 모니터링 및 관리 목적으로 사용할 수 있는 쿼리 메서드를 제공합니다.
  */
@@ -20,7 +20,7 @@ public class OutboxEventQueryAdapter {
 
     /**
      * 특정 Aggregate의 이벤트 조회
-     *
+     * <br>
      * @param aggregateId Aggregate ID (문자열)
      * @return 해당 Aggregate의 이벤트 목록 (timestamp 순)
      */
@@ -35,7 +35,7 @@ public class OutboxEventQueryAdapter {
 
     /**
      * 특정 Aggregate 타입의 이벤트 조회
-     *
+     * <br>
      * @param aggregateType Aggregate 타입 (예: Post, Comment)
      * @param limit 조회할 최대 개수
      * @return 해당 타입의 최근 이벤트 목록
@@ -52,7 +52,7 @@ public class OutboxEventQueryAdapter {
 
     /**
      * 특정 이벤트 타입의 통계 조회
-     *
+     * <br>
      * @param eventType 이벤트 타입
      * @return 해당 타입의 이벤트 수
      */
@@ -68,7 +68,7 @@ public class OutboxEventQueryAdapter {
 
     /**
      * 최근 이벤트 조회 (모니터링용)
-     *
+     * <br>
      * @param limit 조회할 최대 개수
      * @return 최근 이벤트 목록
      */

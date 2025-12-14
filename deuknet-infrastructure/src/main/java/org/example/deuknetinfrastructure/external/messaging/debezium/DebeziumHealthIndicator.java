@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Debezium Engine Health Check
- *
+ * <br>
  * Kubernetes liveness/readiness probe에서 사용됩니다.
  */
 @Component

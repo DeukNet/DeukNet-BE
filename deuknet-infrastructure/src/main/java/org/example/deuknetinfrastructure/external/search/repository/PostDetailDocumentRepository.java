@@ -8,10 +8,10 @@ import java.util.UUID;
 
 /**
  * PostDetailDocument용 Elasticsearch Repository
- *
+ * <br>
  * 이 Repository는 Spring이 PostDetailDocument를 인식하고
  * 자동으로 인덱스를 생성하도록 하기 위한 용도입니다.
- *
+ * <br>
  * 프로덕션에서는 CDC를 통해 Elasticsearch에 데이터가 동기화되므로
  * 이 Repository를 직접 사용하지 않습니다.
  */

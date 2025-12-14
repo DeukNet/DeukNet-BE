@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * QueryDSL 설정
- *
+ * <br>
  * JPAQueryFactory Bean을 생성하여 QueryDSL을 사용할 수 있게 합니다.
  */
 @Configuration

@@ -53,8 +53,8 @@ public class AuthController implements AuthApi {
 
         String redirectUrl = String.format("%s?accessToken=%s&refreshToken=%s",
                 frontendSuccessUrl,
-                tokenPair.getAccessToken(),
-                tokenPair.getRefreshToken()
+                tokenPair.accessToken(),
+                tokenPair.refreshToken()
         );
 
         return new RedirectView(redirectUrl);
@@ -65,6 +65,6 @@ public class AuthController implements AuthApi {
     @ResponseStatus(HttpStatus.OK)
     public TokenResponse refresh(@RequestBody RefreshTokenRequest request) {
         TokenPair tokenPair = refreshTokenUseCase.refresh(request.getRefreshToken());
-        return TokenResponse.from(tokenPair.getAccessToken(), tokenPair.getRefreshToken());
+        return TokenResponse.from(tokenPair.accessToken(), tokenPair.refreshToken());
     }
 }

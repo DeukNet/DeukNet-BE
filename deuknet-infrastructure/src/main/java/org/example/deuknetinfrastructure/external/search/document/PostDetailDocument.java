@@ -10,20 +10,19 @@ import org.springframework.data.elasticsearch.annotations.InnerField;
 import org.springframework.data.elasticsearch.annotations.MultiField;
 import org.springframework.data.elasticsearch.annotations.Setting;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
  * 게시글 상세 검색용 Elasticsearch Document
- *
+ * <br>
  * 게시글 상세 조회 및 전문 검색(Full-text search)에 최적화된 구조입니다.
  * 모든 필드를 포함하여 상세 검색 및 표시를 지원합니다.
- *
+ * <br>
  * 사용 예:
  * - 게시글 상세 페이지 검색
  * - 본문 전체 검색
  * - 상세 필터링 (카테고리, 작성자, 태그 등)
- *
+ * <br>
  * 필드:
  * - 제목, 내용: edge nGram을 통한 한글 자동완성 검색
  * - 작성자 정보: 필터링 및 검색
@@ -115,10 +114,6 @@ public class PostDetailDocument extends BaseDocument {
      */
     @Field(type = FieldType.Long)
     private Long dislikeCount;
-
-    protected PostDetailDocument() {
-        super();
-    }
 
     public PostDetailDocument(UUID id) {
         super(id);

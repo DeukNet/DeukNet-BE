@@ -1,5 +1,10 @@
 package org.example.deuknetpresentation.controller.auth.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter
+@Getter
 public class RefreshTokenRequest {
 
     private String refreshToken;
@@ -8,14 +13,6 @@ public class RefreshTokenRequest {
     }
 
     public RefreshTokenRequest(String refreshToken) {
-        this.refreshToken = refreshToken;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
     }
 }

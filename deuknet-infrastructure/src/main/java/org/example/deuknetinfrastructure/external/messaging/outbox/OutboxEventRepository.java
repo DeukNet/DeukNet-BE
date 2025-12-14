@@ -7,7 +7,7 @@ import java.util.UUID;
 
 /**
  * Outbox 이벤트 저장소
- *
+ * <br>
  * 기본 CRUD 작업만 제공합니다.
  * 복잡한 쿼리는 OutboxEventQueryAdapter에서 QueryDSL로 구현합니다.
  */

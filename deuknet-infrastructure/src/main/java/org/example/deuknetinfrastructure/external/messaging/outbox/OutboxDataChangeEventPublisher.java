@@ -15,15 +15,15 @@ import java.util.UUID;
 
 /**
  * DataChangeEventPublisher 포트의 Outbox 패턴 구현체
- *
+ * <br>
  * Application에서 요청한 데이터 변경 이벤트 발행을
  * Transactional Outbox Pattern으로 구현합니다.
- *
+ * <br>
  * 구현 방식:
  * 1. 데이터 변경 이벤트를 JSON으로 직렬화
  * 2. Outbox 테이블에 저장 (트랜잭션 보장)
  * 3. 별도 스케줄러(OutboxEventScheduler)가 폴링하여 메시지 브로커에 발행
- *
+ * <br>
  * 네이밍:
  * - "Outbox"로 시작: 이 클래스가 Outbox 패턴 구현임을 명시
  * - Infrastructure 레이어에만 존재하므로 기술적 용어 사용 가능
