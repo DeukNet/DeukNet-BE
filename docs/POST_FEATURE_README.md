@@ -173,7 +173,7 @@ deuknet-presentation/
 **Request Body:**
 ```json
 {
-  "reactionType": "LIKE"  // LIKE, LOVE, HAHA, WOW, SAD, ANGRY
+  "reactionType": "LIKE"
 }
 ```
 

@@ -132,18 +132,6 @@ kubectl exec -it deploy/kafka-connect -- curl -s http://localhost:8083/connector
 kubectl exec -it deploy/kafka-connect -- curl -s http://localhost:8083/connectors/elasticsearch-sink-post-detail/status | jq
 ```
 
-### Kafka 토픽 확인
-
-```bash
-kubectl exec -it deploy/kafka -- kafka-topics --bootstrap-server localhost:9092 --list
-
-# 예상 토픽:
-# outbox.events.PostDetail
-# connect_configs
-# connect_offsets
-# connect_statuses
-```
-
 ### Elasticsearch 인덱스 확인
 
 ```bash
@@ -328,7 +316,6 @@ kubectl exec -it deploy/elasticsearch -- curl -X PUT \
 
 - Chart Version: 1.0.0
 - App Version: 1.0
-- Kafka: 3.8.1 (KRaft)
 - Debezium: 2.5
 - Elasticsearch: 8.11
 - PostgreSQL: 15
