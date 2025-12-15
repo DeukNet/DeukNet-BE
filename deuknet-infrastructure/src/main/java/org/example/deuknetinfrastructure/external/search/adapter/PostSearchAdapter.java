@@ -17,7 +17,6 @@ import org.example.deuknetapplication.port.out.external.search.PostSearchPort;
 import org.example.deuknetinfrastructure.external.search.document.PostDetailDocument;
 import org.example.deuknetinfrastructure.external.search.exception.SearchOperationException;
 import org.example.deuknetinfrastructure.external.search.mapper.PostDetailDocumentMapper;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.*;
@@ -86,6 +85,173 @@ public class PostSearchAdapter implements PostSearchPort {
     public PageResponse<PostSearchResponse> searchByRecent(String keyword, UUID authorId, UUID categoryId, int page, int size, boolean includeAnonymous) {
         Query boolQuery = buildBoolQuery(keyword, authorId, categoryId, includeAnonymous);
         return executeSearch(boolQuery, page, size, "createdAt", SortOrder.Desc);
+    }
+
+    @Override
+    public List<String> suggestKeywords(String prefix, int size) {
+        if (prefix == null || prefix.isBlank()) {
+            return List.of();
+        }
+
+        try {
+            // 제목의 autocomplete 필드만 사용한 prefix 검색
+            Query matchQuery = Query.of(q -> q
+                    .match(m -> m
+                            .field("title.autocomplete")
+                            .query(prefix.trim())
+                    )
+            );
+
+            SearchRequest searchRequest = SearchRequest.of(s -> s
+                    .index(INDEX_NAME)
+                    .query(matchQuery)
+                    .size(size)
+                    .source(src -> src.filter(f -> f.includes("title")))
+            );
+
+            SearchResponse<PostDetailDocument> response = elasticsearchClient.search(
+                    searchRequest,
+                    PostDetailDocument.class
+            );
+
+            // 제목에서 고유한 키워드 추출
+            Set<String> suggestions = new LinkedHashSet<>();
+            response.hits().hits().stream()
+                    .map(Hit::source)
+                    .filter(Objects::nonNull)
+                    .map(PostDetailDocument::getTitle)
+                    .filter(Objects::nonNull)
+                    .limit(size)
+                    .forEach(suggestions::add);
+
+            return new ArrayList<>(suggestions);
+
+        } catch (ElasticsearchException e) {
+            if (e.getMessage() != null && (e.getMessage().contains("index_not_found_exception")
+                    || e.getMessage().contains("all shards failed"))) {
+                return List.of();
+            }
+            throw new SearchOperationException("Failed to suggest keywords", e);
+        } catch (IOException e) {
+            throw new SearchOperationException("Failed to suggest keywords", e);
+        }
+    }
+
+    @Override
+    public PageResponse<PostSearchResponse> findFeaturedPosts(UUID categoryId, int page, int size, boolean includeAnonymous) {
+        BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
+
+        // PUBLISHED 상태 필터링 (필수)
+        boolQueryBuilder.filter(Query.of(q -> q
+                .term(t -> t.field("status").value("PUBLISHED"))
+        ));
+
+        // 카테고리 필터링
+        if (categoryId != null) {
+            boolQueryBuilder.filter(Query.of(q -> q
+                    .term(t -> t.field("categoryId").value(categoryId.toString()))
+            ));
+        }
+
+        // 익명 게시물 필터링
+        if (!includeAnonymous) {
+            boolQueryBuilder.filter(Query.of(q -> q
+                    .term(t -> t.field("authorType").value("REAL"))
+            ));
+        }
+
+        Query query = Query.of(q -> q.bool(boolQueryBuilder.build()));
+
+        try {
+            SearchRequest searchRequest = SearchRequest.of(s -> s
+                    .index(INDEX_NAME)
+                    .query(query)
+                    .from(page * size)
+                    .size(Math.min(size, 20))  // 최대 20개
+                    .sort(sort -> sort
+                            .field(f -> f
+                                    .field("likeCount")
+                                    .order(SortOrder.Desc)
+                            )
+                    )
+            );
+
+            return getPostSearchResponsePageResponse(page, size, searchRequest);
+
+        } catch (ElasticsearchException e) {
+            if (e.getMessage() != null && (e.getMessage().contains("index_not_found_exception")
+                    || e.getMessage().contains("all shards failed"))) {
+                return new PageResponse<>(List.of(), 0, page, size);
+            }
+            throw new SearchOperationException("Failed to find featured posts", e);
+        } catch (IOException e) {
+            throw new SearchOperationException("Failed to find featured posts", e);
+        }
+    }
+
+    @Override
+    public List<PostSearchResponse> findTrendingPosts(int size) {
+        try {
+            // 24시간 이내 게시글만 대상
+            long oneDayAgo = System.currentTimeMillis() - (24 * 60 * 60 * 1000);
+
+            SearchRequest searchRequest = SearchRequest.of(s -> s
+                    .index(INDEX_NAME)
+                    .query(q -> q
+                            .bool(b -> b
+                                    .filter(f -> f.term(t -> t.field("status").value("PUBLISHED")))
+                                    .filter(f -> f.range(r -> r
+                                            .field("createdAt")
+                                            .gte(co.elastic.clients.json.JsonData.of(oneDayAgo))
+                                    ))
+                            )
+                    )
+                    .size(size)
+                    .sort(sort -> sort
+                            .script(script -> script
+                                    .type(co.elastic.clients.elasticsearch._types.ScriptSortType.Number)
+                                    .script(sc -> sc
+                                            .inline(inline -> inline
+                                                    .source("""
+                                    long now = new Date().getTime();
+                                    long created = doc['createdAt'].value.toInstant().toEpochMilli();
+                                    double hoursOld = (now - created) / (1000.0 * 60 * 60);
+
+                                    // age_decay = 1 + (hours_old / 24)^2
+                                    double ageDecay = 1.0 + Math.pow(hoursOld / 24.0, 2);
+
+                                    // score = (viewCount * 0.3 + likeCount * 0.7) / age_decay
+                                    double rawScore = (doc['viewCount'].value * 0.3) + (doc['likeCount'].value * 0.7);
+
+                                    return rawScore / ageDecay;
+                                """)
+                                            )
+                                    )
+                                    .order(SortOrder.Desc)
+                            )
+                    )
+            );
+
+            SearchResponse<PostDetailDocument> response = elasticsearchClient.search(
+                    searchRequest,
+                    PostDetailDocument.class
+            );
+
+            return response.hits().hits().stream()
+                    .map(Hit::source)
+                    .map(doc -> mapper.toProjection(doc, null, null, null))
+                    .map(PostSearchResponse::new)
+                    .collect(Collectors.toList());
+
+        } catch (ElasticsearchException e) {
+            if (e.getMessage() != null && (e.getMessage().contains("index_not_found_exception")
+                    || e.getMessage().contains("all shards failed"))) {
+                return List.of();
+            }
+            throw new SearchOperationException("Failed to find trending posts", e);
+        } catch (IOException e) {
+            throw new SearchOperationException("Failed to find trending posts", e);
+        }
     }
 
     /**
@@ -284,7 +450,6 @@ public class PostSearchAdapter implements PostSearchPort {
         }
     }
 
-    @NotNull
     private PageResponse<PostSearchResponse> getPostSearchResponsePageResponse(int page, int size, SearchRequest searchRequest) throws IOException {
         SearchResponse<PostDetailDocument> response = elasticsearchClient.search(
             searchRequest,
@@ -299,108 +464,6 @@ public class PostSearchAdapter implements PostSearchPort {
 
         long totalElements = response.hits().total() != null ? response.hits().total().value() : 0;
         return new PageResponse<>(results, totalElements, page, size);
-    }
-
-    @Override
-    public List<String> suggestKeywords(String prefix, int size) {
-        if (prefix == null || prefix.isBlank()) {
-            return List.of();
-        }
-
-        try {
-            // 제목의 autocomplete 필드만 사용한 prefix 검색
-            Query matchQuery = Query.of(q -> q
-                .match(m -> m
-                    .field("title.autocomplete")
-                    .query(prefix.trim())
-                )
-            );
-
-            SearchRequest searchRequest = SearchRequest.of(s -> s
-                .index(INDEX_NAME)
-                .query(matchQuery)
-                .size(size)
-                .source(src -> src.filter(f -> f.includes("title")))
-            );
-
-            SearchResponse<PostDetailDocument> response = elasticsearchClient.search(
-                searchRequest,
-                PostDetailDocument.class
-            );
-
-            // 제목에서 고유한 키워드 추출
-            Set<String> suggestions = new LinkedHashSet<>();
-            response.hits().hits().stream()
-                .map(Hit::source)
-                .filter(Objects::nonNull)
-                .map(PostDetailDocument::getTitle)
-                .filter(Objects::nonNull)
-                .limit(size)
-                .forEach(suggestions::add);
-
-            return new ArrayList<>(suggestions);
-
-        } catch (ElasticsearchException e) {
-            if (e.getMessage() != null && (e.getMessage().contains("index_not_found_exception")
-                    || e.getMessage().contains("all shards failed"))) {
-                return List.of();
-            }
-            throw new SearchOperationException("Failed to suggest keywords", e);
-        } catch (IOException e) {
-            throw new SearchOperationException("Failed to suggest keywords", e);
-        }
-    }
-
-    @Override
-    public PageResponse<PostSearchResponse> findFeaturedPosts(UUID categoryId, int page, int size, boolean includeAnonymous) {
-        BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
-
-        // PUBLISHED 상태 필터링 (필수)
-        boolQueryBuilder.filter(Query.of(q -> q
-            .term(t -> t.field("status").value("PUBLISHED"))
-        ));
-
-        // 카테고리 필터링
-        if (categoryId != null) {
-            boolQueryBuilder.filter(Query.of(q -> q
-                .term(t -> t.field("categoryId").value(categoryId.toString()))
-            ));
-        }
-
-        // 익명 게시물 필터링
-        if (!includeAnonymous) {
-            boolQueryBuilder.filter(Query.of(q -> q
-                .term(t -> t.field("authorType").value("REAL"))
-            ));
-        }
-
-        Query query = Query.of(q -> q.bool(boolQueryBuilder.build()));
-
-        try {
-            SearchRequest searchRequest = SearchRequest.of(s -> s
-                .index(INDEX_NAME)
-                .query(query)
-                .from(page * size)
-                .size(Math.min(size, 20))  // 최대 20개
-                .sort(sort -> sort
-                    .field(f -> f
-                        .field("likeCount")
-                        .order(SortOrder.Desc)
-                    )
-                )
-            );
-
-            return getPostSearchResponsePageResponse(page, size, searchRequest);
-
-        } catch (ElasticsearchException e) {
-            if (e.getMessage() != null && (e.getMessage().contains("index_not_found_exception")
-                    || e.getMessage().contains("all shards failed"))) {
-                return new PageResponse<>(List.of(), 0, page, size);
-            }
-            throw new SearchOperationException("Failed to find featured posts", e);
-        } catch (IOException e) {
-            throw new SearchOperationException("Failed to find featured posts", e);
-        }
     }
 
     /**
@@ -455,71 +518,6 @@ public class PostSearchAdapter implements PostSearchPort {
 
                 return inner.minimumShouldMatch("1");
             }));
-        }
-    }
-
-    @Override
-    public List<PostSearchResponse> findTrendingPosts(int size) {
-        try {
-            // 24시간 이내 게시글만 대상
-            long oneDayAgo = System.currentTimeMillis() - (24 * 60 * 60 * 1000);
-
-            SearchRequest searchRequest = SearchRequest.of(s -> s
-                .index(INDEX_NAME)
-                .query(q -> q
-                    .bool(b -> b
-                        .filter(f -> f.term(t -> t.field("status").value("PUBLISHED")))
-                        .filter(f -> f.range(r -> r
-                            .field("createdAt")
-                            .gte(co.elastic.clients.json.JsonData.of(oneDayAgo))
-                        ))
-                    )
-                )
-                .size(size)
-                .sort(sort -> sort
-                    .script(script -> script
-                        .type(co.elastic.clients.elasticsearch._types.ScriptSortType.Number)
-                        .script(sc -> sc
-                            .inline(inline -> inline
-                                .source("""
-                                    long now = new Date().getTime();
-                                    long created = doc['createdAt'].value.toInstant().toEpochMilli();
-                                    double hoursOld = (now - created) / (1000.0 * 60 * 60);
-
-                                    // age_decay = 1 + (hours_old / 24)^2
-                                    double ageDecay = 1.0 + Math.pow(hoursOld / 24.0, 2);
-
-                                    // score = (viewCount * 0.3 + likeCount * 0.7) / age_decay
-                                    double rawScore = (doc['viewCount'].value * 0.3) + (doc['likeCount'].value * 0.7);
-
-                                    return rawScore / ageDecay;
-                                """)
-                            )
-                        )
-                        .order(SortOrder.Desc)
-                    )
-                )
-            );
-
-            SearchResponse<PostDetailDocument> response = elasticsearchClient.search(
-                searchRequest,
-                PostDetailDocument.class
-            );
-
-            return response.hits().hits().stream()
-                .map(Hit::source)
-                .map(doc -> mapper.toProjection(doc, null, null, null))
-                .map(PostSearchResponse::new)
-                .collect(Collectors.toList());
-
-        } catch (ElasticsearchException e) {
-            if (e.getMessage() != null && (e.getMessage().contains("index_not_found_exception")
-                    || e.getMessage().contains("all shards failed"))) {
-                return List.of();
-            }
-            throw new SearchOperationException("Failed to find trending posts", e);
-        } catch (IOException e) {
-            throw new SearchOperationException("Failed to find trending posts", e);
         }
     }
 }
