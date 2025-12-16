@@ -13,8 +13,8 @@ public class CreatePostRequest extends CreatePostApplicationRequest {
         super();
     }
 
-    public CreatePostRequest(String title, String content, UUID categoryId, AuthorType authorType) {
-        super(title, content, categoryId, authorType);
+    public CreatePostRequest(String title, String content, UUID categoryId, AuthorType authorType, String thumbnailImageUrl) {
+        super(title, content, categoryId, authorType, thumbnailImageUrl);
     }
 
     @Override
@@ -39,5 +39,11 @@ public class CreatePostRequest extends CreatePostApplicationRequest {
     @Schema(description = "작성자 타입 (REAL: 실명, ANONYMOUS: 익명)", example = "REAL", required = true)
     public AuthorType getAuthorType() {
         return super.getAuthorType();
+    }
+
+    @Override
+    @Schema(description = "썸네일 이미지 URL", example = "https://example.com/thumbnail.jpg")
+    public String getThumbnailImageUrl() {
+        return super.getThumbnailImageUrl();
     }
 }

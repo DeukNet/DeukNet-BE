@@ -91,3 +91,10 @@ minio:
   access-key: ${MINIO_ACCESS_KEY:minioadmin}
   secret-key: ${MINIO_SECRET_KEY:minioadmin123}
   bucket-name: ${MINIO_BUCKET_NAME:deuknet-files}
+
+server:
+  tomcat:
+    threads:
+      max: 300        # 최대 스레드 수
+      min-spare: 50   # 최소 대기 스레드
+    accept-count: 100 # 큐 대기 요청 수

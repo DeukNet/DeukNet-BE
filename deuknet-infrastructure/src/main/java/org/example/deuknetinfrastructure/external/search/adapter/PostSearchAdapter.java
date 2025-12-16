@@ -14,6 +14,7 @@ import org.example.deuknetapplication.port.in.post.PageResponse;
 import org.example.deuknetapplication.port.in.post.PostSearchRequest;
 import org.example.deuknetapplication.port.in.post.PostSearchResponse;
 import org.example.deuknetapplication.port.out.external.search.PostSearchPort;
+import org.example.deuknetdomain.domain.post.PostStatus;
 import org.example.deuknetinfrastructure.external.search.document.PostDetailDocument;
 import org.example.deuknetinfrastructure.external.search.exception.SearchOperationException;
 import org.example.deuknetinfrastructure.external.search.mapper.PostDetailDocumentMapper;
@@ -93,9 +94,9 @@ public class PostSearchAdapter implements PostSearchPort {
     private Query buildBoolQuery(String keyword, UUID authorId, UUID categoryId, boolean includeAnonymous) {
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
-        // PUBLISHED 상태 필터링 (고정)
+        // PUBLIC 상태 필터링 (고정)
         boolQueryBuilder.filter(Query.of(q -> q
-            .term(t -> t.field("status").value("PUBLISHED"))
+            .term(t -> t.field("status").value(PostStatus.PUBLIC.name()))
         ));
 
         // 검색어 필터링
@@ -131,9 +132,9 @@ public class PostSearchAdapter implements PostSearchPort {
     private Query buildBoolQueryForRelevance(String keyword, UUID authorId, UUID categoryId, boolean includeAnonymous) {
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
-        // PUBLISHED 상태 필터링 (고정)
+        // PUBLIC 상태 필터링 (고정)
         boolQueryBuilder.filter(Query.of(q -> q
-            .term(t -> t.field("status").value("PUBLISHED"))
+            .term(t -> t.field("status").value(PostStatus.PUBLIC.name()))
         ));
 
         // 검색어 필터링 (높은 가중치)
@@ -373,9 +374,9 @@ public class PostSearchAdapter implements PostSearchPort {
     public PageResponse<PostSearchResponse> findFeaturedPosts(UUID categoryId, int page, int size, boolean includeAnonymous) {
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
-        // PUBLISHED 상태 필터링 (필수)
+        // PUBLIC 상태 필터링 (필수)
         boolQueryBuilder.filter(Query.of(q -> q
-            .term(t -> t.field("status").value("PUBLISHED"))
+            .term(t -> t.field("status").value(PostStatus.PUBLIC.name()))
         ));
 
         // 카테고리 필터링

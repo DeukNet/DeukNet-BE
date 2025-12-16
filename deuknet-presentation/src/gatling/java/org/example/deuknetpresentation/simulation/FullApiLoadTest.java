@@ -25,8 +25,7 @@ import static io.gatling.javaapi.http.HttpDsl.*;
  */
 public class FullApiLoadTest extends Simulation {
 
-    // 테스트 대상 서버 (NodePort 사용)
-    private static final String BASE_URL = "http://172.17.0.2:30080";
+    private static final String BASE_URL = "http://localhost:8080";
 
     // HTTP 프로토콜 설정
     private final HttpProtocolBuilder httpProtocol = http

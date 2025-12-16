@@ -19,6 +19,7 @@ public class PostMapper {
                 entity.getCategoryId(),
                 entity.getStatus(),
                 entity.getAuthorType(),
+                entity.getThumbnailImageUrl(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );
@@ -35,6 +36,7 @@ public class PostMapper {
                 domain.getCategoryId(),
                 domain.getStatus(),
                 domain.getAuthorType(),
+                domain.getThumbnailImageUrl(),
                 domain.getCreatedAt(),
                 domain.getUpdatedAt()
         );

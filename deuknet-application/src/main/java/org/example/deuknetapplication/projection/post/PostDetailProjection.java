@@ -34,6 +34,7 @@ public class PostDetailProjection extends Projection {
 
     // 게시글 메타 정보
     private final String status;
+    private final String thumbnailImageUrl;
     private final Long viewCount;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
@@ -53,6 +54,7 @@ public class PostDetailProjection extends Projection {
             @JsonProperty("authorId") UUID authorId,
             @JsonProperty("authorType") String authorType,
             @JsonProperty("status") String status,
+            @JsonProperty("thumbnailImageUrl") String thumbnailImageUrl,
             @JsonProperty("viewCount") Long viewCount,
             @JsonProperty("createdAt") LocalDateTime createdAt,
             @JsonProperty("updatedAt") LocalDateTime updatedAt,
@@ -66,6 +68,7 @@ public class PostDetailProjection extends Projection {
         this.authorId = authorId;
         this.authorType = authorType;
         this.status = status;
+        this.thumbnailImageUrl = thumbnailImageUrl;
         this.viewCount = viewCount;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;

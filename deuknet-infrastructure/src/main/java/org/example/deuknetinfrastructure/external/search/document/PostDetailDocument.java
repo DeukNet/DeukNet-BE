@@ -81,10 +81,16 @@ public class PostDetailDocument extends BaseDocument {
 
     /**
      * 게시글 상태 (필터링용)
-     * DRAFT, PUBLISHED, ARCHIVED, DELETED
+     * PRIVATE, PUBLIC, ARCHIVED, DELETED
      */
     @Field(type = FieldType.Keyword)
     private String status;
+
+    /**
+     * 썸네일 이미지 URL (검색 결과 표시용)
+     */
+    @Field(type = FieldType.Keyword)
+    private String thumbnailImageUrl;
 
     /**
      * 카테고리 ID (필터링용, 이름은 별도 조회)
@@ -126,7 +132,7 @@ public class PostDetailDocument extends BaseDocument {
 
     public static PostDetailDocument create(UUID id, String title, String content,
                                             UUID authorId, String authorType,
-                                            String status, UUID categoryId,
+                                            String status, String thumbnailImageUrl, UUID categoryId,
                                             Long viewCount, Long commentCount, Long likeCount, Long dislikeCount,
                                             java.time.LocalDateTime createdAt, java.time.LocalDateTime updatedAt) {
         PostDetailDocument document = new PostDetailDocument(id);
@@ -135,6 +141,7 @@ public class PostDetailDocument extends BaseDocument {
         document.authorId = authorId.toString();
         document.authorType = authorType;
         document.status = status;
+        document.thumbnailImageUrl = thumbnailImageUrl;
         document.categoryId = categoryId != null ? categoryId.toString() : null;
         document.viewCount = viewCount;
         document.commentCount = commentCount;

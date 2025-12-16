@@ -13,14 +13,16 @@ public class CreatePostApplicationRequest {
     private String content;
     private UUID categoryId;
     private AuthorType authorType;
+    private String thumbnailImageUrl;
 
     protected CreatePostApplicationRequest() {
     }
 
-    public CreatePostApplicationRequest(String title, String content, UUID categoryId, AuthorType authorType) {
+    public CreatePostApplicationRequest(String title, String content, UUID categoryId, AuthorType authorType, String thumbnailImageUrl) {
         this.title = title;
         this.content = content;
         this.categoryId = categoryId;
         this.authorType = authorType;
+        this.thumbnailImageUrl = thumbnailImageUrl;
     }
 }

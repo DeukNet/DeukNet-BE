@@ -29,6 +29,7 @@ public class PostDetailDocumentMapper {
                 .authorId(document.getAuthorId() != null ? UUID.fromString(document.getAuthorId()) : null)
                 .authorType(document.getAuthorType())
                 .status(document.getStatus())
+                .thumbnailImageUrl(document.getThumbnailImageUrl())
                 .viewCount(document.getViewCount())
                 .createdAt(document.getCreatedAt())
                 .updatedAt(document.getUpdatedAt())
@@ -55,6 +56,7 @@ public class PostDetailDocumentMapper {
                 projection.getAuthorId(),
                 projection.getAuthorType(),
                 projection.getStatus(),
+                projection.getThumbnailImageUrl(),
                 projection.getCategoryId(),
                 projection.getViewCount(),
                 projection.getCommentCount(),

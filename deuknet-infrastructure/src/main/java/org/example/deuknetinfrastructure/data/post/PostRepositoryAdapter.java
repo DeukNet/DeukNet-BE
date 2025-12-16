@@ -68,6 +68,7 @@ public class PostRepositoryAdapter implements PostRepository {
                         postEntity.authorId,
                         postEntity.authorType,
                         postEntity.status,
+                        postEntity.thumbnailImageUrl,
                         postEntity.createdAt,
                         postEntity.updatedAt,
                         postEntity.categoryId,
@@ -101,10 +102,10 @@ public class PostRepositoryAdapter implements PostRepository {
             return Optional.empty();
         }
 
-        Long commentCount = result.get(9, Long.class);
-        Long likeCount = result.get(10, Long.class);
-        Long dislikeCount = result.get(11, Long.class);
-        Long viewCount = result.get(12, Long.class);
+        Long commentCount = result.get(10, Long.class);
+        Long likeCount = result.get(11, Long.class);
+        Long dislikeCount = result.get(12, Long.class);
+        Long viewCount = result.get(13, Long.class);
 
         PostDetailProjection projection = PostDetailProjection.builder()
                 .id(result.get(0, UUID.class))
@@ -115,9 +116,10 @@ public class PostRepositoryAdapter implements PostRepository {
                         ? result.get(4, org.example.deuknetdomain.domain.post.AuthorType.class).name()
                         : null)
                 .status(result.get(5, org.example.deuknetdomain.domain.post.PostStatus.class).name())
-                .createdAt(result.get(6, java.time.LocalDateTime.class))
-                .updatedAt(result.get(7, java.time.LocalDateTime.class))
-                .categoryId(result.get(8, UUID.class))
+                .thumbnailImageUrl(result.get(6, String.class))
+                .createdAt(result.get(7, java.time.LocalDateTime.class))
+                .updatedAt(result.get(8, java.time.LocalDateTime.class))
+                .categoryId(result.get(9, UUID.class))
                 .commentCount(commentCount != null ? commentCount : 0L)
                 .likeCount(likeCount != null ? likeCount : 0L)
                 .dislikeCount(dislikeCount != null ? dislikeCount : 0L)

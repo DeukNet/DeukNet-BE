@@ -39,6 +39,9 @@ public class PostEntity {
     @Column(name = "author_type", nullable = false, length = 20)
     private AuthorType authorType;
 
+    @Column(name = "thumbnail_image_url", length = 500)
+    private String thumbnailImageUrl;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -52,7 +55,8 @@ public class PostEntity {
     }
 
     public PostEntity(UUID id, String title, String content, UUID authorId, UUID categoryId,
-                      PostStatus status, AuthorType authorType, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                      PostStatus status, AuthorType authorType, String thumbnailImageUrl,
+                      LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.title = title;
         this.content = content;
@@ -60,6 +64,7 @@ public class PostEntity {
         this.categoryId = categoryId;
         this.status = status;
         this.authorType = authorType != null ? authorType : AuthorType.REAL;
+        this.thumbnailImageUrl = thumbnailImageUrl;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.viewCount = 0L;  // 기본값

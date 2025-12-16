@@ -29,6 +29,7 @@ public class PostSearchResponse implements AuthorInfoEnrichable {
     private String authorDisplayName;
     private AuthorType authorType;
     private String status;
+    private String thumbnailImageUrl;
     private UUID categoryId;
     private String categoryName;
     private Long viewCount;
@@ -51,6 +52,7 @@ public class PostSearchResponse implements AuthorInfoEnrichable {
         this.authorId = projection.getAuthorId();
         // authorUsername, authorDisplayName, categoryName은 별도 조회
         this.status = projection.getStatus();
+        this.thumbnailImageUrl = projection.getThumbnailImageUrl();
         this.categoryId = projection.getCategoryId();
         this.viewCount = projection.getViewCount();
         this.commentCount = projection.getCommentCount();

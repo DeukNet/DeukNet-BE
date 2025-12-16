@@ -25,7 +25,7 @@ import java.util.UUID;
  *
  * 책임:
  * - Post 발행 권한 검증
- * - Post 상태를 PUBLISHED로 변경
+ * - Post 상태를 PUBLIC으로 변경
  * - 발행 이벤트 발행 (Outbox Pattern)
  */
 @Service
