@@ -33,7 +33,10 @@ public class CreateCategoryService implements CreateCategoryUseCase {
 
         Category category = Category.create(
                 org.example.deuknetdomain.common.vo.CategoryName.of(normalizedName),
-                request.getParentCategoryId()
+                request.getParentCategoryId(),
+                request.getDescription(),
+                request.getThumbnailImageUrl(),
+                request.getOwnerId()
         );
 
         category = categoryRepository.save(category);

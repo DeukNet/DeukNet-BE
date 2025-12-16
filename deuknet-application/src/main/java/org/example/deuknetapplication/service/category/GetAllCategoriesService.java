@@ -33,7 +33,10 @@ public class GetAllCategoriesService implements GetAllCategoriesUseCase {
         return new CategoryResponse(
                 category.getId(),
                 category.getName().getValue(),
-                category.getParentCategoryId().orElse(null)
+                category.getParentCategoryId().orElse(null),
+                category.getDescription(),
+                category.getThumbnailImageUrl(),
+                category.getOwnerId()
         );
     }
 }

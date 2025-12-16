@@ -13,4 +13,7 @@ public class CategoryResponse {
     private UUID id;
     private String name;
     private UUID parentCategoryId;
+    private String description;
+    private String thumbnailImageUrl;
+    private UUID ownerId;
 }
