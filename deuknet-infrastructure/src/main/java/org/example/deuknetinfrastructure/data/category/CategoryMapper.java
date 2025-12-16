@@ -9,21 +9,27 @@ public class CategoryMapper {
     
     public Category toDomain(CategoryEntity entity) {
         if (entity == null) return null;
-        
+
         return Category.restore(
                 entity.getId(),
                 CategoryName.of(entity.getName()),
-                entity.getParentCategoryId()
+                entity.getParentCategoryId(),
+                entity.getDescription(),
+                entity.getThumbnailImageUrl(),
+                entity.getOwnerId()
         );
     }
-    
+
     public CategoryEntity toEntity(Category domain) {
         if (domain == null) return null;
-        
+
         return new CategoryEntity(
                 domain.getId(),
                 domain.getName().getValue(),
-                domain.getParentCategoryId().orElse(null)
+                domain.getParentCategoryId().orElse(null),
+                domain.getDescription(),
+                domain.getThumbnailImageUrl(),
+                domain.getOwnerId()
         );
     }
 }

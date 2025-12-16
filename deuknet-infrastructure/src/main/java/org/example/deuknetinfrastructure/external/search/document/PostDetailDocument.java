@@ -121,6 +121,10 @@ public class PostDetailDocument extends BaseDocument {
     @Field(type = FieldType.Long)
     private Long dislikeCount;
 
+    protected PostDetailDocument() {
+        super();
+    }
+
     public PostDetailDocument(UUID id) {
         super(id);
     }

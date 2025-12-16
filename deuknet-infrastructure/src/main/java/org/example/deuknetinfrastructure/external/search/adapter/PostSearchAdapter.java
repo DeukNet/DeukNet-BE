@@ -142,9 +142,9 @@ public class PostSearchAdapter implements PostSearchPort {
     public PageResponse<PostSearchResponse> findFeaturedPosts(UUID categoryId, int page, int size, boolean includeAnonymous) {
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
-        // PUBLISHED 상태 필터링 (필수)
+        // PUBLIC 상태 필터링 (필수)
         boolQueryBuilder.filter(Query.of(q -> q
-                .term(t -> t.field("status").value("PUBLISHED"))
+                .term(t -> t.field("status").value(PostStatus.PUBLIC.name()))
         ));
 
         // 카테고리 필터링
@@ -200,7 +200,7 @@ public class PostSearchAdapter implements PostSearchPort {
                     .index(INDEX_NAME)
                     .query(q -> q
                             .bool(b -> b
-                                    .filter(f -> f.term(t -> t.field("status").value("PUBLISHED")))
+                                    .filter(f -> f.term(t -> t.field("status").value(PostStatus.PUBLIC.name())))
                                     .filter(f -> f.range(r -> r
                                             .field("createdAt")
                                             .gte(co.elastic.clients.json.JsonData.of(oneDayAgo))
@@ -465,70 +465,6 @@ public class PostSearchAdapter implements PostSearchPort {
 
         long totalElements = response.hits().total() != null ? response.hits().total().value() : 0;
         return new PageResponse<>(results, totalElements, page, size);
-    }
-
-    @Override
-    public PageResponse<PostSearchResponse> findFeaturedPosts(UUID categoryId, int page, int size, boolean includeAnonymous) {
-        BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
-
-        // PUBLIC 상태 필터링 (필수)
-        boolQueryBuilder.filter(Query.of(q -> q
-            .term(t -> t.field("status").value(PostStatus.PUBLIC.name()))
-        ));
-
-        // 카테고리 필터링
-        if (categoryId != null) {
-            boolQueryBuilder.filter(Query.of(q -> q
-                .term(t -> t.field("categoryId").value(categoryId.toString()))
-            ));
-        }
-
-        // 익명 게시물 필터링
-        if (!includeAnonymous) {
-            boolQueryBuilder.filter(Query.of(q -> q
-                .term(t -> t.field("authorType").value("REAL"))
-            ));
-        }
-
-        Query query = Query.of(q -> q.bool(boolQueryBuilder.build()));
-
-        try {
-            SearchRequest searchRequest = SearchRequest.of(s -> s
-                .index(INDEX_NAME)
-                .query(query)
-                .from(page * size)
-                .size(Math.min(size, 20))  // 최대 20개
-                .sort(sort -> sort
-                    .field(f -> f
-                        .field("likeCount")
-                        .order(SortOrder.Desc)
-                    )
-                )
-            );
-
-            SearchResponse<PostDetailDocument> response = elasticsearchClient.search(
-                searchRequest,
-                PostDetailDocument.class
-            );
-
-            List<PostSearchResponse> results = response.hits().hits().stream()
-                .map(Hit::source)
-                .map(doc -> mapper.toProjection(doc, null, null, null))
-                .map(PostSearchResponse::new)
-                .collect(Collectors.toList());
-
-            long totalElements = response.hits().total() != null ? response.hits().total().value() : 0;
-            return new PageResponse<>(results, totalElements, page, size);
-
-        } catch (ElasticsearchException e) {
-            if (e.getMessage() != null && (e.getMessage().contains("index_not_found_exception")
-                    || e.getMessage().contains("all shards failed"))) {
-                return new PageResponse<>(List.of(), 0, page, size);
-            }
-            throw new SearchOperationException("Failed to find featured posts", e);
-        } catch (IOException e) {
-            throw new SearchOperationException("Failed to find featured posts", e);
-        }
     }
 
     /**
