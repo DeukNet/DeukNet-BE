@@ -1,23 +1,31 @@
 package org.example.deuknetinfrastructure.data.user;
 
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.example.deuknetapplication.port.out.repository.AuthorInfoEnrichable;
 import org.example.deuknetapplication.port.out.repository.UserRepository;
 import org.example.deuknetdomain.domain.post.AuthorType;
 import org.example.deuknetdomain.domain.user.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 public class UserRepositoryAdapter implements UserRepository {
 
     private final JpaUserRepository jpaUserRepository;
     private final UserMapper mapper;
+    private final JPAQueryFactory queryFactory;
 
-    public UserRepositoryAdapter(JpaUserRepository jpaUserRepository, UserMapper mapper) {
+    public UserRepositoryAdapter(JpaUserRepository jpaUserRepository, UserMapper mapper, JPAQueryFactory queryFactory) {
         this.jpaUserRepository = jpaUserRepository;
         this.mapper = mapper;
+        this.queryFactory = queryFactory;
     }
 
     @Override
@@ -75,5 +83,31 @@ public class UserRepositoryAdapter implements UserRepository {
                 response.setAuthorDisplayName(user.getDisplayName());
             });
         }
+    }
+
+    @Override
+    public Page<User> findAll(Pageable pageable) {
+        QUserEntity user = QUserEntity.userEntity;
+
+        // 전체 카운트 조회
+        Long total = queryFactory
+                .select(user.count())
+                .from(user)
+                .fetchOne();
+
+        // 페이징된 결과 조회
+        List<UserEntity> entities = queryFactory
+                .selectFrom(user)
+                .orderBy(user.username.asc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        // Domain 객체로 변환
+        List<User> users = entities.stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(users, pageable, total != null ? total : 0L);
     }
 }

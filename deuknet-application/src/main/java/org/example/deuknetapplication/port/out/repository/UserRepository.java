@@ -2,6 +2,8 @@ package org.example.deuknetapplication.port.out.repository;
 
 import org.example.deuknetdomain.domain.post.AuthorType;
 import org.example.deuknetdomain.domain.user.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -11,6 +13,7 @@ public interface UserRepository {
     Optional<User> findByAuthCredentialId(UUID authCredentialId);
     Optional<User> findById(UUID id);
     Optional<User> findByUsername(String username);
+    Page<User> findAll(Pageable pageable);
 
     /**
      * Post용 User 정보 enrichment
