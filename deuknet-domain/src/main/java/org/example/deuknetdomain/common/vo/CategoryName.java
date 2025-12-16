@@ -33,8 +33,7 @@ public class CategoryName extends ValueObject {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof CategoryName)) return false;
-        CategoryName that = (CategoryName) o;
+        if (!(o instanceof CategoryName that)) return false;
         return Objects.equals(value, that.value);
     }
 

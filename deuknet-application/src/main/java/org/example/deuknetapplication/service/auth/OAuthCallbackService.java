@@ -50,7 +50,7 @@ public class OAuthCallbackService implements OAuthCallbackUseCase {
         // Get user info from OAuth provider
         OAuthUserInfo oAuthUserInfo = oAuthPort.getUserInfo(code, provider);
 
-        Email email = Email.from(oAuthUserInfo.getEmail());
+        Email email = Email.from(oAuthUserInfo.email());
 
         // Find or create user
         AuthCredential authCredential = authCredentialRepository
@@ -67,18 +67,18 @@ public class OAuthCallbackService implements OAuthCallbackUseCase {
         UUID tempUserId = UUID.randomUUID();
         AuthCredential authCredential = AuthCredential.create(
                 tempUserId,
-                oAuthUserInfo.getProvider(),
+                oAuthUserInfo.provider(),
                 email
         );
         authCredential = authCredentialRepository.save(authCredential);
 
-        String username = generateUniqueUsername(oAuthUserInfo.getName());
+        String username = generateUniqueUsername(oAuthUserInfo.name());
         User user = User.create(
                 authCredential.getId(),
                 username,
-                oAuthUserInfo.getName(),
+                oAuthUserInfo.name(),
                 null,
-                oAuthUserInfo.getPicture()
+                oAuthUserInfo.picture()
         );
         userRepository.save(user);
 

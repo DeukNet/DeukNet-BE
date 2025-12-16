@@ -13,9 +13,9 @@ import java.util.concurrent.Executors;
 
 /**
  * Debezium Embedded Engine 설정
- *
+ * <br>
  * PostgreSQL의 Outbox 테이블을 CDC로 모니터링합니다.
- *
+ * <br>
  * 주의사항:
  * - 반드시 단일 인스턴스로만 실행해야 합니다 (replicas=1)
  * - Scale-out 필요 시 Kafka Connect로 전환하세요

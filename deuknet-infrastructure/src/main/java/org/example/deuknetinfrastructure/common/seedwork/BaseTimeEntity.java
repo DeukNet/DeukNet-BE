@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 /**
  * JPA Entity의 생성/수정 시각을 자동으로 관리하는 기반 클래스
  * Spring Data JPA의 Auditing 기능을 활용합니다.
- *
+ * <br>
  * 사용하려면 @EnableJpaAuditing을 설정 클래스에 추가해야 합니다.
  */
 @Getter

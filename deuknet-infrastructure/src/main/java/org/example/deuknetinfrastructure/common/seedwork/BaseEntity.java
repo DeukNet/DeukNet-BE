@@ -13,7 +13,7 @@ import java.util.UUID;
 /**
  * JPA Entity의 기반 클래스
  * UUID 기반 식별자와 생성/수정 시각을 포함합니다.
- *
+ * <br>
  * 이 클래스를 상속받는 JPA Entity는:
  * - UUID 타입의 ID
  * - createdAt, updatedAt 필드
@@ -49,8 +49,7 @@ public abstract class BaseEntity extends BaseTimeEntity implements Persistable {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof BaseEntity)) return false;
-        BaseEntity that = (BaseEntity) o;
+        if (!(o instanceof BaseEntity that)) return false;
         return Objects.equals(id, that.id);
     }
 

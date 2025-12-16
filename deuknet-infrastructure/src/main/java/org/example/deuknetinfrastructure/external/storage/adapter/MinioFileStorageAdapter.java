@@ -16,7 +16,7 @@ import java.util.UUID;
 
 /**
  * MinIO 파일 저장소 Adapter
- *
+ * <br>
  * 책임:
  * - 파일 저장소 기술적 세부사항 처리
  * - 파일 업로드 전 최종 검증 (MIME, 확장자)

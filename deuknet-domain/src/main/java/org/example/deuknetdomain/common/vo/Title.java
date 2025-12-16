@@ -41,8 +41,7 @@ public class Title extends ValueObject {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Title)) return false;
-        Title title = (Title) o;
+        if (!(o instanceof Title title)) return false;
         return Objects.equals(value, title.value);
     }
 
