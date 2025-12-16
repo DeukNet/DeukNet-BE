@@ -6,6 +6,7 @@ import org.example.deuknetapplication.port.out.repository.PostRepository;
 import org.example.deuknetapplication.port.out.repository.ReactionRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
 import org.example.deuknetapplication.projection.post.PostDetailProjection;
+import org.example.deuknetdomain.domain.post.AuthorType;
 import org.example.deuknetdomain.domain.post.PostStatus;
 import org.example.deuknetdomain.domain.post.exception.PostNotFoundException;
 import org.example.deuknetdomain.domain.reaction.Reaction;
@@ -68,8 +69,8 @@ class GetPostServiceTest {
                 .title("Test Post")
                 .content("Test Content")
                 .authorId(otherAuthorId)  // testUserId와 다른 ID
-                .authorType("REAL")
-                .status(PostStatus.PUBLISHED.name())
+                .authorType(AuthorType.REAL.name())
+                .status(PostStatus.PUBLIC.name())
                 .categoryId(null)
                 .viewCount(0L)
                 .commentCount(0L)
@@ -172,8 +173,8 @@ class GetPostServiceTest {
                 .title("Test Post")
                 .content("Test Content")
                 .authorId(testUserId) // 현재 사용자가 작성자
-                .authorType("REAL")
-                .status(PostStatus.PUBLISHED.name())
+                .authorType(AuthorType.REAL.name())
+                .status(PostStatus.PUBLIC.name())
                 .categoryId(null)
                 .viewCount(0L)
                 .commentCount(0L)
