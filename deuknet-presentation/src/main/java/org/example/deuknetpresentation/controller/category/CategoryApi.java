@@ -54,12 +54,12 @@ public interface CategoryApi {
 
     @Operation(
             summary = "카테고리 수정",
-            description = "기존 카테고리의 이름을 수정합니다."
+            description = "기존 카테고리의 설명과 썸네일 이미지를 수정합니다. ADMIN 또는 카테고리 소유자만 수정 가능합니다."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "카테고리 수정 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청 (중복된 카테고리명 등)"),
             @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "403", description = "수정 권한 없음"),
             @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음")
     })
     void updateCategory(

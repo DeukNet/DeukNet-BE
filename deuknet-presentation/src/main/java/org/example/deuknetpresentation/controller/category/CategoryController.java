@@ -6,7 +6,9 @@ import org.example.deuknetapplication.port.in.category.CreateCategoryUseCase;
 import org.example.deuknetapplication.port.in.category.DeleteCategoryUseCase;
 import org.example.deuknetapplication.port.in.category.GetAllCategoriesUseCase;
 import org.example.deuknetapplication.port.in.category.GetCategoryRankingUseCase;
+import org.example.deuknetapplication.port.in.category.GrantCategoryOwnershipUseCase;
 import org.example.deuknetapplication.port.in.category.UpdateCategoryUseCase;
+import org.example.deuknetapplication.port.out.security.CurrentUserPort;
 import org.example.deuknetpresentation.controller.category.dto.CreateCategoryRequest;
 import org.example.deuknetpresentation.controller.category.dto.UpdateCategoryRequest;
 import org.springframework.http.HttpStatus;
@@ -25,19 +27,22 @@ public class CategoryController implements CategoryApi {
     private final UpdateCategoryUseCase updateCategoryUseCase;
     private final DeleteCategoryUseCase deleteCategoryUseCase;
     private final GetCategoryRankingUseCase getCategoryRankingUseCase;
+    private final GrantCategoryOwnershipUseCase grantCategoryOwnershipUseCase;
 
     public CategoryController(
             GetAllCategoriesUseCase getAllCategoriesUseCase,
             CreateCategoryUseCase createCategoryUseCase,
             UpdateCategoryUseCase updateCategoryUseCase,
             DeleteCategoryUseCase deleteCategoryUseCase,
-            GetCategoryRankingUseCase getCategoryRankingUseCase
+            GetCategoryRankingUseCase getCategoryRankingUseCase,
+            GrantCategoryOwnershipUseCase grantCategoryOwnershipUseCase
     ) {
         this.getAllCategoriesUseCase = getAllCategoriesUseCase;
         this.createCategoryUseCase = createCategoryUseCase;
         this.updateCategoryUseCase = updateCategoryUseCase;
         this.deleteCategoryUseCase = deleteCategoryUseCase;
         this.getCategoryRankingUseCase = getCategoryRankingUseCase;
+        this.grantCategoryOwnershipUseCase = grantCategoryOwnershipUseCase;
     }
 
     @Override
@@ -57,8 +62,7 @@ public class CategoryController implements CategoryApi {
     @PutMapping("/{categoryId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateCategory(@PathVariable UUID categoryId, @RequestBody UpdateCategoryRequest request) {
-        request.setCategoryId(categoryId);
-        updateCategoryUseCase.updateCategory(request);
+        updateCategoryUseCase.updateCategory(categoryId, request);
     }
 
     @Override
@@ -80,5 +84,14 @@ public class CategoryController implements CategoryApi {
 
         List<CategoryRankingResponse> rankings = getCategoryRankingUseCase.getCategoryRanking(size);
         return ResponseEntity.ok(rankings);
+    }
+
+    @PutMapping("/{categoryId}/owner/{targetUserId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void grantOwnership(
+            @PathVariable UUID categoryId,
+            @PathVariable UUID targetUserId
+    ) {
+        grantCategoryOwnershipUseCase.grantOwnership(categoryId, targetUserId);
     }
 }

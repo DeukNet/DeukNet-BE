@@ -443,6 +443,167 @@ After building the app, images must be loaded into Minikube:
 - `helm/deuknet/values.yaml`: Kubernetes deployment configuration
 - `build.gradle`: Dependency versions and module configuration
 
+## Coding Standards and Best Practices
+
+### 1. 현재 사용자 정보 조회
+
+**⚠️ 중요: Service 레이어에서 현재 사용자 정보는 `CurrentUserPort`를 통해 조회해야 합니다.**
+
+#### 원칙
+
+- **Controller에서 userId를 파라미터로 전달하지 않습니다**
+- **Service에서 `CurrentUserPort.getCurrentUserId()`를 직접 호출합니다**
+- **UseCase 인터페이스에 userId 파라미터를 포함하지 않습니다**
+
+#### 올바른 예시
+
+```java
+// ✅ GOOD - Service에서 CurrentUserPort 사용
+@Service
+@Transactional
+public class UpdateCategoryService implements UpdateCategoryUseCase {
+    private final CategoryRepository categoryRepository;
+    private final UserRepository userRepository;
+    private final CurrentUserPort currentUserPort;
+
+    @Override
+    public void updateCategory(UUID categoryId, UpdateCategoryApplicationRequest request) {
+        // CurrentUserPort로 현재 사용자 ID 조회
+        UUID currentUserId = currentUserPort.getCurrentUserId();
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 권한 검증 및 업데이트 로직
+        validateUpdatePermission(category, user);
+        // ...
+    }
+}
+
+// ✅ GOOD - Controller는 userId를 전달하지 않음
+@PutMapping("/{categoryId}")
+@ResponseStatus(HttpStatus.NO_CONTENT)
+public void updateCategory(@PathVariable UUID categoryId, @RequestBody UpdateCategoryRequest request) {
+    updateCategoryUseCase.updateCategory(categoryId, request);
+}
+```
+
+#### 잘못된 예시
+
+```java
+// ❌ BAD - Controller에서 userId를 추출하여 전달
+@PutMapping("/{categoryId}")
+public void updateCategory(@PathVariable UUID categoryId, @RequestBody UpdateCategoryRequest request) {
+    UUID userId = currentUserPort.getCurrentUserId();  // Controller에서 하면 안됨!
+    updateCategoryUseCase.updateCategory(categoryId, userId, request);
+}
+
+// ❌ BAD - UseCase에 userId 파라미터 포함
+public interface UpdateCategoryUseCase {
+    void updateCategory(UUID categoryId, UUID userId, UpdateCategoryApplicationRequest request);
+}
+```
+
+#### 이유
+
+1. **책임 분리**: 인증/인가는 Service 레이어의 책임
+2. **테스트 용이성**: Service 테스트 시 CurrentUserPort를 Mock으로 대체 가능
+3. **일관성**: 모든 Service에서 동일한 패턴 사용
+4. **보안**: Controller에서 userId를 조작할 가능성 제거
+
+### 2. 예외 처리 원칙
+
+**⚠️ 중요: `DeukNetException`을 상속하지 않는 표준 Java 예외 사용을 자제해야 합니다.**
+
+#### 원칙
+
+- **Domain 예외**: `DomainException` 상속
+- **Application 예외**: `ApplicationException` 상속
+- **`IllegalArgumentException`, `IllegalStateException` 등 표준 예외 사용 금지**
+
+#### 올바른 예시
+
+```java
+// ✅ GOOD - UserNotFoundException 사용 (DomainException 상속)
+User user = userRepository.findById(userId)
+        .orElseThrow(UserNotFoundException::new);
+
+// ✅ GOOD - CategoryNotFoundException 사용 (DomainException 상속)
+Category category = categoryRepository.findById(categoryId)
+        .orElseThrow(CategoryNotFoundException::new);
+```
+
+#### 잘못된 예시
+
+```java
+// ❌ BAD - IllegalArgumentException 사용
+User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+// ❌ BAD - IllegalStateException 사용
+if (category == null) {
+    throw new IllegalStateException("Category is required");
+}
+```
+
+#### 예외 생성 가이드
+
+새로운 예외가 필요한 경우:
+
+```java
+// Domain 예외 예시
+package org.example.deuknetdomain.domain.user.exception;
+
+import org.example.deuknetdomain.common.exception.DomainException;
+
+public class UserNotFoundException extends DomainException {
+    public UserNotFoundException() {
+        super(404, "USER_NOT_FOUND", "User not found");
+    }
+}
+```
+
+#### 이유
+
+1. **일관된 예외 처리**: `GlobalExceptionHandler`에서 모든 `DeukNetException` 일괄 처리
+2. **명확한 에러 코드**: HTTP 상태 코드와 에러 코드를 명시적으로 정의
+3. **API 응답 일관성**: 클라이언트가 예측 가능한 에러 응답 형식 제공
+4. **디버깅 용이성**: 예외 타입만으로도 어떤 문제인지 즉시 파악 가능
+
+### 3. Import 문 작성 원칙
+
+**⚠️ 중요: 와일드카드(`*`) import를 사용하지 마세요.**
+
+#### 원칙
+
+- **개별 클래스를 명시적으로 import합니다**
+- **`import org.example.*` 같은 와일드카드 import 금지**
+
+#### 올바른 예시
+
+```java
+// ✅ GOOD - 명시적 import
+import org.example.deuknetapplication.port.in.category.CategoryRankingResponse;
+import org.example.deuknetapplication.port.in.category.CategoryResponse;
+import org.example.deuknetapplication.port.in.category.CreateCategoryUseCase;
+import org.example.deuknetapplication.port.in.category.DeleteCategoryUseCase;
+import org.example.deuknetapplication.port.in.category.GetAllCategoriesUseCase;
+```
+
+#### 잘못된 예시
+
+```java
+// ❌ BAD - 와일드카드 import
+import org.example.deuknetapplication.port.in.category.*;
+import org.example.deuknetdomain.domain.user.exception.*;
+```
+
+#### 이유
+
+1. **가독성**: 어떤 클래스를 사용하는지 명확히 파악 가능
+2. **네이밍 충돌 방지**: 다른 패키지의 동일한 클래스명 사용 시 문제 방지
+3. **IDE 지원**: 자동 완성 및 리팩토링 도구가 더 정확하게 동작
+4. **코드 리뷰**: 의존성 변경 사항을 명확히 확인 가능
+
 ## Further Reading
 
 - Main README.md: Detailed architecture explanation and aggregate design principles

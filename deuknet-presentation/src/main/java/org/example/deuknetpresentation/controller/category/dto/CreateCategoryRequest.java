@@ -12,8 +12,8 @@ public class CreateCategoryRequest extends CreateCategoryApplicationRequest {
         super();
     }
 
-    public CreateCategoryRequest(String name, UUID parentCategoryId, String description, String thumbnailImageUrl, UUID ownerId) {
-        super(name, parentCategoryId, description, thumbnailImageUrl, ownerId);
+    public CreateCategoryRequest(String name, UUID parentCategoryId, String description, String thumbnailImageUrl) {
+        super(name, parentCategoryId, description, thumbnailImageUrl);
     }
 
     @Override
@@ -38,11 +38,5 @@ public class CreateCategoryRequest extends CreateCategoryApplicationRequest {
     @Schema(description = "썸네일 이미지 URL", example = "https://example.com/thumbnail.jpg")
     public String getThumbnailImageUrl() {
         return super.getThumbnailImageUrl();
-    }
-
-    @Override
-    @Schema(description = "카테고리 소유자 ID (null이면 admin만 수정 가능)", example = "123e4567-e89b-12d3-a456-426614174000")
-    public UUID getOwnerId() {
-        return super.getOwnerId();
     }
 }

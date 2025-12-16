@@ -13,16 +13,14 @@ public class CreateCategoryApplicationRequest {
     private UUID parentCategoryId;
     private String description;
     private String thumbnailImageUrl;
-    private UUID ownerId;
 
     protected CreateCategoryApplicationRequest() {
     }
 
-    public CreateCategoryApplicationRequest(String name, UUID parentCategoryId, String description, String thumbnailImageUrl, UUID ownerId) {
+    public CreateCategoryApplicationRequest(String name, UUID parentCategoryId, String description, String thumbnailImageUrl) {
         this.name = name;
         this.parentCategoryId = parentCategoryId;
         this.description = description;
         this.thumbnailImageUrl = thumbnailImageUrl;
-        this.ownerId = ownerId;
     }
 }

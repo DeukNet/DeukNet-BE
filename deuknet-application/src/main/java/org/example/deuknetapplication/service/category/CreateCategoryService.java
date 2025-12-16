@@ -3,6 +3,7 @@ package org.example.deuknetapplication.service.category;
 import org.example.deuknetapplication.port.in.category.CreateCategoryApplicationRequest;
 import org.example.deuknetapplication.port.in.category.CreateCategoryUseCase;
 import org.example.deuknetapplication.port.out.repository.CategoryRepository;
+import org.example.deuknetapplication.port.out.security.CurrentUserPort;
 import org.example.deuknetdomain.domain.category.Category;
 import org.example.deuknetdomain.domain.category.exception.CategoryAlreadyExistsException;
 import org.springframework.stereotype.Service;
@@ -15,9 +16,11 @@ import java.util.UUID;
 public class CreateCategoryService implements CreateCategoryUseCase {
 
     private final CategoryRepository categoryRepository;
+    private final CurrentUserPort currentUserPort;
 
-    public CreateCategoryService(CategoryRepository categoryRepository) {
+    public CreateCategoryService(CategoryRepository categoryRepository, CurrentUserPort currentUserPort) {
         this.categoryRepository = categoryRepository;
+        this.currentUserPort = currentUserPort;
     }
 
     @Override
@@ -31,12 +34,15 @@ public class CreateCategoryService implements CreateCategoryUseCase {
                     throw new CategoryAlreadyExistsException();
                 });
 
+        // 현재 사용자 ID 조회
+        UUID currentUserId = currentUserPort.getCurrentUserId();
+
         Category category = Category.create(
                 org.example.deuknetdomain.common.vo.CategoryName.of(normalizedName),
                 request.getParentCategoryId(),
                 request.getDescription(),
                 request.getThumbnailImageUrl(),
-                request.getOwnerId()
+                currentUserId
         );
 
         category = categoryRepository.save(category);
