@@ -18,8 +18,6 @@ public class DebeziumProperties {
 
     private String connectorName = "deuknet-outbox-connector";
 
-    private String offsetStorageFileName = "offsets.dat";
-
     private Database database = new Database();
 
     @Getter

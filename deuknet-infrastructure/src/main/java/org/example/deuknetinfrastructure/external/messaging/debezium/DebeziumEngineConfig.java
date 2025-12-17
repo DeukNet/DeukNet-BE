@@ -4,6 +4,7 @@ import io.debezium.engine.ChangeEvent;
 import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.format.Json;
 import lombok.extern.slf4j.Slf4j;
+import org.example.deuknetinfrastructure.data.debezium.DebeziumOffsetJpaRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,23 +28,27 @@ public class DebeziumEngineConfig {
 
     private final DebeziumProperties properties;
     private final DebeziumEventHandler eventHandler;
+    private final DebeziumOffsetJpaRepository offsetRepository;
 
     public DebeziumEngineConfig(
             DebeziumProperties properties,
-            DebeziumEventHandler eventHandler
+            DebeziumEventHandler eventHandler,
+            DebeziumOffsetJpaRepository offsetRepository
     ) {
         this.properties = properties;
         this.eventHandler = eventHandler;
+        this.offsetRepository = offsetRepository;
     }
 
     @Bean
     public io.debezium.config.Configuration debeziumConfiguration() {
+        // DatabaseOffsetBackingStore에 Repository 주입
+        DatabaseOffsetBackingStore.setOffsetRepository(offsetRepository);
         return io.debezium.config.Configuration.create()
                 // Engine 설정
                 .with("name", properties.getConnectorName())
                 .with("connector.class", "io.debezium.connector.postgresql.PostgresConnector")
-                .with("offset.storage", "org.apache.kafka.connect.storage.FileOffsetBackingStore")
-                .with("offset.storage.file.filename", properties.getOffsetStorageFileName())
+                .with("offset.storage", "org.example.deuknetinfrastructure.external.messaging.debezium.DatabaseOffsetBackingStore")
                 .with("offset.flush.interval.ms", "1000")
 
                 // Database 연결 설정
