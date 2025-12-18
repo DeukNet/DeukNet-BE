@@ -7,14 +7,20 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.example.deuknetapplication.port.in.post.PageResponse;
 import org.example.deuknetapplication.port.in.user.GetCurrentUserUseCase;
 import org.example.deuknetapplication.port.in.user.GetUserByIdUseCase;
 import org.example.deuknetapplication.port.in.user.GetUsersUseCase;
+import org.example.deuknetapplication.port.in.user.UpdateUserProfileCommand;
+import org.example.deuknetapplication.port.in.user.UpdateUserProfileUseCase;
 import org.example.deuknetapplication.port.in.user.UserResponse;
+import org.example.deuknetpresentation.controller.user.dto.UpdateUserProfileRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -30,15 +36,18 @@ public class UserController {
     private final GetUsersUseCase getUsersUseCase;
     private final GetCurrentUserUseCase getCurrentUserUseCase;
     private final GetUserByIdUseCase getUserByIdUseCase;
+    private final UpdateUserProfileUseCase updateUserProfileUseCase;
 
     public UserController(
             GetUsersUseCase getUsersUseCase,
             GetCurrentUserUseCase getCurrentUserUseCase,
-            GetUserByIdUseCase getUserByIdUseCase
+            GetUserByIdUseCase getUserByIdUseCase,
+            UpdateUserProfileUseCase updateUserProfileUseCase
     ) {
         this.getUsersUseCase = getUsersUseCase;
         this.getCurrentUserUseCase = getCurrentUserUseCase;
         this.getUserByIdUseCase = getUserByIdUseCase;
+        this.updateUserProfileUseCase = updateUserProfileUseCase;
     }
 
     @Operation(
@@ -60,6 +69,35 @@ public class UserController {
     @ResponseStatus(HttpStatus.OK)
     public UserResponse getCurrentUser() {
         return getCurrentUserUseCase.getCurrentUser();
+    }
+
+    @Operation(
+            summary = "현재 사용자 프로필 수정",
+            description = "인증된 현재 사용자의 프로필을 수정합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "수정 성공"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청 데이터"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자"
+            )
+    })
+    @PutMapping("/me")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateMyProfile(@Valid @RequestBody UpdateUserProfileRequest request) {
+        UpdateUserProfileCommand command = new UpdateUserProfileCommand(
+                request.getDisplayName(),
+                request.getBio(),
+                request.getAvatarUrl()
+        );
+        updateUserProfileUseCase.updateProfile(command);
     }
 
     @Operation(
