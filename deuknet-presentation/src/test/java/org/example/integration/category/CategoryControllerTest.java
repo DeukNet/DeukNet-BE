@@ -54,8 +54,7 @@ class CategoryControllerTest extends AbstractTest {
     void updateCategory() throws Exception {
         UUID id = create("Original");
 
-        UpdateCategoryRequest req = new UpdateCategoryRequest();
-        req.setName("Updated");
+        UpdateCategoryRequest req = new UpdateCategoryRequest("Updated description", "https://example.com/thumbnail.jpg");
 
         mockMvc.perform(put("/api/categories/" + id)
                 .contentType(MediaType.APPLICATION_JSON)
