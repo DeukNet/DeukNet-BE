@@ -2,6 +2,8 @@ package org.example.deuknetinfrastructure.data.category;
 
 import org.example.deuknetapplication.port.out.repository.CategoryRepository;
 import org.example.deuknetdomain.domain.category.Category;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -58,6 +60,12 @@ public class CategoryRepositoryAdapter implements CategoryRepository {
     public Optional<Category> findByName(String name) {
         return jpaCategoryRepository.findByName(name)
                 .map(mapper::toDomain);
+    }
+
+    @Override
+    public Page<Category> searchByKeyword(String keyword, Pageable pageable) {
+        Page<CategoryEntity> entityPage = jpaCategoryRepository.findByNameContainingIgnoreCase(keyword, pageable);
+        return entityPage.map(mapper::toDomain);
     }
 
     @Override

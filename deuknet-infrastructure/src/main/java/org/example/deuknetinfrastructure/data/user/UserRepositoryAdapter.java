@@ -110,4 +110,38 @@ public class UserRepositoryAdapter implements UserRepository {
 
         return new PageImpl<>(users, pageable, total != null ? total : 0L);
     }
+
+    @Override
+    public Page<User> searchByKeyword(String keyword, Pageable pageable) {
+        QUserEntity user = QUserEntity.userEntity;
+
+        // 키워드로 username 또는 displayName 검색
+        Long total = queryFactory
+                .select(user.count())
+                .from(user)
+                .where(
+                        user.username.containsIgnoreCase(keyword)
+                                .or(user.displayName.containsIgnoreCase(keyword))
+                )
+                .fetchOne();
+
+        // 페이징된 결과 조회
+        List<UserEntity> entities = queryFactory
+                .selectFrom(user)
+                .where(
+                        user.username.containsIgnoreCase(keyword)
+                                .or(user.displayName.containsIgnoreCase(keyword))
+                )
+                .orderBy(user.username.asc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        // Domain 객체로 변환
+        List<User> users = entities.stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(users, pageable, total != null ? total : 0L);
+    }
 }

@@ -7,8 +7,9 @@ import org.example.deuknetapplication.port.in.category.DeleteCategoryUseCase;
 import org.example.deuknetapplication.port.in.category.GetAllCategoriesUseCase;
 import org.example.deuknetapplication.port.in.category.GetCategoryRankingUseCase;
 import org.example.deuknetapplication.port.in.category.GrantCategoryOwnershipUseCase;
+import org.example.deuknetapplication.port.in.category.SearchCategoriesUseCase;
 import org.example.deuknetapplication.port.in.category.UpdateCategoryUseCase;
-import org.example.deuknetapplication.port.out.security.CurrentUserPort;
+import org.example.deuknetapplication.port.in.post.PageResponse;
 import org.example.deuknetpresentation.controller.category.dto.CreateCategoryRequest;
 import org.example.deuknetpresentation.controller.category.dto.UpdateCategoryRequest;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,7 @@ public class CategoryController implements CategoryApi {
     private final DeleteCategoryUseCase deleteCategoryUseCase;
     private final GetCategoryRankingUseCase getCategoryRankingUseCase;
     private final GrantCategoryOwnershipUseCase grantCategoryOwnershipUseCase;
+    private final SearchCategoriesUseCase searchCategoriesUseCase;
 
     public CategoryController(
             GetAllCategoriesUseCase getAllCategoriesUseCase,
@@ -35,7 +37,8 @@ public class CategoryController implements CategoryApi {
             UpdateCategoryUseCase updateCategoryUseCase,
             DeleteCategoryUseCase deleteCategoryUseCase,
             GetCategoryRankingUseCase getCategoryRankingUseCase,
-            GrantCategoryOwnershipUseCase grantCategoryOwnershipUseCase
+            GrantCategoryOwnershipUseCase grantCategoryOwnershipUseCase,
+            SearchCategoriesUseCase searchCategoriesUseCase
     ) {
         this.getAllCategoriesUseCase = getAllCategoriesUseCase;
         this.createCategoryUseCase = createCategoryUseCase;
@@ -43,6 +46,7 @@ public class CategoryController implements CategoryApi {
         this.deleteCategoryUseCase = deleteCategoryUseCase;
         this.getCategoryRankingUseCase = getCategoryRankingUseCase;
         this.grantCategoryOwnershipUseCase = grantCategoryOwnershipUseCase;
+        this.searchCategoriesUseCase = searchCategoriesUseCase;
     }
 
     @Override
@@ -93,5 +97,21 @@ public class CategoryController implements CategoryApi {
             @PathVariable UUID targetUserId
     ) {
         grantCategoryOwnershipUseCase.grantOwnership(categoryId, targetUserId);
+    }
+
+    @GetMapping("/search")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<PageResponse<CategoryResponse>> searchCategories(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        // 최대 100개로 제한
+        if (size > 100) {
+            size = 100;
+        }
+
+        PageResponse<CategoryResponse> response = searchCategoriesUseCase.searchCategories(keyword, page, size);
+        return ResponseEntity.ok(response);
     }
 }

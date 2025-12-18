@@ -14,6 +14,7 @@ public interface UserRepository {
     Optional<User> findById(UUID id);
     Optional<User> findByUsername(String username);
     Page<User> findAll(Pageable pageable);
+    Page<User> searchByKeyword(String keyword, Pageable pageable);
 
     /**
      * Post용 User 정보 enrichment

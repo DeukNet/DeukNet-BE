@@ -12,6 +12,7 @@ import org.example.deuknetapplication.port.in.post.PageResponse;
 import org.example.deuknetapplication.port.in.user.GetCurrentUserUseCase;
 import org.example.deuknetapplication.port.in.user.GetUserByIdUseCase;
 import org.example.deuknetapplication.port.in.user.GetUsersUseCase;
+import org.example.deuknetapplication.port.in.user.SearchUsersUseCase;
 import org.example.deuknetapplication.port.in.user.UpdateUserProfileCommand;
 import org.example.deuknetapplication.port.in.user.UpdateUserProfileUseCase;
 import org.example.deuknetapplication.port.in.user.UserResponse;
@@ -37,17 +38,20 @@ public class UserController {
     private final GetCurrentUserUseCase getCurrentUserUseCase;
     private final GetUserByIdUseCase getUserByIdUseCase;
     private final UpdateUserProfileUseCase updateUserProfileUseCase;
+    private final SearchUsersUseCase searchUsersUseCase;
 
     public UserController(
             GetUsersUseCase getUsersUseCase,
             GetCurrentUserUseCase getCurrentUserUseCase,
             GetUserByIdUseCase getUserByIdUseCase,
-            UpdateUserProfileUseCase updateUserProfileUseCase
+            UpdateUserProfileUseCase updateUserProfileUseCase,
+            SearchUsersUseCase searchUsersUseCase
     ) {
         this.getUsersUseCase = getUsersUseCase;
         this.getCurrentUserUseCase = getCurrentUserUseCase;
         this.getUserByIdUseCase = getUserByIdUseCase;
         this.updateUserProfileUseCase = updateUserProfileUseCase;
+        this.searchUsersUseCase = searchUsersUseCase;
     }
 
     @Operation(
@@ -144,5 +148,33 @@ public class UserController {
             @RequestParam(defaultValue = "20") int size
     ) {
         return getUsersUseCase.getUsers(page, size);
+    }
+
+    @Operation(
+            summary = "사용자 검색",
+            description = "username 또는 displayName으로 사용자를 검색합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "검색 성공",
+                    content = @Content(schema = @Schema(implementation = PageResponse.class))
+            )
+    })
+    @GetMapping("/search")
+    @ResponseStatus(HttpStatus.OK)
+    public PageResponse<UserResponse> searchUsers(
+            @Parameter(description = "검색 키워드", example = "john")
+            @RequestParam String keyword,
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "20")
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        // 최대 100개로 제한
+        if (size > 100) {
+            size = 100;
+        }
+        return searchUsersUseCase.searchUsers(keyword, page, size);
     }
 }
