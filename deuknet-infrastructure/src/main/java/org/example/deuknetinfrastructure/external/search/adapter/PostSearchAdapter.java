@@ -208,6 +208,7 @@ public class PostSearchAdapter implements PostSearchPort {
                             )
                     )
                     .size(size)
+                    .source(src -> src.filter(f -> f.excludes("content")))  // content 필드 제외
                     .sort(sort -> sort
                             .script(script -> script
                                     .type(co.elastic.clients.elasticsearch._types.ScriptSortType.Number)
@@ -452,8 +453,19 @@ public class PostSearchAdapter implements PostSearchPort {
     }
 
     private PageResponse<PostSearchResponse> getPostSearchResponsePageResponse(int page, int size, SearchRequest searchRequest) throws IOException {
+        // SearchRequest를 복사하면서 content 필드 제외
+        SearchRequest modifiedRequest = SearchRequest.of(s -> s
+            .index(searchRequest.index())
+            .query(searchRequest.query())
+            .from(searchRequest.from())
+            .size(searchRequest.size())
+            .sort(searchRequest.sort())
+            .minScore(searchRequest.minScore())
+            .source(src -> src.filter(f -> f.excludes("content")))  // content 필드 제외
+        );
+
         SearchResponse<PostDetailDocument> response = elasticsearchClient.search(
-            searchRequest,
+            modifiedRequest,
             PostDetailDocument.class
         );
 

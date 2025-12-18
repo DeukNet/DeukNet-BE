@@ -55,14 +55,7 @@ public class PostDetailDocument extends BaseDocument {
      * - 기본: Nori 형태소 분석 (조사/어미 제거, 어순 무관 검색)
      * - autocomplete: edge nGram (자동완성용)
      */
-    @MultiField(
-        mainField = @Field(type = FieldType.Text, analyzer = "nori_analyzer"),
-        otherFields = {
-            @InnerField(suffix = "autocomplete", type = FieldType.Text,
-                        analyzer = "edge_ngram_analyzer",
-                        searchAnalyzer = "edge_ngram_search_analyzer")
-        }
-    )
+    @Field(type = FieldType.Text, analyzer = "nori_analyzer")
     private String content;
 
     /**
