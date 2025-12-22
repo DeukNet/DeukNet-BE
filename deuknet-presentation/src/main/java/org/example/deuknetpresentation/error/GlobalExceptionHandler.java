@@ -1,5 +1,6 @@
 package org.example.deuknetpresentation.error;
 
+import org.apache.catalina.connector.ClientAbortException;
 import org.example.deuknetdomain.common.exception.DeukNetException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.util.List;
@@ -149,18 +151,27 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 클라이언트 연결 끊김 처리 (이미지 로딩 중 페이지 이탈 등)
+     * 정상적인 상황이므로 DEBUG 레벨로만 로깅하고 응답하지 않음
+     */
+    @ExceptionHandler({ClientAbortException.class, AsyncRequestNotUsableException.class})
+    public void handleClientAbortException(Exception e) {
+        log.debug("Client disconnected during response: {}", e.getMessage());
+    }
+
+    /**
      * 그 외 모든 예외 처리
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception e) {
         log.error("Unexpected exception occurred", e);
-        
+
         ErrorResponse response = ErrorResponse.of(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "INTERNAL_SERVER_ERROR",
                 "An unexpected error occurred"
         );
-        
+
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(response);

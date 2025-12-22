@@ -60,7 +60,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 List<SimpleGrantedAuthority> authorities = new ArrayList<>();
                 userRepository.findById(userId).ifPresent(user -> {
                     authorities.add(new SimpleGrantedAuthority(user.getRole().name()));
-                    log.info("User role: {}, User id: {}", user.getRole().name(), userId);
+                    log.debug("User authenticated - role: {}, id: {}", user.getRole().name(), userId);
                 });
 
                 UserPrincipal principal = new UserPrincipal(userId);
@@ -68,11 +68,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     new UsernamePasswordAuthenticationToken(principal, null, authorities);
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-            } else {
-                log.info("JWT validation failed or authentication already set");
             }
         } catch (Exception e) {
-            log.error("JWT validation error for URI: {}, Error: {}, uri: {}", requestURI, e.getMessage(), requestURI);
+            // JWT 검증 실패 - SecurityContext를 설정하지 않고 필터 체인 계속 진행
+            // Spring Security가 해당 엔드포인트의 권한 요구사항에 따라 처리
+            // - permitAll(): 인증 없이 통과
+            // - authenticated(): 401 Unauthorized 자동 반환
+            log.debug("JWT validation failed for URI: {}, Error: {}", requestURI, e.getMessage());
         }
 
         filterChain.doFilter(request, response);

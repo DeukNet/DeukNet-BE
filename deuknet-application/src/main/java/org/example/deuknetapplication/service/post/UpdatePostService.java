@@ -110,6 +110,12 @@ public class UpdatePostService implements UpdatePostUseCase {
                 Content.from(request.getContent())
         );
         post.updateCategory(request.getCategoryId());
+
+        // 썸네일 이미지 URL 업데이트 (null 허용)
+        if (request.getThumbnailImageUrl() != null) {
+            post.updateThumbnailImageUrl(request.getThumbnailImageUrl());
+        }
+
         postRepository.save(post);
     }
 

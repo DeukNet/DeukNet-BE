@@ -120,25 +120,25 @@ public class PostApiLoadTest extends Simulation {
         setUp(
             // 총 600 RPS를 검색 관련 엔드포인트에 분배
             searchPostsScenario.injectOpen(
-                constantUsersPerSec(200).during(Duration.ofSeconds(60))  // 200 RPS - 기본 검색
+                constantUsersPerSec(200).during(Duration.ofSeconds(60))
             ),
             searchWithKeywordScenario.injectOpen(
-                constantUsersPerSec(100).during(Duration.ofSeconds(60))  // 100 RPS - 키워드 검색
+                constantUsersPerSec(100).during(Duration.ofSeconds(60))
             ),
             searchPopularScenario.injectOpen(
-                constantUsersPerSec(100).during(Duration.ofSeconds(60))  // 100 RPS - 인기순 검색
+                constantUsersPerSec(100).during(Duration.ofSeconds(60))
             ),
             getPostDetailScenario.injectOpen(
-                constantUsersPerSec(100).during(Duration.ofSeconds(60))  // 100 RPS - 상세 조회
+                constantUsersPerSec(100).during(Duration.ofSeconds(60))
             ),
             getTrendingScenario.injectOpen(
-                constantUsersPerSec(100).during(Duration.ofSeconds(60))   // 40 RPS - 트렌딩
+                constantUsersPerSec(100).during(Duration.ofSeconds(60))
             ),
             getFeaturedScenario.injectOpen(
-                constantUsersPerSec(100).during(Duration.ofSeconds(60))   // 40 RPS - 추천
+                constantUsersPerSec(100).during(Duration.ofSeconds(60))
             ),
             suggestScenario.injectOpen(
-                constantUsersPerSec(200).during(Duration.ofSeconds(60))   // 20 RPS - 자동완성
+                constantUsersPerSec(200).during(Duration.ofSeconds(60))
             )
         ).protocols(httpProtocol)
          .assertions(

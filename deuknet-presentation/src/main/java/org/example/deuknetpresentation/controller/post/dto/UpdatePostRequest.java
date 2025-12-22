@@ -12,8 +12,8 @@ public class UpdatePostRequest extends UpdatePostApplcationRequest {
         super();
     }
 
-    public UpdatePostRequest(UUID postId, String title, String content, UUID categoryId) {
-        super(postId, title, content, categoryId);
+    public UpdatePostRequest(UUID postId, String title, String content, UUID categoryId, String thumbnailImageUrl) {
+        super(postId, title, content, categoryId, thumbnailImageUrl);
     }
 
     @Override
@@ -32,5 +32,11 @@ public class UpdatePostRequest extends UpdatePostApplcationRequest {
     @Schema(description = "카테고리 ID", example = "123e4567-e89b-12d3-a456-426614174000")
     public UUID getCategoryId() {
         return super.getCategoryId();
+    }
+
+    @Override
+    @Schema(description = "썸네일 이미지 URL", example = "https://example.com/image.jpg")
+    public String getThumbnailImageUrl() {
+        return super.getThumbnailImageUrl();
     }
 }
