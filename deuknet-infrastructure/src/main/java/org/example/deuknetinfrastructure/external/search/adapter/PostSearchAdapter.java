@@ -64,6 +64,36 @@ public class PostSearchAdapter implements PostSearchPort {
     }
 
     @Override
+    public List<PostSearchResponse> findByIds(List<UUID> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+
+        try {
+            var response = elasticsearchClient.mget(m -> m
+                    .index(INDEX_NAME)
+                    .ids(ids.stream().map(UUID::toString).collect(Collectors.toList())),
+                PostDetailDocument.class
+            );
+
+            return response.docs().stream()
+                    .filter(doc -> !doc.isFailure() && doc.result().found())
+                    .map(doc -> doc.result().source())
+                    .filter(Objects::nonNull)
+                    .map(doc -> mapper.toProjection(doc, null, null, null))
+                    .map(PostSearchResponse::new)
+                    .collect(Collectors.toList());
+        } catch (ElasticsearchException e) {
+            if (e.getMessage() != null && e.getMessage().contains("index_not_found_exception")) {
+                return List.of();
+            }
+            throw new SearchOperationException("Failed to find posts by ids", e);
+        } catch (IOException e) {
+            throw new SearchOperationException("Failed to find posts by ids", e);
+        }
+    }
+
+    @Override
     @Deprecated
     public PageResponse<PostSearchResponse> search(PostSearchRequest request) {
         // Deprecated: Service 레이어에서 sortType별 메서드를 직접 호출

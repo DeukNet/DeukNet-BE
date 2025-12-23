@@ -19,6 +19,7 @@ public class PostController implements PostApi {
     private final DeletePostUseCase deletePostUseCase;
     private final GetPostUseCase getPostUseCase;
     private final SearchPostUseCase searchPostUseCase;
+    private final GetMyLikedPostsUseCase getMyLikedPostsUseCase;
     private final org.example.deuknetapplication.port.out.security.CurrentUserPort currentUserPort;
 
     public PostController(
@@ -28,6 +29,7 @@ public class PostController implements PostApi {
             DeletePostUseCase deletePostUseCase,
             GetPostUseCase getPostUseCase,
             SearchPostUseCase searchPostUseCase,
+            GetMyLikedPostsUseCase getMyLikedPostsUseCase,
             org.example.deuknetapplication.port.out.security.CurrentUserPort currentUserPort
     ) {
         this.createPostUseCase = createPostUseCase;
@@ -36,6 +38,7 @@ public class PostController implements PostApi {
         this.deletePostUseCase = deletePostUseCase;
         this.getPostUseCase = getPostUseCase;
         this.searchPostUseCase = searchPostUseCase;
+        this.getMyLikedPostsUseCase = getMyLikedPostsUseCase;
         this.currentUserPort = currentUserPort;
     }
 
@@ -141,6 +144,21 @@ public class PostController implements PostApi {
                 .build();
 
         PageResponse<PostSearchResponse> results = searchPostUseCase.search(request);
+        return ResponseEntity.ok(results);
+    }
+
+    @GetMapping("/liked")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<PageResponse<PostSearchResponse>> getMyLikedPosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        // 페이지 크기 제한: 최대 100
+        if (size > 100) {
+            size = 100;
+        }
+
+        PageResponse<PostSearchResponse> results = getMyLikedPostsUseCase.getMyLikedPosts(page, size);
         return ResponseEntity.ok(results);
     }
 

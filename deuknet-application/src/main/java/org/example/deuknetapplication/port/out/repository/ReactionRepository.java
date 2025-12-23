@@ -34,4 +34,10 @@ public interface ReactionRepository {
      * (성능 최적화: LIKE, DISLIKE를 한 번의 쿼리로 조회)
      */
     List<Reaction> findByTargetIdAndUserId(UUID targetId, UUID userId);
+
+    /**
+     * 특정 사용자가 좋아요를 누른 게시글 ID 목록 조회
+     * 최신순으로 정렬
+     */
+    List<UUID> findLikedPostIdsByUserId(UUID userId);
 }

@@ -62,4 +62,9 @@ public class ReactionRepositoryAdapter implements ReactionRepository {
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<UUID> findLikedPostIdsByUserId(UUID userId) {
+        return jpaReactionRepository.findLikedPostIdsByUserId(userId);
+    }
 }

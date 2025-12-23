@@ -1,7 +1,10 @@
 package org.example.deuknetinfrastructure.data.reaction;
 
 import org.example.deuknetdomain.domain.reaction.ReactionType;
+import org.example.deuknetdomain.domain.reaction.TargetType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,4 +33,10 @@ public interface JpaReactionRepository extends JpaRepository<ReactionEntity, UUI
      * 특정 사용자가 특정 타겟에 대한 모든 반응을 조회
      */
     List<ReactionEntity> findByTargetIdAndUserId(UUID targetId, UUID userId);
+
+    /**
+     * 특정 사용자가 좋아요를 누른 게시글 ID 목록 조회 (최신순)
+     */
+    @Query("SELECT r.targetId FROM ReactionEntity r WHERE r.userId = :userId AND r.reactionType = 'LIKE' AND r.targetType = 'POST' ORDER BY r.createdAt DESC")
+    List<UUID> findLikedPostIdsByUserId(@Param("userId") UUID userId);
 }

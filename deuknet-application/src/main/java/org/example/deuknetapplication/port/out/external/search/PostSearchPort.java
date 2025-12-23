@@ -19,6 +19,12 @@ public interface PostSearchPort {
     Optional<PostSearchResponse> findById(UUID id);
 
     /**
+     * ID 목록으로 게시글 조회
+     * 순서는 보장되지 않으므로 호출자가 재정렬 필요
+     */
+    List<PostSearchResponse> findByIds(List<UUID> ids);
+
+    /**
      * 통합 검색 (모든 조건 AND)
      * sortType: RECENT(최신순), POPULAR(인기순)
      * 항상 PUBLISHED 상태만 조회
