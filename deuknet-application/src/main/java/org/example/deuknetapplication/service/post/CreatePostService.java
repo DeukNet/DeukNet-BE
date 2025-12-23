@@ -13,6 +13,8 @@ import org.example.deuknetdomain.common.vo.Content;
 import org.example.deuknetdomain.common.vo.Title;
 import org.example.deuknetdomain.domain.post.Post;
 import org.example.deuknetdomain.domain.user.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,8 @@ import java.util.UUID;
 @Service
 @Transactional
 public class CreatePostService implements CreatePostUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(CreatePostService.class);
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
@@ -58,6 +62,13 @@ public class CreatePostService implements CreatePostUseCase {
         Post post = createAndSavePost(request, author.getId());
 
         publishPostCreated(post, author);
+
+        log.info("[POST_CREATED] postId={}, authorId={}, username={}, title={}, categoryId={}",
+                post.getId(),
+                author.getId(),
+                author.getUsername(),
+                request.getTitle(),
+                request.getCategoryId());
 
         return post.getId();
     }

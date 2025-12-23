@@ -13,6 +13,8 @@ import org.example.deuknetdomain.domain.auth.OAuthUserInfo;
 import org.example.deuknetdomain.domain.auth.TokenPair;
 import org.example.deuknetdomain.domain.user.User;
 import org.example.deuknetdomain.domain.user.exception.UserNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,8 @@ import java.util.UUID;
 @Service
 @Transactional
 public class OAuthCallbackService implements OAuthCallbackUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(OAuthCallbackService.class);
 
     private final OAuthPort oAuthPort;
     private final OAuthStateManagerPort oAuthStateManagerPort;
@@ -53,12 +57,24 @@ public class OAuthCallbackService implements OAuthCallbackUseCase {
         Email email = Email.from(oAuthUserInfo.email());
 
         // Find or create user
+        boolean isNewUser = false;
         AuthCredential authCredential = authCredentialRepository
                 .findByEmailAndProvider(email, provider)
-                .orElseGet(() -> createNewUser(oAuthUserInfo, email));
+                .orElseGet(() -> {
+                    AuthCredential newAuthCredential = createNewUser(oAuthUserInfo, email);
+                    return newAuthCredential;
+                });
 
         User user = userRepository.findByAuthCredentialId(authCredential.getId())
                 .orElseThrow(UserNotFoundException::new);
+
+        // 로그인 로그 출력 (구글 문의용)
+        log.info("[LOGIN] userId={}, username={}, email={}, provider={}, displayName={}",
+                user.getId(),
+                user.getUsername(),
+                email.getValue(),
+                provider,
+                user.getDisplayName());
 
         return jwtPort.createTokenPair(user.getId());
     }

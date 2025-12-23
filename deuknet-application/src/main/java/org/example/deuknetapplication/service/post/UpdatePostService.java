@@ -17,6 +17,8 @@ import org.example.deuknetdomain.common.vo.Title;
 import org.example.deuknetdomain.domain.post.Post;
 import org.example.deuknetdomain.domain.reaction.ReactionType;
 import org.example.deuknetdomain.domain.user.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +35,8 @@ import java.util.UUID;
 @Service
 @Transactional
 public class UpdatePostService implements UpdatePostUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(UpdatePostService.class);
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
@@ -84,6 +88,12 @@ public class UpdatePostService implements UpdatePostUseCase {
 
         // 5. 이벤트 발행
         dataChangeEventPublisher.publish(EventType.POST_UPDATED, post.getId(), detailProjection);
+
+        log.info("[POST_UPDATED] postId={}, authorId={}, title={}, categoryId={}",
+                post.getId(),
+                post.getAuthorId(),
+                request.getTitle(),
+                request.getCategoryId());
     }
 
     /**

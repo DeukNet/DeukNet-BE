@@ -10,6 +10,8 @@ import org.example.deuknetdomain.domain.category.exception.CategoryNotFoundExcep
 import org.example.deuknetdomain.domain.category.exception.CategoryUpdateNotAllowedException;
 import org.example.deuknetdomain.domain.user.User;
 import org.example.deuknetdomain.domain.user.exception.UserNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +20,8 @@ import java.util.UUID;
 @Service
 @Transactional
 public class UpdateCategoryService implements UpdateCategoryUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(UpdateCategoryService.class);
 
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
@@ -57,6 +61,12 @@ public class UpdateCategoryService implements UpdateCategoryUseCase {
 
         // 5. 저장
         categoryRepository.save(category);
+
+        log.info("[CATEGORY_UPDATED] categoryId={}, name={}, updatedBy={}, description={}",
+                categoryId,
+                category.getName().getValue(),
+                currentUserId,
+                request.getDescription());
     }
 
     /**

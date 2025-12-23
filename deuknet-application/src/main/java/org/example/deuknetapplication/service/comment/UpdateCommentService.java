@@ -13,6 +13,8 @@ import org.example.deuknetapplication.projection.comment.CommentProjection;
 import org.example.deuknetdomain.common.vo.Content;
 import org.example.deuknetdomain.domain.comment.Comment;
 import org.example.deuknetdomain.domain.user.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,8 @@ import java.util.UUID;
 @Service
 @Transactional
 public class UpdateCommentService implements UpdateCommentUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(UpdateCommentService.class);
 
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
@@ -58,6 +62,11 @@ public class UpdateCommentService implements UpdateCommentUseCase {
 
         // 3. 이벤트 발행
         publishCommentUpdatedEvent(comment);
+
+        log.info("[COMMENT_UPDATED] commentId={}, postId={}, authorId={}",
+                comment.getId(),
+                comment.getPostId(),
+                comment.getAuthorId());
     }
 
     /**

@@ -6,6 +6,8 @@ import org.example.deuknetapplication.port.out.repository.CategoryRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
 import org.example.deuknetdomain.domain.category.Category;
 import org.example.deuknetdomain.domain.category.exception.CategoryAlreadyExistsException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +16,8 @@ import java.util.UUID;
 @Service
 @Transactional
 public class CreateCategoryService implements CreateCategoryUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(CreateCategoryService.class);
 
     private final CategoryRepository categoryRepository;
     private final CurrentUserPort currentUserPort;
@@ -46,6 +50,13 @@ public class CreateCategoryService implements CreateCategoryUseCase {
         );
 
         category = categoryRepository.save(category);
+
+        log.info("[CATEGORY_CREATED] categoryId={}, name={}, ownerId={}, description={}",
+                category.getId(),
+                normalizedName,
+                currentUserId,
+                request.getDescription());
+
         return category.getId();
     }
 }

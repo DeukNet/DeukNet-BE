@@ -18,6 +18,8 @@ import org.example.deuknetdomain.domain.comment.Comment;
 import org.example.deuknetdomain.domain.post.Post;
 import org.example.deuknetdomain.domain.reaction.ReactionType;
 import org.example.deuknetdomain.domain.user.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +35,8 @@ import java.util.UUID;
 @Service
 @Transactional
 public class CreateCommentService implements CreateCommentUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(CreateCommentService.class);
 
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
@@ -70,6 +74,13 @@ public class CreateCommentService implements CreateCommentUseCase {
 
         // 3. 이벤트 발행 (Outbox Pattern)
         publishCommentCreatedEvent(comment, author);
+
+        log.info("[COMMENT_CREATED] commentId={}, postId={}, authorId={}, username={}, isReply={}",
+                comment.getId(),
+                comment.getPostId(),
+                author.getId(),
+                author.getUsername(),
+                comment.isReply());
 
         return comment.getId();
     }
