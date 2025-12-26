@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/app_db
-    username: app_user
-    password: app_pass
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:app_db}
+    username: ${DB_USERNAME:app_user}
+    password: ${DB_PASSWORD:app_pass}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
@@ -12,17 +12,18 @@ spring:
       max-lifetime: 1800000
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: false
+      ddl-auto: ${DDL_AUTO:update}
+    show-sql: ${SHOW_SQL:false}
     open-in-view: false
     properties:
-      hibernate.format_sql: false
-      hibernate.hbm2ddl.auto: update
+      hibernate.format_sql: ${FORMAT_SQL:false}
       hibernate.jdbc.batch_size: 20
       hibernate.order_inserts: true
       hibernate.order_updates: true
   elasticsearch:
-    uris: http://localhost:9200
+    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+    username: ${ELASTICSEARCH_USERNAME:elastic}
+    password: ${ELASTICSEARCH_PASSWORD:elastic123!@#}
   servlet:
     multipart:
       enabled: true
