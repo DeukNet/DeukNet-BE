@@ -94,7 +94,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/users/*").permitAll()
 
                 // File API
-                .requestMatchers(HttpMethod.POST, "/api/files/upload").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/files/upload").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/files/**").permitAll()
 
                 // 기타 모든 요청 거부
