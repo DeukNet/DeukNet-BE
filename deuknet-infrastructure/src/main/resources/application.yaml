@@ -12,7 +12,7 @@ spring:
       max-lifetime: 1800000
   jpa:
     hibernate:
-      ddl-auto: ${DDL_AUTO:update}
+      ddl-auto: ${DDL_AUTO:validate}
     show-sql: ${SHOW_SQL:false}
     open-in-view: false
     properties:
@@ -20,6 +20,12 @@ spring:
       hibernate.jdbc.batch_size: 20
       hibernate.order_inserts: true
       hibernate.order_updates: true
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:true}
+    locations: classpath:db/migration
+    baseline-version: 0
+    baseline-description: Initial baseline
   elasticsearch:
     uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
     username: ${ELASTICSEARCH_USERNAME:elastic}
@@ -85,13 +91,10 @@ debezium:
     schema-include-list: public
     table-include-list: public.outbox_events
 
-# MinIO Configuration
-minio:
-  url: ${MINIO_URL:http://localhost:9000}
-  external-url: ${MINIO_EXTERNAL_URL:http://localhost:9000}
-  access-key: ${MINIO_ACCESS_KEY:minioadmin}
-  secret-key: ${MINIO_SECRET_KEY:minioadmin123}
-  bucket-name: ${MINIO_BUCKET_NAME:deuknet-files}
+# SeaweedFS Configuration
+seaweedfs:
+  master-url: ${SEAWEEDFS_MASTER_URL:http://localhost:9333}
+  external-url: ${SEAWEEDFS_EXTERNAL_URL:http://localhost:8090}
 
 server:
   tomcat:
