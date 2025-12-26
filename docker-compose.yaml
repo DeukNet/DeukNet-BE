@@ -51,46 +51,66 @@ services:
       timeout: 10s
       retries: 5
 
-  # MinIO Object Storage
-  minio:
-    image: minio/minio:latest
-    container_name: deuknet-minio
+  # SeaweedFS Master Server
+  seaweedfs-master:
+    image: chrislusf/seaweedfs:latest
+    container_name: deuknet-seaweedfs-master
     restart: unless-stopped
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+    command: master -ip=seaweedfs-master -port=9333
     ports:
-      - "9000:9000"  # API
-      - "9001:9001"  # Console
+      - "9333:9333"  # Master HTTP
+      - "19333:19333"  # Master gRPC
     volumes:
-      - minio_data:/data
+      - seaweedfs_master_data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9333/cluster/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # MinIO 버킷 초기화 (최초 1회)
-  minio-init:
-    image: minio/mc:latest
-    container_name: deuknet-minio-init
+  # SeaweedFS Volume Server
+  seaweedfs-volume:
+    image: chrislusf/seaweedfs:latest
+    container_name: deuknet-seaweedfs-volume
+    restart: unless-stopped
+    command: volume -mserver=seaweedfs-master:9333 -port=8080 -ip=seaweedfs-volume -publicUrl=localhost:8090
+    ports:
+      - "8090:8080"  # Volume HTTP (포트 충돌 방지)
+      - "18080:18080"  # Volume gRPC
+    volumes:
+      - seaweedfs_volume_data:/data
     depends_on:
-      minio:
+      seaweedfs-master:
         condition: service_healthy
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
-      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME:-deuknet-files}
-    entrypoint: >
-      /bin/sh -c "
-      /usr/bin/mc alias set myminio http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD};
-      /usr/bin/mc mb myminio/$${MINIO_BUCKET_NAME} --ignore-existing;
-      /usr/bin/mc anonymous set public myminio/$${MINIO_BUCKET_NAME};
-      exit 0;
-      "
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # SeaweedFS Filer (선택사항, 디렉토리 구조 지원)
+  seaweedfs-filer:
+    image: chrislusf/seaweedfs:latest
+    container_name: deuknet-seaweedfs-filer
+    restart: unless-stopped
+    command: filer -master=seaweedfs-master:9333 -ip=seaweedfs-filer -port=8888
+    ports:
+      - "8888:8888"  # Filer HTTP
+      - "18888:18888"  # Filer gRPC
+    volumes:
+      - seaweedfs_filer_data:/data
+    depends_on:
+      seaweedfs-master:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8888/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   pg_data:
   es_data:
-  minio_data:
+  seaweedfs_master_data:
+  seaweedfs_volume_data:
+  seaweedfs_filer_data:
