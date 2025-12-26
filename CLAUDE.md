@@ -5,7 +5,7 @@
 DeukNet-BE is a Spring Boot backend service implementing **Hexagonal Architecture** with **CQRS pattern** and **Event Sourcing** using CDC (Change Data Capture).
 
 ### Related Projects
-- **Frontend**: `/home/kkm06100/frontend` (Frontend application repository)
+- **Frontend**: `/home/kkm06100/IdeaProjects/DeukNet-FE` (Frontend application repository)
 
 ### Tech Stack
 - **Language**: Java 17
@@ -13,7 +13,7 @@ DeukNet-BE is a Spring Boot backend service implementing **Hexagonal Architectur
 - **Build Tool**: Gradle 8.10.2
 - **Write DB**: PostgreSQL 15 (with WAL level=logical for CDC)
 - **Read DB**: Elasticsearch 8.11 (with Nori Korean analyzer plugin)
-- **File Storage**: MinIO
+- **File Storage**: SeaweedFS
 - **CDC**: Debezium 2.7.3 Embedded Engine
 - **Deployment**: Kubernetes + Helm
 
@@ -26,7 +26,7 @@ deuknet-domain          (Core business logic - no external dependencies)
     ↓
 deuknet-application     (Use cases, ports/interfaces)
     ↓
-deuknet-infrastructure  (Adapters: DB, Kafka, MinIO, Security, CDC)
+deuknet-infrastructure  (Adapters: DB, Kafka, SeaweedFS, Security, CDC)
     ↓
 deuknet-presentation    (REST API, Controllers, DTOs)
 ```
@@ -38,7 +38,7 @@ deuknet-presentation    (REST API, Controllers, DTOs)
 - **deuknet-infrastructure**:
   - Persistence adapters (JPA entities, repositories)
   - CDC engine (Debezium Embedded)
-  - External service adapters (MinIO, Elasticsearch)
+  - External service adapters (SeaweedFS, Elasticsearch)
   - Security configuration
 - **deuknet-presentation**: REST controllers, request/response DTOs, exception handlers
 
@@ -314,7 +314,7 @@ private void enrichWithUserInfo(CommentResponse response) {
 
 #### Start External Services (Docker Compose)
 ```bash
-# Start all external dependencies (PostgreSQL, Elasticsearch, MinIO)
+# Start all external dependencies (PostgreSQL, Elasticsearch, SeaweedFS)
 docker compose up -d
 
 # View logs
@@ -372,7 +372,7 @@ kubectl exec -it deployment/deuknet-app -- curl localhost:8080/actuator/health
 ### File Upload Security
 File validation is implemented at the **infrastructure boundary** (adapter layer):
 
-- **MinioFileStorageAdapter** performs:
+- **SeaweedFSFileStorageAdapter** performs:
   - MIME type whitelist validation
   - File extension validation
   - Path traversal attack prevention (blocks `..`, `/`, `\\`)
@@ -438,7 +438,7 @@ After building the app, images must be loaded into Minikube:
 
 ## Key Configuration Files
 
-- `application.yaml`: Spring Boot configuration (DB, Kafka, MinIO connection strings)
+- `application.yaml`: Spring Boot configuration (DB, Kafka, SeaweedFS connection strings)
 - `docker-compose.yaml`: Local development external services
 - `helm/deuknet/values.yaml`: Kubernetes deployment configuration
 - `build.gradle`: Dependency versions and module configuration
