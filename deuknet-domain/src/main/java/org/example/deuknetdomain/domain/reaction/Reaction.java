@@ -1,5 +1,6 @@
 package org.example.deuknetdomain.domain.reaction;
 
+import com.github.f4b6a3.uuid.UuidCreator;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.Getter;
@@ -26,7 +27,7 @@ public class Reaction extends AggregateRoot {
 
     public static Reaction create(ReactionType reactionType, TargetType targetType, UUID targetId, UUID userId) {
         return new Reaction(
-                UUID.randomUUID(),
+                UuidCreator.getTimeOrderedEpoch(),
                 reactionType,
                 targetType,
                 targetId,

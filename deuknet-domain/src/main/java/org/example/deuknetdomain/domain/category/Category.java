@@ -1,5 +1,6 @@
 package org.example.deuknetdomain.domain.category;
 
+import com.github.f4b6a3.uuid.UuidCreator;
 import lombok.Getter;
 import org.example.deuknetdomain.common.seedwork.AggregateRoot;
 import org.example.deuknetdomain.common.vo.CategoryName;
@@ -25,7 +26,7 @@ public class Category extends AggregateRoot {
     }
 
     public static Category create(CategoryName name, UUID parentCategoryId, String description, String thumbnailImageUrl, UUID ownerId) {
-        return new Category(UUID.randomUUID(), name, parentCategoryId, description, thumbnailImageUrl, ownerId);
+        return new Category(UuidCreator.getTimeOrderedEpoch(), name, parentCategoryId, description, thumbnailImageUrl, ownerId);
     }
 
     public static Category restore(UUID id, CategoryName name, UUID parentCategoryId, String description, String thumbnailImageUrl, UUID ownerId) {

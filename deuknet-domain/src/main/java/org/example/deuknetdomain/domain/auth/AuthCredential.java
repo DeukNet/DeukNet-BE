@@ -1,5 +1,6 @@
 package org.example.deuknetdomain.domain.auth;
 
+import com.github.f4b6a3.uuid.UuidCreator;
 import java.util.UUID;
 
 import lombok.Getter;
@@ -21,7 +22,7 @@ public class AuthCredential extends AggregateRoot {
     }
 
     public static AuthCredential create(UUID userId, AuthProvider authProvider, Email email) {
-        return new AuthCredential(UUID.randomUUID(), userId, authProvider, email);
+        return new AuthCredential(UuidCreator.getTimeOrderedEpoch(), userId, authProvider, email);
     }
 
     public static AuthCredential restore(UUID id, UUID userId, AuthProvider authProvider, Email email) {

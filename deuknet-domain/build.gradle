@@ -26,17 +26,15 @@ dependencyManagement {
 }
 
 dependencies {
-    // 🔥 필수: Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
-    // 🔥 필수: Spring Context (이벤트 처리용)
     implementation 'org.springframework:spring-context'
 
-    // 🔥 필수: Jakarta Validation (domain 검증용)
     implementation 'jakarta.validation:jakarta.validation-api'
 
-    // 테스트 의존성
+    implementation 'com.github.f4b6a3:uuid-creator:6.0.0'
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'

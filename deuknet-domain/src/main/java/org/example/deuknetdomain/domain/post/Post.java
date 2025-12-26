@@ -1,5 +1,6 @@
 package org.example.deuknetdomain.domain.post;
 
+import com.github.f4b6a3.uuid.UuidCreator;
 import lombok.Getter;
 import org.example.deuknetdomain.common.seedwork.AggregateRoot;
 import org.example.deuknetdomain.common.vo.Content;
@@ -40,7 +41,7 @@ public class Post extends AggregateRoot {
 
     public static Post create(Title title, Content content, UUID authorId, UUID categoryId, AuthorType authorType, String thumbnailImageUrl) {
         return new Post(
-                UUID.randomUUID(),
+                UuidCreator.getTimeOrderedEpoch(),
                 title,
                 content,
                 authorId,

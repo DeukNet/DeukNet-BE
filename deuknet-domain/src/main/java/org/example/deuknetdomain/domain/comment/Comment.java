@@ -1,5 +1,6 @@
 package org.example.deuknetdomain.domain.comment;
 
+import com.github.f4b6a3.uuid.UuidCreator;
 import lombok.Getter;
 import org.example.deuknetdomain.common.seedwork.AggregateRoot;
 import org.example.deuknetdomain.common.vo.Content;
@@ -33,7 +34,7 @@ public class Comment extends AggregateRoot {
 
     public static Comment create(UUID postId, UUID authorId, Content content, UUID parentCommentId, AuthorType authorType) {
         return new Comment(
-                UUID.randomUUID(),
+                UuidCreator.getTimeOrderedEpoch(),
                 postId,
                 authorId,
                 content,

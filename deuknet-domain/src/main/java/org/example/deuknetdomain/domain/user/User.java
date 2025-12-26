@@ -1,5 +1,6 @@
 package org.example.deuknetdomain.domain.user;
 
+import com.github.f4b6a3.uuid.UuidCreator;
 import lombok.Getter;
 import org.example.deuknetdomain.common.seedwork.Entity;
 
@@ -26,7 +27,7 @@ public class User extends Entity {
     }
 
     public static User create(UUID authCredentialId, String username, String displayName, String bio, String avatarUrl) {
-        return new User(UUID.randomUUID(), authCredentialId, username, displayName, bio, avatarUrl, UserRole.USER);
+        return new User(UuidCreator.getTimeOrderedEpoch(), authCredentialId, username, displayName, bio, avatarUrl, UserRole.USER);
     }
 
     public static User restore(UUID id, UUID authCredentialId, String username, String displayName, String bio, String avatarUrl, UserRole role) {
