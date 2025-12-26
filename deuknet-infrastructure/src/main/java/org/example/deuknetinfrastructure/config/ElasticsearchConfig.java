@@ -7,6 +7,10 @@ import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.elasticsearch.client.RestClient;
 import org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchProperties;
 import org.springframework.context.annotation.Bean;
@@ -39,7 +43,19 @@ public class ElasticsearchConfig {
         String uris = elasticsearchProperties.getUris().get(0);
         HttpHost host = HttpHost.create(uris);
 
-        // RestClient에 connection pool 설정 추가
+        // Elasticsearch 인증 정보 설정
+        final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+        if (elasticsearchProperties.getUsername() != null && elasticsearchProperties.getPassword() != null) {
+            credentialsProvider.setCredentials(
+                    AuthScope.ANY,
+                    new UsernamePasswordCredentials(
+                            elasticsearchProperties.getUsername(),
+                            elasticsearchProperties.getPassword()
+                    )
+            );
+        }
+
+        // RestClient에 connection pool 및 인증 설정 추가
         // 테스트 환경에서 연결이 끊어지는 문제를 방지하기 위해 큰 타임아웃 설정
         RestClient restClient = RestClient.builder(host)
                 .setRequestConfigCallback(requestConfigBuilder ->
@@ -49,6 +65,7 @@ public class ElasticsearchConfig {
                 )
                 .setHttpClientConfigCallback(httpClientBuilder ->
                         httpClientBuilder
+                                .setDefaultCredentialsProvider(credentialsProvider)  // 인증 정보 추가
                                 .setMaxConnTotal(100)  // 최대 연결 수
                                 .setMaxConnPerRoute(100)  // 라우트당 최대 연결 수
                 )
