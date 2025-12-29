@@ -1,6 +1,5 @@
 package org.example.deuknetapplication.port.out.repository;
 
-import org.example.deuknetapplication.projection.comment.CommentProjection;
 import org.example.deuknetdomain.domain.comment.Comment;
 
 import java.util.List;
@@ -18,7 +17,7 @@ public interface CommentRepository {
     long countByPostId(UUID postId);
 
     /**
-     * 특정 게시글의 모든 댓글 조회 (Projection)
+     * 특정 게시글의 모든 댓글 조회 (Domain 객체)
      */
-    List<CommentProjection> findProjectionsByPostId(UUID postId);
+    List<Comment> findByPostId(UUID postId);
 }

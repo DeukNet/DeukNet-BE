@@ -2,6 +2,7 @@ package org.example.deuknetapplication.messaging;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.example.deuknetapplication.common.exception.InvalidEventTypeException;
 
 /**
  * Outbox 이벤트 타입
@@ -43,7 +44,7 @@ public enum EventType {
      *
      * @param typeName Outbox 테이블의 type 컬럼 값
      * @return 해당하는 EventType
-     * @throws IllegalArgumentException 매칭되는 타입이 없을 경우
+     * @throws InvalidEventTypeException 매칭되는 타입이 없을 경우
      */
     public static EventType fromTypeName(String typeName) {
         for (EventType type : values()) {
@@ -51,7 +52,7 @@ public enum EventType {
                 return type;
             }
         }
-        throw new IllegalArgumentException("Unknown event type: " + typeName);
+        throw new InvalidEventTypeException(typeName);
     }
 
     /**
