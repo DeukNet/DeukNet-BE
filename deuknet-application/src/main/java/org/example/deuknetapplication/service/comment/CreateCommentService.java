@@ -10,7 +10,6 @@ import org.example.deuknetapplication.port.out.repository.PostRepository;
 import org.example.deuknetapplication.port.out.repository.ReactionRepository;
 import org.example.deuknetapplication.port.out.repository.UserRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
-import org.example.deuknetapplication.projection.comment.CommentProjection;
 import org.example.deuknetapplication.projection.post.PostDetailProjection;
 import org.example.deuknetapplication.service.post.PostProjectionFactory;
 import org.example.deuknetdomain.common.vo.Content;
@@ -110,28 +109,10 @@ public class CreateCommentService implements CreateCommentUseCase {
 
     /**
      * CommentCreated 이벤트 발행 (SRP: 이벤트 발행 책임 분리)
+     * Comment는 CQRS를 사용하지 않으므로 PostDetailProjection만 발행
      */
     private void publishCommentCreatedEvent(Comment comment, User author) {
-        LocalDateTime now = LocalDateTime.now();
-
-        // 1. CommentProjection 발행
-        CommentProjection projection = new CommentProjection(
-                comment.getId(),
-                comment.getPostId(),
-                comment.getContent().getValue(),
-                author.getId(),
-                author.getUsername(),
-                author.getDisplayName(),
-                author.getAvatarUrl(),
-                comment.getParentCommentId().orElse(null),
-                comment.isReply(),
-                comment.getAuthorType().name(),
-                now,
-                now
-        );
-        dataChangeEventPublisher.publish(EventType.COMMENT_CREATED, comment.getId(), projection);
-
-        // 2. PostDetailProjection 발행 (전체 통계 업데이트)
+        // PostDetailProjection 발행 (댓글 수 업데이트)
         Post post = postRepository.findById(comment.getPostId())
                 .orElseThrow(ResourceNotFoundException::new);
 

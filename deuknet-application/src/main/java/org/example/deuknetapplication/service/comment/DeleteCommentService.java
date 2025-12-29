@@ -92,14 +92,10 @@ public class DeleteCommentService implements DeleteCommentUseCase {
 
     /**
      * CommentDeleted 이벤트 발행 (SRP: 이벤트 발행 책임 분리)
-     *
-     * Projection을 삭제하도록 이벤트를 발행합니다.
+     * Comment는 CQRS를 사용하지 않으므로 PostDetailProjection만 발행
      */
     private void publishCommentDeletedEvent(UUID commentId, UUID postId) {
-        // 1. CommentDeleted 이벤트 발행
-        dataChangeEventPublisher.publish(EventType.COMMENT_DELETED, commentId);
-
-        // 2. PostDetailProjection 발행 (전체 통계 업데이트)
+        // PostDetailProjection 발행 (댓글 수 업데이트)
         Post post = postRepository.findById(postId)
                 .orElseThrow(ResourceNotFoundException::new);
 

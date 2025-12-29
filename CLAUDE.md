@@ -287,6 +287,228 @@ private void enrichWithUserInfo(CommentResponse response) {
 3. **유지보수성**: 익명 처리 로직이 UserRepository에 집중되어 수정이 용이
 4. **확장성**: 새로운 작성물 타입(Reply 등) 추가 시 동일한 패턴 적용 가능
 
+### 7. CQRS 사용 기준과 Service 패턴
+
+**⚠️ 매우 중요: 모든 Entity가 CQRS를 사용하는 것은 아닙니다. CQRS 사용 여부에 따라 Service 패턴이 달라집니다.**
+
+#### CQRS 사용 기준
+
+##### ✅ CQRS를 사용하는 경우 (Elasticsearch 기반 검색 필요)
+
+- **Post**: 전문 검색, 필터링, 정렬 등 복잡한 검색 요구사항
+  - PostgreSQL (Write) + Elasticsearch (Read)
+  - CDC를 통한 동기화
+  - Projection과 Document 사용
+
+##### ❌ CQRS를 사용하지 않는 경우 (단순 CRUD)
+
+- **User**: 단순 조회, 업데이트 작업만 필요
+- **Category**: 단순 목록 조회, 생성/수정/삭제
+- **Comment**: 게시글별 댓글 목록 조회 (복잡한 검색 불필요)
+  - PostgreSQL만 사용 (Write + Read)
+  - Projection 사용 안함
+  - Domain 객체를 직접 Response로 변환
+
+#### Service 패턴 차이
+
+##### 1. CQRS를 사용하는 Entity (예: Post)
+
+**Repository**:
+```java
+// Application Layer - Port
+public interface PostRepository {
+    // Command: Domain 객체 반환
+    Post save(Post post);
+    Optional<Post> findById(UUID id);
+
+    // Query: Projection 반환
+    Optional<PostDetailProjection> findDetailById(UUID id);
+    Page<PostSearchProjection> findByFilters(...);
+}
+```
+
+**Service**:
+```java
+@Service
+@Transactional
+public class CreatePostService implements CreatePostUseCase {
+    private final PostRepository postRepository;
+    private final DataChangeEventPublisher eventPublisher;
+
+    @Override
+    public UUID createPost(CreatePostApplicationRequest request) {
+        // 1. Domain 객체 생성 및 저장
+        Post post = Post.create(...);
+        postRepository.save(post);
+
+        // 2. Projection 생성 및 이벤트 발행 (CDC를 통해 Elasticsearch로 전달)
+        PostDetailProjection projection = projectionFactory.createDetailProjection(post, ...);
+        eventPublisher.publish(EventType.POST_CREATED, post.getId(), projection);
+
+        return post.getId();
+    }
+}
+
+@Service
+@Transactional(readOnly = true)
+public class GetPostDetailService implements GetPostDetailUseCase {
+    private final PostRepository postRepository;
+
+    @Override
+    public PostDetailResponse getPostDetail(UUID postId) {
+        // Repository에서 직접 Projection 조회 (Elasticsearch에서 읽음)
+        PostDetailProjection projection = postRepository.findDetailById(postId)
+                .orElseThrow(PostNotFoundException::new);
+
+        return PostDetailResponse.from(projection);
+    }
+}
+```
+
+**이벤트 발행**:
+- `POST_CREATED`: 게시글 생성 시
+- `POST_UPDATED`: 게시글 수정 시
+- `POST_DELETED`: 게시글 삭제 시
+- 모든 이벤트는 Projection을 payload로 전달
+
+##### 2. CQRS를 사용하지 않는 Entity (예: User, Category, Comment)
+
+**Repository**:
+```java
+// Application Layer - Port
+public interface CommentRepository {
+    // Command & Query 모두 Domain 객체 반환 (Projection 없음)
+    Comment save(Comment comment);
+    Optional<Comment> findById(UUID id);
+    List<Comment> findByPostId(UUID postId);
+    void delete(Comment comment);
+}
+```
+
+**Service**:
+```java
+@Service
+@Transactional
+public class CreateCommentService implements CreateCommentUseCase {
+    private final CommentRepository commentRepository;
+    private final PostRepository postRepository;
+    private final DataChangeEventPublisher eventPublisher;
+
+    @Override
+    public UUID createComment(CreateCommentApplicationRequest request) {
+        // 1. Domain 객체 생성 및 저장
+        Comment comment = Comment.create(...);
+        commentRepository.save(comment);
+
+        // 2. 연관된 CQRS Entity(Post)의 Projection만 발행
+        // Comment 자체의 이벤트는 발행하지 않음!
+        Post post = postRepository.findById(comment.getPostId())
+                .orElseThrow(PostNotFoundException::new);
+        PostDetailProjection projection = projectionFactory.createDetailProjectionForUpdate(
+                post, ..., commentCount + 1, ...);
+        eventPublisher.publish(EventType.POST_UPDATED, post.getId(), projection);
+
+        return comment.getId();
+    }
+}
+
+@Service
+@Transactional(readOnly = true)
+public class GetCommentsService implements GetCommentsUseCase {
+    private final CommentRepository commentRepository;
+    private final UserRepository userRepository;
+
+    @Override
+    public List<CommentResponse> getCommentsByPostId(UUID postId) {
+        // 1. Repository에서 Domain 객체 조회 (PostgreSQL에서 직접 읽음)
+        List<Comment> comments = commentRepository.findByPostId(postId);
+
+        // 2. Service Layer에서 toResponse() 메서드로 변환
+        return comments.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    private CommentResponse toResponse(Comment comment) {
+        // Domain 객체 → Response DTO 변환 로직
+        boolean isAuthor = isCurrentUserAuthor(comment);
+
+        // 익명 처리
+        if (comment.getAuthorType() == AuthorType.ANONYMOUS) {
+            return new CommentResponse(comment.getId(), ..., null, "익명", ...);
+        } else {
+            User author = userRepository.findById(comment.getAuthorId()).orElse(null);
+            return new CommentResponse(comment.getId(), ...,
+                    author.getUsername(), author.getDisplayName(), ...);
+        }
+    }
+}
+
+@Service
+@Transactional
+public class UpdateCommentService implements UpdateCommentUseCase {
+    private final CommentRepository commentRepository;
+
+    @Override
+    public void updateComment(UpdateCommentApplicationRequest request) {
+        // 1. Domain 객체 조회 및 업데이트
+        Comment comment = commentRepository.findById(request.getCommentId())
+                .orElseThrow(CommentNotFoundException::new);
+
+        comment.updateContent(Content.from(request.getContent()));
+        commentRepository.save(comment);
+
+        // 2. 이벤트 발행 안함! (Comment는 CQRS 사용 안함)
+        // 필요하면 연관된 Post의 Projection만 업데이트 (댓글 수 등)
+    }
+}
+```
+
+**이벤트 발행**:
+- Comment 자체의 이벤트는 발행하지 않음
+- 연관된 CQRS Entity(Post)의 통계 업데이트만 발행
+  - 댓글 생성/삭제 시 `POST_UPDATED` 이벤트로 댓글 수 업데이트
+
+#### 패턴 비교 요약
+
+| 구분 | CQRS 사용 (Post) | CQRS 미사용 (User, Category, Comment) |
+|------|-----------------|-------------------------------------|
+| **Read DB** | Elasticsearch | PostgreSQL |
+| **Write DB** | PostgreSQL | PostgreSQL |
+| **Repository 반환 타입** | Projection (Query), Domain (Command) | Domain (Command & Query) |
+| **Service 변환** | `Projection → Response` | `Domain → Response (toResponse())` |
+| **이벤트 발행** | Entity 생성/수정/삭제 시 발행 | 발행 안함 (연관 Entity만 업데이트) |
+| **Projection 클래스** | 필요 (Document와 1:1 매핑) | 불필요 |
+| **Document 클래스** | 필요 (Elasticsearch) | 불필요 |
+
+#### 체크리스트
+
+새로운 Entity 추가 시:
+
+- [ ] **CQRS 필요성 판단**: 복잡한 검색 요구사항이 있는가?
+  - Yes → Post 패턴 따르기 (Projection, Document, CDC)
+  - No → User/Category/Comment 패턴 따르기 (Domain only)
+
+- [ ] **Repository 인터페이스 설계**
+  - CQRS: Query 메서드는 Projection 반환, Command 메서드는 Domain 반환
+  - Non-CQRS: 모든 메서드는 Domain 반환
+
+- [ ] **Service 구현**
+  - CQRS: Repository에서 Projection 조회 → Response 변환
+  - Non-CQRS: Repository에서 Domain 조회 → toResponse() 메서드로 변환
+
+- [ ] **이벤트 발행 여부**
+  - CQRS: 생성/수정/삭제 시 해당 Entity의 Projection 발행
+  - Non-CQRS: 이벤트 발행 안함 (연관된 CQRS Entity만 업데이트)
+
+#### 이 패턴을 지켜야 하는 이유
+
+1. **복잡도 관리**: CQRS는 필요한 곳에만 적용하여 시스템 복잡도 최소화
+2. **일관성**: 동일한 특성을 가진 Entity는 동일한 패턴 사용
+3. **유지보수성**: 패턴이 명확하여 새로운 개발자도 쉽게 이해 가능
+4. **성능**: 단순 CRUD는 PostgreSQL 직접 조회로 충분 (Elasticsearch 오버헤드 제거)
+5. **비용**: Elasticsearch 인덱스는 필요한 데이터만 저장하여 인프라 비용 절감
+
 ## Common Commands
 
 ### Build & Test
@@ -603,6 +825,265 @@ import org.example.deuknetdomain.domain.user.exception.*;
 2. **네이밍 충돌 방지**: 다른 패키지의 동일한 클래스명 사용 시 문제 방지
 3. **IDE 지원**: 자동 완성 및 리팩토링 도구가 더 정확하게 동작
 4. **코드 리뷰**: 의존성 변경 사항을 명확히 확인 가능
+
+### 4. 정적 팩토리 메서드 사용 원칙
+
+**⚠️ 중요: Service, Adapter 등의 로직에서 생성자나 Builder 패턴을 직접 사용하지 말고, DTO에 정적 팩토리 메서드를 제공하세요.**
+
+#### 원칙
+
+- **Response/Request DTO는 정적 팩토리 메서드(`from()`, `of()`)를 제공합니다**
+- **Service, Adapter에서는 생성자나 Builder를 직접 호출하지 않습니다**
+- **정적 팩토리 메서드 명명 규칙**:
+  - `from(Domain)`: Domain 객체로부터 DTO 생성
+  - `of(...)`: 여러 파라미터로부터 DTO 생성
+  - `fromProjection(Projection)`: Projection 객체로부터 DTO 생성
+
+#### 올바른 예시
+
+```java
+// ✅ GOOD - Response DTO에 정적 팩토리 메서드 제공
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserResponse {
+    private UUID id;
+    private String username;
+    private String displayName;
+    private String bio;
+    private String avatarUrl;
+    private UserRole role;
+
+    /**
+     * Domain 객체로부터 Response 생성
+     */
+    public static UserResponse from(User user) {
+        return new UserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getDisplayName(),
+                user.getBio(),
+                user.getAvatarUrl(),
+                user.getRole()
+        );
+    }
+}
+
+// ✅ GOOD - Service에서 정적 팩토리 메서드 사용
+@Service
+@Transactional(readOnly = true)
+public class GetUserByIdService implements GetUserByIdUseCase {
+    private final UserRepository userRepository;
+
+    @Override
+    public UserResponse getUserById(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        return UserResponse.from(user);  // 정적 팩토리 메서드 사용
+    }
+}
+
+// ✅ GOOD - CommentResponse with AuthorType 처리
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class CommentResponse {
+    private UUID id;
+    private UUID postId;
+    private String content;
+    private UUID authorId;
+    private String authorUsername;
+    // ... other fields
+
+    /**
+     * Domain 객체와 User 정보로부터 Response 생성
+     */
+    public static CommentResponse from(Comment comment, User author, boolean isAuthor) {
+        if (comment.getAuthorType() == AuthorType.ANONYMOUS) {
+            return new CommentResponse(
+                    comment.getId(),
+                    comment.getPostId(),
+                    comment.getContent().getValue(),
+                    null,  // authorId 숨김
+                    "익명",
+                    "익명",
+                    null,  // avatarUrl 숨김
+                    comment.getParentCommentId().orElse(null),
+                    comment.isReply(),
+                    comment.getAuthorType(),
+                    isAuthor,
+                    comment.getCreatedAt(),
+                    comment.getUpdatedAt()
+            );
+        } else {
+            return new CommentResponse(
+                    comment.getId(),
+                    comment.getPostId(),
+                    comment.getContent().getValue(),
+                    author.getId(),
+                    author.getUsername(),
+                    author.getDisplayName(),
+                    author.getAvatarUrl(),
+                    comment.getParentCommentId().orElse(null),
+                    comment.isReply(),
+                    comment.getAuthorType(),
+                    isAuthor,
+                    comment.getCreatedAt(),
+                    comment.getUpdatedAt()
+            );
+        }
+    }
+}
+
+// ✅ GOOD - Service에서 정적 팩토리 메서드 사용
+@Service
+@Transactional(readOnly = true)
+public class GetCommentsService implements GetCommentsUseCase {
+    private final CommentRepository commentRepository;
+    private final UserRepository userRepository;
+
+    @Override
+    public List<CommentResponse> getCommentsByPostId(UUID postId) {
+        List<Comment> comments = commentRepository.findByPostId(postId);
+        return comments.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    private CommentResponse toResponse(Comment comment) {
+        boolean isAuthor = isCurrentUserAuthor(comment);
+
+        if (comment.getAuthorType() == AuthorType.ANONYMOUS) {
+            return CommentResponse.from(comment, null, isAuthor);  // 정적 팩토리 메서드
+        } else {
+            User author = userRepository.findById(comment.getAuthorId()).orElse(null);
+            return CommentResponse.from(comment, author, isAuthor);  // 정적 팩토리 메서드
+        }
+    }
+}
+```
+
+#### 잘못된 예시
+
+```java
+// ❌ BAD - Service에서 생성자 직접 호출
+@Service
+public class GetUserByIdService implements GetUserByIdUseCase {
+    @Override
+    public UserResponse getUserById(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 생성자 직접 호출 - 가독성이 떨어지고 코드 중복 발생
+        return new UserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getDisplayName(),
+                user.getBio(),
+                user.getAvatarUrl(),
+                user.getRole()
+        );
+    }
+}
+
+// ❌ BAD - Builder 패턴 직접 사용 (간단한 DTO의 경우)
+@Service
+public class GetUserByIdService implements GetUserByIdUseCase {
+    @Override
+    public UserResponse getUserById(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // Builder 직접 사용 - 불필요하게 장황함
+        return UserResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .displayName(user.getDisplayName())
+                .bio(user.getBio())
+                .avatarUrl(user.getAvatarUrl())
+                .role(user.getRole())
+                .build();
+    }
+}
+
+// ❌ BAD - Service에서 복잡한 변환 로직 (DTO에 있어야 함)
+@Service
+public class GetCommentsService implements GetCommentsUseCase {
+    private CommentResponse toResponse(Comment comment) {
+        boolean isAuthor = isCurrentUserAuthor(comment);
+
+        // 변환 로직이 Service에 흩어져 있음 - DTO의 정적 팩토리 메서드로 이동해야 함
+        if (comment.getAuthorType() == AuthorType.ANONYMOUS) {
+            return new CommentResponse(
+                    comment.getId(),
+                    comment.getPostId(),
+                    comment.getContent().getValue(),
+                    null,
+                    "익명",
+                    "익명",
+                    null,
+                    // ... 20개 파라미터
+            );
+        } else {
+            User author = userRepository.findById(comment.getAuthorId()).orElse(null);
+            return new CommentResponse(
+                    comment.getId(),
+                    comment.getPostId(),
+                    comment.getContent().getValue(),
+                    author.getId(),
+                    author.getUsername(),
+                    // ... 20개 파라미터
+            );
+        }
+    }
+}
+```
+
+#### 정적 팩토리 메서드의 장점
+
+1. **가독성**: `UserResponse.from(user)`는 의도가 명확함
+2. **코드 중복 제거**: 동일한 변환 로직이 여러 Service에서 재사용됨
+3. **캡슐화**: DTO 생성 로직이 DTO 클래스 내부에 캡슐화됨
+4. **유지보수성**: 필드 추가/제거 시 정적 팩토리 메서드만 수정하면 됨
+5. **테스트 용이성**: DTO 변환 로직을 독립적으로 테스트 가능
+
+#### Builder 패턴은 언제 사용하는가?
+
+Builder 패턴은 다음 경우에만 사용하세요:
+
+- **선택적 파라미터가 많은 경우** (10개 이상)
+- **파라미터 조합이 복잡한 경우**
+- **불변 객체 생성이 필요하고 필드가 많은 경우**
+
+대부분의 간단한 DTO는 정적 팩토리 메서드로 충분합니다.
+
+#### Record 타입 사용
+
+Java 14+의 Record는 이미 간결하므로 정적 팩토리 메서드가 선택사항입니다:
+
+```java
+// ✅ GOOD - Record는 간결하므로 그대로 사용 가능
+public record FileUploadResponse(
+    String fileName,
+    String fileUrl,
+    long size
+) {}
+
+// Service에서 직접 생성 가능
+return new FileUploadResponse(fileName, fileUrl, size);  // OK
+```
+
+#### 체크리스트
+
+새로운 Response DTO 작성 시:
+
+- [ ] 정적 팩토리 메서드(`from()`, `of()`) 제공
+- [ ] Service에서 생성자/Builder 직접 호출 금지
+- [ ] 복잡한 변환 로직은 DTO 내부로 캡슐화
+- [ ] Record 타입은 선택적으로 정적 팩토리 메서드 추가
 
 ## Further Reading
 

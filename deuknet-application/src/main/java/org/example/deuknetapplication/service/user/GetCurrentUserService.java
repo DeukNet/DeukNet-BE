@@ -29,13 +29,6 @@ public class GetCurrentUserService implements GetCurrentUserUseCase {
         User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return new UserResponse(
-                user.getId(),
-                user.getUsername(),
-                user.getDisplayName(),
-                user.getBio(),
-                user.getAvatarUrl(),
-                user.getRole()
-        );
+        return UserResponse.from(user);
     }
 }

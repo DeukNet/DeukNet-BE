@@ -1,11 +1,8 @@
 package org.example.deuknetinfrastructure.data.comment;
 
-import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.example.deuknetapplication.port.out.repository.CommentRepository;
-import org.example.deuknetapplication.projection.comment.CommentProjection;
 import org.example.deuknetdomain.domain.comment.Comment;
-import org.example.deuknetinfrastructure.data.user.UserEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -14,7 +11,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.example.deuknetinfrastructure.data.comment.QCommentEntity.commentEntity;
-import static org.example.deuknetinfrastructure.data.user.QUserEntity.userEntity;
 
 @Component
 public class CommentRepositoryAdapter implements CommentRepository {
@@ -58,37 +54,15 @@ public class CommentRepositoryAdapter implements CommentRepository {
     }
 
     @Override
-    public List<CommentProjection> findProjectionsByPostId(UUID postId) {
-        // QueryDSL로 Comment + User join 조회
-        List<Tuple> results = queryFactory
-                .select(commentEntity, userEntity)
-                .from(commentEntity)
-                .leftJoin(userEntity).on(commentEntity.authorId.eq(userEntity.id))
+    public List<Comment> findByPostId(UUID postId) {
+        List<CommentEntity> entities = queryFactory
+                .selectFrom(commentEntity)
                 .where(commentEntity.postId.eq(postId))
                 .orderBy(commentEntity.createdAt.asc())
                 .fetch();
 
-        return results.stream()
-                .map(tuple -> {
-                    CommentEntity comment = tuple.get(commentEntity);
-                    UserEntity user = tuple.get(userEntity);
-
-                    assert comment != null;
-                    return new CommentProjection(
-                            comment.getId(),
-                            comment.getPostId(),
-                            comment.getContent(),
-                            comment.getAuthorId(),
-                            user != null ? user.getUsername() : null,
-                            user != null ? user.getDisplayName() : null,
-                            user != null ? user.getAvatarUrl() : null,
-                            comment.getParentCommentId(),
-                            comment.getParentCommentId() != null,  // isReply: parentCommentId가 있으면 true
-                            comment.getAuthorType() != null ? comment.getAuthorType().name() : "REAL",
-                            comment.getCreatedAt(),
-                            comment.getUpdatedAt()
-                    );
-                })
+        return entities.stream()
+                .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 }

@@ -42,13 +42,6 @@ public class SearchUsersService implements SearchUsersUseCase {
     }
 
     private UserResponse toResponse(User user) {
-        return new UserResponse(
-                user.getId(),
-                user.getUsername(),
-                user.getDisplayName(),
-                user.getBio(),
-                user.getAvatarUrl(),
-                user.getRole()
-        );
+        return UserResponse.from(user);
     }
 }

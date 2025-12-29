@@ -44,6 +44,10 @@ public class PostSearchResponse implements AuthorInfoEnrichable {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    /**
+     * @deprecated Use {@link #fromProjection(PostDetailProjection)} instead
+     */
+    @Deprecated
     public PostSearchResponse(PostDetailProjection projection) {
         this.id = projection.getId();
         this.title = projection.getTitle();
@@ -60,5 +64,28 @@ public class PostSearchResponse implements AuthorInfoEnrichable {
         this.dislikeCount = projection.getDislikeCount();
         this.createdAt = projection.getCreatedAt();
         this.updatedAt = projection.getUpdatedAt();
+    }
+
+    /**
+     * Projection 객체로부터 Response 생성
+     */
+    public static PostSearchResponse fromProjection(PostDetailProjection projection) {
+        PostSearchResponse response = new PostSearchResponse();
+        response.id = projection.getId();
+        response.title = projection.getTitle();
+        response.content = projection.getContent();
+        response.authorType = AuthorType.valueOf(projection.getAuthorType());
+        response.authorId = projection.getAuthorId();
+        // authorUsername, authorDisplayName, categoryName은 별도 조회
+        response.status = projection.getStatus();
+        response.thumbnailImageUrl = projection.getThumbnailImageUrl();
+        response.categoryId = projection.getCategoryId();
+        response.viewCount = projection.getViewCount();
+        response.commentCount = projection.getCommentCount();
+        response.likeCount = projection.getLikeCount();
+        response.dislikeCount = projection.getDislikeCount();
+        response.createdAt = projection.getCreatedAt();
+        response.updatedAt = projection.getUpdatedAt();
+        return response;
     }
 }

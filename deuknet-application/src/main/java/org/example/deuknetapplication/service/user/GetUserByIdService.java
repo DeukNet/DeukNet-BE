@@ -24,13 +24,6 @@ public class GetUserByIdService implements GetUserByIdUseCase {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return new UserResponse(
-                user.getId(),
-                user.getUsername(),
-                user.getDisplayName(),
-                user.getBio(),
-                user.getAvatarUrl(),
-                user.getRole()
-        );
+        return UserResponse.from(user);
     }
 }

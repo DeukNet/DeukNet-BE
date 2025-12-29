@@ -42,13 +42,6 @@ public class SearchCategoriesService implements SearchCategoriesUseCase {
     }
 
     private CategoryResponse toResponse(Category category) {
-        return new CategoryResponse(
-                category.getId(),
-                category.getName().getValue(),
-                category.getParentCategoryId().orElse(null),
-                category.getDescription(),
-                category.getThumbnailImageUrl(),
-                category.getOwnerId()
-        );
+        return CategoryResponse.from(category);
     }
 }
