@@ -22,4 +22,25 @@ public class CategoryRankingResponse {
     private long totalViewCount;
     private long totalLikeCount;
     private double rankingScore;  // (postCount * 1.5) + (viewCount * 1) + (likeCount * 2)
+
+    /**
+     * 통계 데이터로부터 Response 생성
+     */
+    public static CategoryRankingResponse of(
+            UUID categoryId,
+            String categoryName,
+            long postCount,
+            long totalViewCount,
+            long totalLikeCount,
+            double rankingScore
+    ) {
+        return new CategoryRankingResponse(
+                categoryId,
+                categoryName,
+                postCount,
+                totalViewCount,
+                totalLikeCount,
+                rankingScore
+        );
+    }
 }
