@@ -57,7 +57,7 @@ public class GetMyLikedPostsService implements GetMyLikedPostsUseCase {
         int offset = page * size;
         List<PostSearchResponse> posts = postRepository.findLikedPostsByUserId(currentUserId, offset, size)
                 .stream()
-                .map(PostSearchResponse::new)
+                .map(PostSearchResponse::fromProjection)
                 .toList();
 
         // 3. 각 게시글에 사용자 정보 enrichment
