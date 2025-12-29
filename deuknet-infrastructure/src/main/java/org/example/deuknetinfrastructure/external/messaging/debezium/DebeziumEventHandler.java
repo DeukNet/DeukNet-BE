@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.example.deuknetapplication.messaging.EventType;
+import org.example.deuknetinfrastructure.external.messaging.exception.InvalidCDCEventException;
+import org.example.deuknetinfrastructure.external.messaging.exception.UnknownEventTypeException;
 import org.example.deuknetinfrastructure.external.messaging.handler.CDCEventHandler;
 import org.example.deuknetinfrastructure.external.messaging.handler.CDCEventMessage;
 import org.springframework.stereotype.Component;
@@ -40,7 +42,7 @@ public class DebeziumEventHandler {
         JsonNode envelope = root.get("payload");
         if (envelope == null || envelope.isNull()) {
             log.debug("Empty envelope, skipping. key={}", key);
-            throw new IllegalArgumentException("Empty envelope, skipping. key=" + key);
+            throw new InvalidCDCEventException("Empty envelope, skipping. key=" + key);
         }
 
         String eventTypeName = envelope.get("eventType").asText();
@@ -52,7 +54,7 @@ public class DebeziumEventHandler {
 
         if (!EventType.isValid(eventTypeName)) {
             log.warn("Unknown event type: {}", eventTypeName);
-            throw new IllegalArgumentException("Unknown event type: " + eventTypeName);
+            throw new UnknownEventTypeException(eventTypeName);
         }
 
         EventType eventType = EventType.fromTypeName(eventTypeName);

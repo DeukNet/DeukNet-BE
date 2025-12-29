@@ -100,7 +100,7 @@ public class GetPostService implements GetPostUseCase {
         PostDetailProjection projection = postRepository.findDetailById(postId)
                 .orElseThrow(PostNotFoundException::new);
 
-        return new PostSearchResponse(projection);
+        return PostSearchResponse.fromProjection(projection);
     }
 
     /**

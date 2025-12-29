@@ -50,7 +50,7 @@ public class PostSearchAdapter implements PostSearchPort {
             if (document.found()) {
                 return Optional.ofNullable(document.source())
                         .map(doc -> mapper.toProjection(doc, null, null, null))
-                        .map(PostSearchResponse::new);
+                        .map(PostSearchResponse::fromProjection);
             }
             return Optional.empty();
         } catch (ElasticsearchException e) {
@@ -81,7 +81,7 @@ public class PostSearchAdapter implements PostSearchPort {
                     .map(doc -> doc.result().source())
                     .filter(Objects::nonNull)
                     .map(doc -> mapper.toProjection(doc, null, null, null))
-                    .map(PostSearchResponse::new)
+                    .map(PostSearchResponse::fromProjection)
                     .collect(Collectors.toList());
         } catch (ElasticsearchException e) {
             if (e.getMessage() != null && e.getMessage().contains("index_not_found_exception")) {
@@ -272,7 +272,7 @@ public class PostSearchAdapter implements PostSearchPort {
             return response.hits().hits().stream()
                     .map(Hit::source)
                     .map(doc -> mapper.toProjection(doc, null, null, null))
-                    .map(PostSearchResponse::new)
+                    .map(PostSearchResponse::fromProjection)
                     .collect(Collectors.toList());
 
         } catch (ElasticsearchException e) {
@@ -502,7 +502,7 @@ public class PostSearchAdapter implements PostSearchPort {
         List<PostSearchResponse> results = response.hits().hits().stream()
             .map(Hit::source)
             .map(doc -> mapper.toProjection(doc, null, null, null))
-            .map(PostSearchResponse::new)
+            .map(PostSearchResponse::fromProjection)
             .collect(Collectors.toList());
 
         long totalElements = response.hits().total() != null ? response.hits().total().value() : 0;
