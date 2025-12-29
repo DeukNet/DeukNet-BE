@@ -79,14 +79,14 @@ public class CategoryStatsAdapter implements CategoryStatsPort {
                             .map(name -> name.getValue())
                             .orElse("Unknown");
 
-                    rankings.add(CategoryRankingResponse.builder()
-                            .categoryId(categoryId)
-                            .categoryName(categoryName)
-                            .postCount(postCount)
-                            .totalViewCount(totalViewCount)
-                            .totalLikeCount(totalLikeCount)
-                            .rankingScore(rankingScore)
-                            .build());
+                    rankings.add(CategoryRankingResponse.of(
+                            categoryId,
+                            categoryName,
+                            postCount,
+                            totalViewCount,
+                            totalLikeCount,
+                            rankingScore
+                    ));
                 }
             }
 
