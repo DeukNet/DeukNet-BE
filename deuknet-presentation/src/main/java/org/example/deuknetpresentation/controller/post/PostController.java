@@ -1,10 +1,31 @@
 package org.example.deuknetpresentation.controller.post;
 
-import org.example.deuknetapplication.port.in.post.*;
-import org.example.deuknetpresentation.controller.post.dto.*;
+import org.example.deuknetapplication.port.in.post.CreatePostUseCase;
+import org.example.deuknetapplication.port.in.post.DeletePostUseCase;
+import org.example.deuknetapplication.port.in.post.GetMyLikedPostsUseCase;
+import org.example.deuknetapplication.port.in.post.GetMyPostsUseCase;
+import org.example.deuknetapplication.port.in.post.GetPostUseCase;
+import org.example.deuknetapplication.port.in.post.PageResponse;
+import org.example.deuknetapplication.port.in.post.PostSearchRequest;
+import org.example.deuknetapplication.port.in.post.PostSearchResponse;
+import org.example.deuknetapplication.port.in.post.PublishPostUseCase;
+import org.example.deuknetapplication.port.in.post.SearchPostUseCase;
+import org.example.deuknetapplication.port.in.post.SortType;
+import org.example.deuknetapplication.port.in.post.UpdatePostUseCase;
+import org.example.deuknetpresentation.controller.post.dto.CreatePostRequest;
+import org.example.deuknetpresentation.controller.post.dto.UpdatePostRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,8 +40,8 @@ public class PostController implements PostApi {
     private final DeletePostUseCase deletePostUseCase;
     private final GetPostUseCase getPostUseCase;
     private final SearchPostUseCase searchPostUseCase;
+    private final GetMyPostsUseCase getMyPostsUseCase;
     private final GetMyLikedPostsUseCase getMyLikedPostsUseCase;
-    private final org.example.deuknetapplication.port.out.security.CurrentUserPort currentUserPort;
 
     public PostController(
             CreatePostUseCase createPostUseCase,
@@ -29,8 +50,8 @@ public class PostController implements PostApi {
             DeletePostUseCase deletePostUseCase,
             GetPostUseCase getPostUseCase,
             SearchPostUseCase searchPostUseCase,
-            GetMyLikedPostsUseCase getMyLikedPostsUseCase,
-            org.example.deuknetapplication.port.out.security.CurrentUserPort currentUserPort
+            GetMyPostsUseCase getMyPostsUseCase,
+            GetMyLikedPostsUseCase getMyLikedPostsUseCase
     ) {
         this.createPostUseCase = createPostUseCase;
         this.updatePostUseCase = updatePostUseCase;
@@ -38,8 +59,8 @@ public class PostController implements PostApi {
         this.deletePostUseCase = deletePostUseCase;
         this.getPostUseCase = getPostUseCase;
         this.searchPostUseCase = searchPostUseCase;
+        this.getMyPostsUseCase = getMyPostsUseCase;
         this.getMyLikedPostsUseCase = getMyLikedPostsUseCase;
-        this.currentUserPort = currentUserPort;
     }
 
     @Override
@@ -104,6 +125,8 @@ public class PostController implements PostApi {
             sortTypeEnum = SortType.valueOf(sortType.toUpperCase());
         } catch (IllegalArgumentException e) {
             // 잘못된 값이면 기본값(RECENT) 사용
+            // TODO: InvalidSortTypeException을 throw하는 것을 고려할 수 있지만,
+            // 현재는 사용자 편의를 위해 기본값 사용
             sortTypeEnum = SortType.RECENT;
         }
 
@@ -132,18 +155,8 @@ public class PostController implements PostApi {
             size = 100;
         }
 
-        // 현재 사용자 ID로 조회 (익명 게시물 포함)
-        UUID currentUserId = currentUserPort.getCurrentUserId();
-
-        PostSearchRequest request = PostSearchRequest.builder()
-                .authorId(currentUserId)
-                .sortType(SortType.RECENT)
-                .page(page)
-                .size(size)
-                .includeAnonymous(true)  // 내 게시물 조회 시 익명 포함
-                .build();
-
-        PageResponse<PostSearchResponse> results = searchPostUseCase.search(request);
+        // Service에서 현재 사용자 조회 및 검색 처리
+        PageResponse<PostSearchResponse> results = getMyPostsUseCase.getMyPosts(page, size);
         return ResponseEntity.ok(results);
     }
 
