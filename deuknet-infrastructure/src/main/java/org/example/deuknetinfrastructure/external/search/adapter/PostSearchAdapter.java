@@ -25,10 +25,7 @@ import java.util.stream.Collectors;
 
 /**
  * 게시글 검색 Adapter (Elasticsearch)
- * <br>
  * PostSearchPort 구현 (out port)
- * - SearchPostService, GetPostByIdService가 사용
- * todo 리펙토링 합시다.
  */
 @Component
 @RequiredArgsConstructor
@@ -37,6 +34,30 @@ public class PostSearchAdapter implements PostSearchPort {
     private static final String INDEX_NAME = "posts-detail";
     private final ElasticsearchClient elasticsearchClient;
     private final PostDetailDocumentMapper mapper;
+
+    /**
+     * 검색 설정 (가중치, 스코어 임계값 등)
+     */
+    private static class SearchConfig {
+        // 최신순 검색 가중치 (검색어는 필터 역할만)
+        static final double RECENT_TITLE_BOOST = 3.0;
+        static final double RECENT_CONTENT_BOOST = 1.0;
+
+        // 인기순 검색 가중치 (검색어 + 인기도 균형)
+        static final double POPULAR_TITLE_BOOST = 5.0;
+        static final double POPULAR_CONTENT_BOOST = 1.0;
+
+        // 정확도순 검색 가중치 (검색어 매칭이 가장 중요)
+        static final double RELEVANCE_TITLE_BOOST = 5.0;
+        static final double RELEVANCE_CONTENT_BOOST = 1.0;
+        static final double RELEVANCE_MIN_SCORE = 2.0;
+
+        // minimumShouldMatch 설정
+        static final int MIN_TOKENS_FOR_STRICT_MATCH = 4;
+        static final int STRICT_MATCH_TOLERANCE = 2;
+    }
+
+    // ==================== Public API Methods ====================
 
     @Override
     public Optional<PostSearchResponse> findById(UUID id) {
@@ -54,7 +75,7 @@ public class PostSearchAdapter implements PostSearchPort {
             }
             return Optional.empty();
         } catch (ElasticsearchException e) {
-            if (e.getMessage() != null && e.getMessage().contains("index_not_found_exception")) {
+            if (isIndexNotFound(e)) {
                 return Optional.empty();
             }
             throw new SearchOperationException("Failed to find post by id: " + id, e);
@@ -84,7 +105,7 @@ public class PostSearchAdapter implements PostSearchPort {
                     .map(PostSearchResponse::fromProjection)
                     .collect(Collectors.toList());
         } catch (ElasticsearchException e) {
-            if (e.getMessage() != null && e.getMessage().contains("index_not_found_exception")) {
+            if (isIndexNotFound(e)) {
                 return List.of();
             }
             throw new SearchOperationException("Failed to find posts by ids", e);
@@ -96,26 +117,47 @@ public class PostSearchAdapter implements PostSearchPort {
     @Override
     @Deprecated
     public PageResponse<PostSearchResponse> search(PostSearchRequest request) {
-        // Deprecated: Service 레이어에서 sortType별 메서드를 직접 호출
         throw new UnsupportedOperationException("Use sortType-specific methods instead");
     }
 
-    @Override
-    public PageResponse<PostSearchResponse> searchByPopular(String keyword, UUID authorId, UUID categoryId, int page, int size, boolean includeAnonymous) {
-        Query boolQuery = buildBoolQuery(keyword, authorId, categoryId, includeAnonymous);
-        return executePopularSearch(boolQuery, page, size);
-    }
-
-    @Override
-    public PageResponse<PostSearchResponse> searchByRelevance(String keyword, UUID authorId, UUID categoryId, int page, int size, boolean includeAnonymous) {
-        Query boolQuery = buildBoolQueryForRelevance(keyword, authorId, categoryId, includeAnonymous);
-        return executeSearchByRelevance(boolQuery, page, size);
-    }
-
+    /**
+     * 최신순 검색
+     * - 정렬: 작성일 기준 내림차순 (최신 글이 위로)
+     * - 검색어: 필터 역할 (가중치 낮음)
+     * - 용도: 전체 게시물 최신 순으로 탐색
+     */
     @Override
     public PageResponse<PostSearchResponse> searchByRecent(String keyword, UUID authorId, UUID categoryId, int page, int size, boolean includeAnonymous) {
-        Query boolQuery = buildBoolQuery(keyword, authorId, categoryId, includeAnonymous);
-        return executeSearch(boolQuery, page, size, "createdAt", SortOrder.Desc);
+        Query query = buildSearchQuery(keyword, authorId, categoryId, includeAnonymous,
+                SearchConfig.RECENT_TITLE_BOOST, SearchConfig.RECENT_CONTENT_BOOST);
+        return executeSearch(query, page, size, "createdAt", SortOrder.Desc);
+    }
+
+    /**
+     * 인기순 검색
+     * - 정렬: 인기도 점수 기준 (좋아요 * 3 + 조회수 * 1, 30일 이상 시 감쇠)
+     * - 검색어: 필터 + 부스트 (가중치 중간)
+     * - 용도: 인기 있는 게시물 탐색
+     */
+    @Override
+    public PageResponse<PostSearchResponse> searchByPopular(String keyword, UUID authorId, UUID categoryId, int page, int size, boolean includeAnonymous) {
+        Query query = buildSearchQuery(keyword, authorId, categoryId, includeAnonymous,
+                SearchConfig.POPULAR_TITLE_BOOST, SearchConfig.POPULAR_CONTENT_BOOST);
+        return executePopularSearch(query, page, size);
+    }
+
+    /**
+     * 정확도순 검색 (관련성)
+     * - 정렬: Elasticsearch _score 기준
+     * - 검색어: 매칭이 가장 중요 (가중치 높음)
+     * - 용도: 특정 키워드에 대한 정확한 검색
+     * - 최소 스코어: 2.0 이상만 반환
+     */
+    @Override
+    public PageResponse<PostSearchResponse> searchByRelevance(String keyword, UUID authorId, UUID categoryId, int page, int size, boolean includeAnonymous) {
+        Query query = buildSearchQuery(keyword, authorId, categoryId, includeAnonymous,
+                SearchConfig.RELEVANCE_TITLE_BOOST, SearchConfig.RELEVANCE_CONTENT_BOOST);
+        return executeSearchByRelevance(query, page, size);
     }
 
     @Override
@@ -125,7 +167,6 @@ public class PostSearchAdapter implements PostSearchPort {
         }
 
         try {
-            // 제목의 autocomplete 필드만 사용한 prefix 검색
             Query matchQuery = Query.of(q -> q
                     .match(m -> m
                             .field("title.autocomplete")
@@ -145,7 +186,6 @@ public class PostSearchAdapter implements PostSearchPort {
                     PostDetailDocument.class
             );
 
-            // 제목에서 고유한 키워드 추출
             Set<String> suggestions = new LinkedHashSet<>();
             response.hits().hits().stream()
                     .map(Hit::source)
@@ -158,8 +198,7 @@ public class PostSearchAdapter implements PostSearchPort {
             return new ArrayList<>(suggestions);
 
         } catch (ElasticsearchException e) {
-            if (e.getMessage() != null && (e.getMessage().contains("index_not_found_exception")
-                    || e.getMessage().contains("all shards failed"))) {
+            if (isIndexNotFoundOrShardFailed(e)) {
                 return List.of();
             }
             throw new SearchOperationException("Failed to suggest keywords", e);
@@ -172,24 +211,9 @@ public class PostSearchAdapter implements PostSearchPort {
     public PageResponse<PostSearchResponse> findFeaturedPosts(UUID categoryId, int page, int size, boolean includeAnonymous) {
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
-        // PUBLIC 상태 필터링 (필수)
-        boolQueryBuilder.filter(Query.of(q -> q
-                .term(t -> t.field("status").value(PostStatus.PUBLIC.name()))
-        ));
-
-        // 카테고리 필터링
-        if (categoryId != null) {
-            boolQueryBuilder.filter(Query.of(q -> q
-                    .term(t -> t.field("categoryId").value(categoryId.toString()))
-            ));
-        }
-
-        // 익명 게시물 필터링
-        if (!includeAnonymous) {
-            boolQueryBuilder.filter(Query.of(q -> q
-                    .term(t -> t.field("authorType").value("REAL"))
-            ));
-        }
+        addPublicStatusFilter(boolQueryBuilder);
+        addCategoryFilter(boolQueryBuilder, categoryId);
+        addAnonymousFilter(boolQueryBuilder, includeAnonymous);
 
         Query query = Query.of(q -> q.bool(boolQueryBuilder.build()));
 
@@ -198,7 +222,7 @@ public class PostSearchAdapter implements PostSearchPort {
                     .index(INDEX_NAME)
                     .query(query)
                     .from(page * size)
-                    .size(Math.min(size, 20))  // 최대 20개
+                    .size(Math.min(size, 20))
                     .sort(sort -> sort
                             .field(f -> f
                                     .field("likeCount")
@@ -207,11 +231,10 @@ public class PostSearchAdapter implements PostSearchPort {
                     )
             );
 
-            return getPostSearchResponsePageResponse(page, size, searchRequest);
+            return executeSearchRequest(searchRequest, page, size);
 
         } catch (ElasticsearchException e) {
-            if (e.getMessage() != null && (e.getMessage().contains("index_not_found_exception")
-                    || e.getMessage().contains("all shards failed"))) {
+            if (isIndexNotFoundOrShardFailed(e)) {
                 return new PageResponse<>(List.of(), 0, page, size);
             }
             throw new SearchOperationException("Failed to find featured posts", e);
@@ -223,7 +246,6 @@ public class PostSearchAdapter implements PostSearchPort {
     @Override
     public List<PostSearchResponse> findTrendingPosts(int size) {
         try {
-            // 24시간 이내 게시글만 대상
             long oneDayAgo = System.currentTimeMillis() - (24 * 60 * 60 * 1000);
 
             SearchRequest searchRequest = SearchRequest.of(s -> s
@@ -238,7 +260,7 @@ public class PostSearchAdapter implements PostSearchPort {
                             )
                     )
                     .size(size)
-                    .source(src -> src.filter(f -> f.excludes("content")))  // content 필드 제외
+                    .source(src -> src.filter(f -> f.excludes("content")))
                     .sort(sort -> sort
                             .script(script -> script
                                     .type(co.elastic.clients.elasticsearch._types.ScriptSortType.Number)
@@ -248,13 +270,8 @@ public class PostSearchAdapter implements PostSearchPort {
                                     long now = new Date().getTime();
                                     long created = doc['createdAt'].value.toInstant().toEpochMilli();
                                     double hoursOld = (now - created) / (1000.0 * 60 * 60);
-
-                                    // age_decay = 1 + (hours_old / 24)^2
                                     double ageDecay = 1.0 + Math.pow(hoursOld / 24.0, 2);
-
-                                    // score = (viewCount * 0.3 + likeCount * 0.7) / age_decay
                                     double rawScore = (doc['viewCount'].value * 0.3) + (doc['likeCount'].value * 0.7);
-
                                     return rawScore / ageDecay;
                                 """)
                                             )
@@ -276,8 +293,7 @@ public class PostSearchAdapter implements PostSearchPort {
                     .collect(Collectors.toList());
 
         } catch (ElasticsearchException e) {
-            if (e.getMessage() != null && (e.getMessage().contains("index_not_found_exception")
-                    || e.getMessage().contains("all shards failed"))) {
+            if (isIndexNotFoundOrShardFailed(e)) {
                 return List.of();
             }
             throw new SearchOperationException("Failed to find trending posts", e);
@@ -286,194 +302,203 @@ public class PostSearchAdapter implements PostSearchPort {
         }
     }
 
+    // ==================== Query Building ====================
+
     /**
-     * BoolQuery 생성 공통 메서드
+     * 통합 검색 쿼리 생성
      */
-    private Query buildBoolQuery(String keyword, UUID authorId, UUID categoryId, boolean includeAnonymous) {
+    private Query buildSearchQuery(String keyword, UUID authorId, UUID categoryId,
+                                    boolean includeAnonymous, double titleBoost, double contentBoost) {
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
-        // PUBLIC 상태 필터링 (고정)
-        boolQueryBuilder.filter(Query.of(q -> q
-            .term(t -> t.field("status").value(PostStatus.PUBLIC.name()))
-        ));
-
-        // 검색어 필터링
-        applyKeywordFilter(boolQueryBuilder, keyword);
-
-        // 작성자 필터
-        if (authorId != null) {
-            boolQueryBuilder.filter(Query.of(q -> q
-                .term(t -> t.field("authorId").value(authorId.toString()))
-            ));
-        }
-
-        // 카테고리 필터
-        if (categoryId != null) {
-            boolQueryBuilder.filter(Query.of(q -> q
-                .term(t -> t.field("categoryId").value(categoryId.toString()))
-            ));
-        }
-
-        // 익명 게시물 필터링
-        if (!includeAnonymous) {
-            boolQueryBuilder.filter(Query.of(q -> q
-                .term(t -> t.field("authorType").value("REAL"))
-            ));
-        }
+        addPublicStatusFilter(boolQueryBuilder);
+        addKeywordFilter(boolQueryBuilder, keyword, titleBoost, contentBoost);
+        addAuthorFilter(boolQueryBuilder, authorId);
+        addCategoryFilter(boolQueryBuilder, categoryId);
+        addAnonymousFilter(boolQueryBuilder, includeAnonymous);
 
         return Query.of(q -> q.bool(boolQueryBuilder.build()));
     }
 
     /**
-     * 관련성 검색용 BoolQuery 생성 (높은 가중치 적용)
+     * PUBLIC 상태 필터 추가
      */
-    private Query buildBoolQueryForRelevance(String keyword, UUID authorId, UUID categoryId, boolean includeAnonymous) {
-        BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
-
-        // PUBLIC 상태 필터링 (고정)
-        boolQueryBuilder.filter(Query.of(q -> q
-            .term(t -> t.field("status").value(PostStatus.PUBLIC.name()))
+    private void addPublicStatusFilter(BoolQuery.Builder builder) {
+        builder.filter(Query.of(q -> q
+                .term(t -> t.field("status").value(PostStatus.PUBLIC.name()))
         ));
-
-        // 검색어 필터링 (높은 가중치)
-        applyKeywordFilterForRelevance(boolQueryBuilder, keyword);
-
-        // 작성자 필터
-        if (authorId != null) {
-            boolQueryBuilder.filter(Query.of(q -> q
-                .term(t -> t.field("authorId").value(authorId.toString()))
-            ));
-        }
-
-        // 카테고리 필터
-        if (categoryId != null) {
-            boolQueryBuilder.filter(Query.of(q -> q
-                .term(t -> t.field("categoryId").value(categoryId.toString()))
-            ));
-        }
-
-        // 익명 게시물 필터링
-        if (!includeAnonymous) {
-            boolQueryBuilder.filter(Query.of(q -> q
-                .term(t -> t.field("authorType").value("REAL"))
-            ));
-        }
-
-        return Query.of(q -> q.bool(boolQueryBuilder.build()));
     }
 
+    /**
+     * 검색어 필터 추가
+     */
+    private void addKeywordFilter(BoolQuery.Builder builder, String keyword,
+                                   double titleBoost, double contentBoost) {
+        if (keyword == null || keyword.isBlank()) {
+            return;
+        }
+
+        List<String> keywords = parseKeywords(keyword);
+        String minimumMatch = calculateMinimumMatch(keywords.size());
+
+        builder.must(b -> b.bool(inner -> {
+            keywords.forEach(kw -> inner.should(s ->
+                    s.multiMatch(m -> m
+                            .query(kw)
+                            .fields("title^" + titleBoost, "content^" + contentBoost)
+                            .operator(Operator.Or)
+                    )
+            ));
+            return inner.minimumShouldMatch(minimumMatch);
+        }));
+    }
 
     /**
-     * 인기 게시물 검색
-     * 인기도 = (likeCount * 3 + viewCount * 1)
-     * 시간 감쇠 = 30일 이상 경과 시 0.75배
+     * 작성자 필터 추가
+     */
+    private void addAuthorFilter(BoolQuery.Builder builder, UUID authorId) {
+        if (authorId != null) {
+            builder.filter(Query.of(q -> q
+                    .term(t -> t.field("authorId").value(authorId.toString()))
+            ));
+        }
+    }
+
+    /**
+     * 카테고리 필터 추가
+     */
+    private void addCategoryFilter(BoolQuery.Builder builder, UUID categoryId) {
+        if (categoryId != null) {
+            builder.filter(Query.of(q -> q
+                    .term(t -> t.field("categoryId").value(categoryId.toString()))
+            ));
+        }
+    }
+
+    /**
+     * 익명 게시물 필터 추가
+     */
+    private void addAnonymousFilter(BoolQuery.Builder builder, boolean includeAnonymous) {
+        if (!includeAnonymous) {
+            builder.filter(Query.of(q -> q
+                    .term(t -> t.field("authorType").value("REAL"))
+            ));
+        }
+    }
+
+    /**
+     * 키워드 파싱 (공백 기준 분리)
+     */
+    private List<String> parseKeywords(String keyword) {
+        return Arrays.stream(keyword.trim().split("\\s+"))
+                .filter(k -> !k.isBlank())
+                .toList();
+    }
+
+    /**
+     * minimumShouldMatch 계산
+     * - 1-3개 토큰: 최소 1개 매칭
+     * - 4개 이상 토큰: N-2 매칭 (예: 4토큰=2개, 5토큰=3개, 6토큰=4개)
+     */
+    private String calculateMinimumMatch(int tokenCount) {
+        if (tokenCount >= SearchConfig.MIN_TOKENS_FOR_STRICT_MATCH) {
+            return String.valueOf(tokenCount - SearchConfig.STRICT_MATCH_TOLERANCE);
+        }
+        return "1";
+    }
+
+    // ==================== Search Execution ====================
+
+    /**
+     * 인기 게시물 검색 (Script 정렬)
      */
     private PageResponse<PostSearchResponse> executePopularSearch(Query query, int page, int size) {
         try {
             SearchRequest searchRequest = SearchRequest.of(s -> s
-                .index(INDEX_NAME)
-                .query(query)
-                .from(page * size)
-                .size(size)
-                .sort(sort -> sort
-                    .script(script -> script
-                        .type(co.elastic.clients.elasticsearch._types.ScriptSortType.Number)
-                        .script(sc -> sc
-                            .inline(inline -> inline
-                                .source("""
+                    .index(INDEX_NAME)
+                    .query(query)
+                    .from(page * size)
+                    .size(size)
+                    .sort(sort -> sort
+                            .script(script -> script
+                                    .type(co.elastic.clients.elasticsearch._types.ScriptSortType.Number)
+                                    .script(sc -> sc
+                                            .inline(inline -> inline
+                                                    .source("""
                                     long now = new Date().getTime();
                                     long created = doc['createdAt'].value.toInstant().toEpochMilli();
                                     long daysDiff = (now - created) / (1000L * 60 * 60 * 24);
-
                                     double timeDecay = daysDiff > 30 ? 0.75 : 1.0;
                                     double popularity = (doc['likeCount'].value * 3) + (doc['viewCount'].value * 1);
-
                                     return popularity * timeDecay;
                                 """)
+                                            )
+                                    )
+                                    .order(SortOrder.Desc)
                             )
-                        )
-                        .order(SortOrder.Desc)
                     )
-                )
             );
 
-            return getPostSearchResponsePageResponse(page, size, searchRequest);
-
-        } catch (co.elastic.clients.elasticsearch._types.ElasticsearchException e) {
-            // 인덱스가 없는 경우 빈 페이지 반환
-            if (e.getMessage() != null && (e.getMessage().contains("index_not_found_exception")
-                    || e.getMessage().contains("all shards failed"))) {
-                return new PageResponse<>(List.of(), 0, page, size);
-            }
-            throw new SearchOperationException("Failed to execute popular search", e);
-        } catch (IOException e) {
-            throw new SearchOperationException("Failed to execute popular search", e);
-        }
-    }
-
-    /**
-     * 관련성 점수(_score) 기준 검색 실행 메서드
-     * 스코어 1.5 이상만 반환 (검색 품질 향상)
-     */
-    private PageResponse<PostSearchResponse> executeSearchByRelevance(
-            Query query,
-            int page,
-            int size
-    ) {
-        try {
-            SearchRequest searchRequest = SearchRequest.of(s -> s
-                .index(INDEX_NAME)
-                .query(query)
-                .from(page * size)
-                .size(size)
-                .minScore(1.5)  // 스코어 1.5 이상만 반환
-                // _score 기준 내림차순 정렬 (관련성이 높은 순)
-            );
-
-            return getPostSearchResponsePageResponse(page, size, searchRequest);
-
-        } catch (co.elastic.clients.elasticsearch._types.ElasticsearchException e) {
-            // 인덱스가 없는 경우 빈 페이지 반환
-            if (e.getMessage() != null && (e.getMessage().contains("index_not_found_exception")
-                    || e.getMessage().contains("all shards failed"))) {
-                return new PageResponse<>(List.of(), 0, page, size);
-            }
-            throw new SearchOperationException("Failed to execute search", e);
-        } catch (IOException e) {
-            throw new SearchOperationException("Failed to execute search", e);
-        }
-    }
-
-    /**
-     * 공통 검색 실행 메서드 (필드 기준 정렬)
-     */
-    private PageResponse<PostSearchResponse> executeSearch(
-            Query query,
-            int page,
-            int size,
-            String sortField,
-            SortOrder sortOrder
-    ) {
-        try {
-            SearchRequest searchRequest = SearchRequest.of(s -> s
-                .index(INDEX_NAME)
-                .query(query)
-                .from(page * size)
-                .size(size)
-                .sort(sort -> sort
-                    .field(f -> f
-                        .field(sortField)
-                        .order(sortOrder)
-                    )
-                )
-            );
-
-            return getPostSearchResponsePageResponse(page, size, searchRequest);
+            return executeSearchRequest(searchRequest, page, size);
 
         } catch (ElasticsearchException e) {
-            // 인덱스가 없는 경우 빈 페이지 반환
-            if (e.getMessage() != null && (e.getMessage().contains("index_not_found_exception")
-                    || e.getMessage().contains("all shards failed"))) {
+            if (isIndexNotFoundOrShardFailed(e)) {
+                return new PageResponse<>(List.of(), 0, page, size);
+            }
+            throw new SearchOperationException("Failed to execute popular search", e);
+        } catch (IOException e) {
+            throw new SearchOperationException("Failed to execute popular search", e);
+        }
+    }
+
+    /**
+     * 관련성 검색 (_score 기준)
+     */
+    private PageResponse<PostSearchResponse> executeSearchByRelevance(Query query, int page, int size) {
+        try {
+            SearchRequest searchRequest = SearchRequest.of(s -> s
+                    .index(INDEX_NAME)
+                    .query(query)
+                    .from(page * size)
+                    .size(size)
+                    .minScore(SearchConfig.RELEVANCE_MIN_SCORE)
+            );
+
+            return executeSearchRequest(searchRequest, page, size);
+
+        } catch (ElasticsearchException e) {
+            if (isIndexNotFoundOrShardFailed(e)) {
+                return new PageResponse<>(List.of(), 0, page, size);
+            }
+            throw new SearchOperationException("Failed to execute search by relevance", e);
+        } catch (IOException e) {
+            throw new SearchOperationException("Failed to execute search by relevance", e);
+        }
+    }
+
+    /**
+     * 일반 검색 (필드 정렬)
+     */
+    private PageResponse<PostSearchResponse> executeSearch(Query query, int page, int size,
+                                                            String sortField, SortOrder sortOrder) {
+        try {
+            SearchRequest searchRequest = SearchRequest.of(s -> s
+                    .index(INDEX_NAME)
+                    .query(query)
+                    .from(page * size)
+                    .size(size)
+                    .sort(sort -> sort
+                            .field(f -> f
+                                    .field(sortField)
+                                    .order(sortOrder)
+                            )
+                    )
+            );
+
+            return executeSearchRequest(searchRequest, page, size);
+
+        } catch (ElasticsearchException e) {
+            if (isIndexNotFoundOrShardFailed(e)) {
                 return new PageResponse<>(List.of(), 0, page, size);
             }
             throw new SearchOperationException("Failed to execute search", e);
@@ -482,85 +507,50 @@ public class PostSearchAdapter implements PostSearchPort {
         }
     }
 
-    private PageResponse<PostSearchResponse> getPostSearchResponsePageResponse(int page, int size, SearchRequest searchRequest) throws IOException {
-        // SearchRequest를 복사하면서 content 필드 제외
+    /**
+     * SearchRequest 실행 (content 필드 제외)
+     */
+    private PageResponse<PostSearchResponse> executeSearchRequest(SearchRequest searchRequest,
+                                                                   int page, int size) throws IOException {
         SearchRequest modifiedRequest = SearchRequest.of(s -> s
-            .index(searchRequest.index())
-            .query(searchRequest.query())
-            .from(searchRequest.from())
-            .size(searchRequest.size())
-            .sort(searchRequest.sort())
-            .minScore(searchRequest.minScore())
-            .source(src -> src.filter(f -> f.excludes("content")))  // content 필드 제외
+                .index(searchRequest.index())
+                .query(searchRequest.query())
+                .from(searchRequest.from())
+                .size(searchRequest.size())
+                .sort(searchRequest.sort())
+                .minScore(searchRequest.minScore())
+                .source(src -> src.filter(f -> f.excludes("content")))
         );
 
         SearchResponse<PostDetailDocument> response = elasticsearchClient.search(
-            modifiedRequest,
-            PostDetailDocument.class
+                modifiedRequest,
+                PostDetailDocument.class
         );
 
         List<PostSearchResponse> results = response.hits().hits().stream()
-            .map(Hit::source)
-            .map(doc -> mapper.toProjection(doc, null, null, null))
-            .map(PostSearchResponse::fromProjection)
-            .collect(Collectors.toList());
+                .map(Hit::source)
+                .map(doc -> mapper.toProjection(doc, null, null, null))
+                .map(PostSearchResponse::fromProjection)
+                .collect(Collectors.toList());
 
         long totalElements = response.hits().total() != null ? response.hits().total().value() : 0;
         return new PageResponse<>(results, totalElements, page, size);
     }
 
+    // ==================== Utility Methods ====================
+
     /**
-     * 검색어 필터링을 BoolQuery에 적용하는 공통 메서드
-     * Nori 형태소 분석 기반 검색 (fuzziness 제거, 스코어 품질 향상)
-     * 제목 가중치 2.0, 내용 가중치 0.8
+     * 인덱스 없음 예외 체크
      */
-    private void applyKeywordFilter(BoolQuery.Builder boolQueryBuilder, String keyword) {
-        applyKeywordFilterWithBoost(boolQueryBuilder, keyword, 2.0, 0.8);
+    private boolean isIndexNotFound(ElasticsearchException e) {
+        return e.getMessage() != null && e.getMessage().contains("index_not_found_exception");
     }
 
     /**
-     * 관련성 검색용 검색어 필터링 (세밀한 검색을 위한 균형잡힌 가중치)
-     * minScore 1.5를 통과하면서도 내용 검색을 잘 반영하도록 조정
-     * 제목 가중치 3.0, 내용 가중치 2.0 (비율 1.5:1)
+     * 인덱스 없음 또는 샤드 실패 예외 체크
      */
-    private void applyKeywordFilterForRelevance(BoolQuery.Builder boolQueryBuilder, String keyword) {
-        applyKeywordFilterWithBoost(boolQueryBuilder, keyword, 3.0, 2.0);
-    }
-
-    /**
-     * 검색어 필터링을 BoolQuery에 적용하는 공통 메서드 (가중치 커스터마이징 가능)
-     * Nori 형태소 분석 기반 검색
-     *
-     * @param boolQueryBuilder BoolQuery 빌더
-     * @param keyword 검색 키워드
-     * @param titleBoost 제목 필드 가중치
-     * @param contentBoost 내용 필드 가중치
-     */
-    private void applyKeywordFilterWithBoost(
-            BoolQuery.Builder boolQueryBuilder,
-            String keyword,
-            double titleBoost,
-            double contentBoost
-    ) {
-        if (keyword != null && !keyword.isBlank()) {
-            String trimmedKeyword = keyword.trim();
-
-            List<String> keywords = Arrays.stream(trimmedKeyword.split("\\s+"))
-                    .filter(k -> !k.isBlank())
-                    .toList();
-
-            boolQueryBuilder.must(b -> b.bool(inner -> {
-                // multi_match: title + content (커스터마이징 가능한 가중치)
-                keywords.forEach(kw -> inner.should(s ->
-                        s.multiMatch(m -> m
-                                .query(kw)
-                                .fields("title^" + titleBoost, "content^" + contentBoost)
-                                .operator(Operator.Or)
-                        )
-                ));
-
-                return inner.minimumShouldMatch("1");
-            }));
-        }
+    private boolean isIndexNotFoundOrShardFailed(ElasticsearchException e) {
+        return e.getMessage() != null && (e.getMessage().contains("index_not_found_exception")
+                || e.getMessage().contains("all shards failed"));
     }
 }
