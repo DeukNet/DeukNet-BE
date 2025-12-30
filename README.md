@@ -88,7 +88,7 @@ application이 port를 참조 하는 게 아니라 정의하고,
 1. **작은 Aggregate**: 각 Aggregate는 단일 책임
 2. **ID로 참조**: Aggregate 간에는 Entity 객체가 아닌 ID로 참조
 3. **일관성 경계**: 각 Aggregate는 독립적인 트랜잭션 경계
-4. **명확한 루트**: 각 Aggregate는 명확한 Root Entity 보유
+4. **명확한 루트**: 각 Aggregate는 명확한 Root Entity 보유 
 
 
 
