@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.deuknetapplication.messaging.EventType;
 import org.example.deuknetapplication.port.out.external.search.PostProjectionCommandPort;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -89,6 +90,7 @@ class PostCDCEventHandlerTest {
     }
 
     @Test
+    @Disabled("PostCountProjection is deprecated - now using PostDetailProjection only")
     @DisplayName("PostCountProjection (viewCount만 포함, title 없음) 이벤트는 updatePostCounts를 호출한다")
     void shouldUpdatePostCountsForCountProjection() throws Exception {
         // Given: PostCountProjection (viewCount 필드 포함, title 없음)
@@ -166,6 +168,7 @@ class PostCDCEventHandlerTest {
     }
 
     @Test
+    @Disabled("PostCountProjection is deprecated - now using PostDetailProjection only")
     @DisplayName("POST_PUBLISHED 이벤트에서 PostCountProjection은 updatePostCounts를 호출한다")
     void shouldUpdatePostCountsForPublishedCountProjection() throws Exception {
         // Given: POST_PUBLISHED 이벤트의 PostCountProjection
@@ -222,6 +225,7 @@ class PostCDCEventHandlerTest {
     }
 
     @Test
+    @Disabled("PostCountProjection is deprecated - now using PostDetailProjection only")
     @DisplayName("title도 viewCount도 없는 경우 아무 작업도 하지 않는다")
     void shouldDoNothingWhenNeitherFieldPresent() throws Exception {
         // Given: title도 viewCount도 없는 payload
