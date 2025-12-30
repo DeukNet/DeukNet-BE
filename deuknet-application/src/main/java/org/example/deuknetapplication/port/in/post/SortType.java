@@ -6,10 +6,15 @@ package org.example.deuknetapplication.port.in.post;
 public enum SortType {
     /**
      * 최신순 정렬
-     * - 검색어가 있으면: 관련성(_score) 기준 정렬
-     * - 검색어가 없으면: createdAt 내림차순 정렬
+     * - createdAt 내림차순 정렬
      */
     RECENT,
+
+    /**
+     * 정확도순 정렬 (검색어 매칭 중심)
+     * - Elasticsearch _score 기준 정렬 (최소 스코어 2.0)
+     */
+    RELEVANCE,
 
     /**
      * 인기순 정렬

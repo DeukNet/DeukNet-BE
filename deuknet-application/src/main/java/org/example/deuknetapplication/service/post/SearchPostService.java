@@ -34,7 +34,23 @@ public class SearchPostService implements SearchPostUseCase {
     @Override
     public PageResponse<PostSearchResponse> search(PostSearchRequest request) {
         // sortType에 따라 적절한 검색 메서드 호출
-        PageResponse<PostSearchResponse> response = switch (request.getSortType()) {
+            PageResponse<PostSearchResponse> response = switch (request.getSortType()) {
+            case RECENT -> postSearchPort.searchByRecent(
+                    request.getKeyword(),
+                    request.getAuthorId(),
+                    request.getCategoryId(),
+                    request.getPage(),
+                    request.getSize(),
+                    request.isIncludeAnonymous()
+            );
+            case RELEVANCE -> postSearchPort.searchByRelevance(
+                    request.getKeyword(),
+                    request.getAuthorId(),
+                    request.getCategoryId(),
+                    request.getPage(),
+                    request.getSize(),
+                    request.isIncludeAnonymous()
+            );
             case POPULAR -> postSearchPort.searchByPopular(
                     request.getKeyword(),
                     request.getAuthorId(),
@@ -43,28 +59,6 @@ public class SearchPostService implements SearchPostUseCase {
                     request.getSize(),
                     request.isIncludeAnonymous()
             );
-            case RECENT -> {
-                // 검색어가 있으면 관련성 검색, 없으면 최신순 검색
-                if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
-                    yield postSearchPort.searchByRelevance(
-                            request.getKeyword(),
-                            request.getAuthorId(),
-                            request.getCategoryId(),
-                            request.getPage(),
-                            request.getSize(),
-                            request.isIncludeAnonymous()
-                    );
-                } else {
-                    yield postSearchPort.searchByRecent(
-                            request.getKeyword(),
-                            request.getAuthorId(),
-                            request.getCategoryId(),
-                            request.getPage(),
-                            request.getSize(),
-                            request.isIncludeAnonymous()
-                    );
-                }
-            }
         };
 
         response.getContent().forEach(this::enrichPostResponse);

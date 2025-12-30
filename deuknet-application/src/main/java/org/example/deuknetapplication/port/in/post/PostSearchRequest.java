@@ -33,7 +33,7 @@ public class PostSearchRequest {
     private UUID categoryId;
 
     /**
-     * 정렬 타입 (RECENT: 최신순, POPULAR: 인기순)
+     * 정렬 타입 (RECENT: 최신순, RELEVANCE: 정확도순, POPULAR: 인기순)
      */
     @Builder.Default
     private SortType sortType = SortType.RECENT;

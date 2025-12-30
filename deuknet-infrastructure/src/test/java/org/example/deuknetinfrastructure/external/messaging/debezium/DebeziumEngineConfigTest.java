@@ -1,6 +1,7 @@
 package org.example.deuknetinfrastructure.external.messaging.debezium;
 
 import io.debezium.config.Configuration;
+import org.example.deuknetinfrastructure.data.debezium.DebeziumOffsetJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,9 @@ class DebeziumEngineConfigTest {
     @Mock
     private DebeziumEventHandler mockEventHandler;
 
+    @Mock
+    private DebeziumOffsetJpaRepository mockOffsetRepository;
+
     private DebeziumProperties properties;
     private DebeziumEngineConfig debeziumEngineConfig;
 
@@ -31,7 +35,6 @@ class DebeziumEngineConfigTest {
         // Given: DebeziumProperties 설정
         properties = new DebeziumProperties();
         properties.setConnectorName("test-connector");
-        properties.setOffsetStorageFileName("/tmp/test-offsets.dat");
 
         DebeziumProperties.Database database = new DebeziumProperties.Database();
         database.setHostname("localhost");
@@ -45,7 +48,7 @@ class DebeziumEngineConfigTest {
 
         properties.setDatabase(database);
 
-        debeziumEngineConfig = new DebeziumEngineConfig(properties, mockEventHandler);
+        debeziumEngineConfig = new DebeziumEngineConfig(properties, mockEventHandler, mockOffsetRepository);
     }
 
     @Test
@@ -59,9 +62,7 @@ class DebeziumEngineConfigTest {
         assertThat(config.getString("connector.class"))
                 .isEqualTo("io.debezium.connector.postgresql.PostgresConnector");
         assertThat(config.getString("offset.storage"))
-                .isEqualTo("org.apache.kafka.connect.storage.FileOffsetBackingStore");
-        assertThat(config.getString("offset.storage.file.filename"))
-                .isEqualTo("/tmp/test-offsets.dat");
+                .isEqualTo("org.example.deuknetinfrastructure.external.messaging.debezium.DatabaseOffsetBackingStore");
     }
 
     @Test
