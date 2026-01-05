@@ -82,11 +82,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/api/posts/*/reactions/*").authenticated()
 
                 // Category API
-                .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/categories/*").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/categories").hasAuthority(Role.ADMIN.name())
-                .requestMatchers(HttpMethod.PUT, "/api/categories/*").hasAuthority(Role.ADMIN.name())
-                .requestMatchers(HttpMethod.DELETE, "/api/categories/*").hasAuthority(Role.ADMIN.name())
+                .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/categories").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/categories/*").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/categories/*").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/categories/*/owner/*").hasAuthority(Role.ADMIN.name())
 
                 // User API (더 구체적인 패턴을 먼저 배치)
                 .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
