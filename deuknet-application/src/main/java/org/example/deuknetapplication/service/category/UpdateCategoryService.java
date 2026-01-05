@@ -53,10 +53,12 @@ public class UpdateCategoryService implements UpdateCategoryUseCase {
 
         // 4. 설명과 썸네일 이미지 업데이트
         if (request.getDescription() != null) {
-            category.updateDescription(request.getDescription());
+            String description = request.getDescription().trim();
+            category.updateDescription(description.isEmpty() ? null : description);
         }
         if (request.getThumbnailImageUrl() != null) {
-            category.updateThumbnailImageUrl(request.getThumbnailImageUrl());
+            String thumbnailImageUrl = request.getThumbnailImageUrl().trim();
+            category.updateThumbnailImageUrl(thumbnailImageUrl.isEmpty() ? null : thumbnailImageUrl);
         }
 
         // 5. 저장

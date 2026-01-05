@@ -5,6 +5,7 @@ import org.example.deuknetapplication.port.in.category.CategoryResponse;
 import org.example.deuknetapplication.port.in.category.CreateCategoryUseCase;
 import org.example.deuknetapplication.port.in.category.DeleteCategoryUseCase;
 import org.example.deuknetapplication.port.in.category.GetAllCategoriesUseCase;
+import org.example.deuknetapplication.port.in.category.GetCategoriesUseCase;
 import org.example.deuknetapplication.port.in.category.GetCategoryRankingUseCase;
 import org.example.deuknetapplication.port.in.category.GrantCategoryOwnershipUseCase;
 import org.example.deuknetapplication.port.in.category.SearchCategoriesUseCase;
@@ -33,6 +34,7 @@ import java.util.UUID;
 public class CategoryController implements CategoryApi {
 
     private final GetAllCategoriesUseCase getAllCategoriesUseCase;
+    private final GetCategoriesUseCase getCategoriesUseCase;
     private final CreateCategoryUseCase createCategoryUseCase;
     private final UpdateCategoryUseCase updateCategoryUseCase;
     private final DeleteCategoryUseCase deleteCategoryUseCase;
@@ -42,6 +44,7 @@ public class CategoryController implements CategoryApi {
 
     public CategoryController(
             GetAllCategoriesUseCase getAllCategoriesUseCase,
+            GetCategoriesUseCase getCategoriesUseCase,
             CreateCategoryUseCase createCategoryUseCase,
             UpdateCategoryUseCase updateCategoryUseCase,
             DeleteCategoryUseCase deleteCategoryUseCase,
@@ -50,6 +53,7 @@ public class CategoryController implements CategoryApi {
             SearchCategoriesUseCase searchCategoriesUseCase
     ) {
         this.getAllCategoriesUseCase = getAllCategoriesUseCase;
+        this.getCategoriesUseCase = getCategoriesUseCase;
         this.createCategoryUseCase = createCategoryUseCase;
         this.updateCategoryUseCase = updateCategoryUseCase;
         this.deleteCategoryUseCase = deleteCategoryUseCase;
@@ -62,6 +66,21 @@ public class CategoryController implements CategoryApi {
     @GetMapping
     public List<CategoryResponse> getAllCategories() {
         return getAllCategoriesUseCase.getAllCategories();
+    }
+
+    @GetMapping("/all")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<PageResponse<CategoryResponse>> getCategories(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        // 최대 100개로 제한
+        if (size > 100) {
+            size = 100;
+        }
+
+        PageResponse<CategoryResponse> response = getCategoriesUseCase.getCategories(page, size);
+        return ResponseEntity.ok(response);
     }
 
     @Override
