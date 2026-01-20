@@ -43,6 +43,12 @@ public class CategoryRepositoryAdapter implements CategoryRepository {
     }
 
     @Override
+    public Page<Category> findAll(Pageable pageable) {
+        Page<CategoryEntity> entityPage = jpaCategoryRepository.findAll(pageable);
+        return entityPage.map(mapper::toDomain);
+    }
+
+    @Override
     public List<Category> findByParentCategoryId(UUID parentCategoryId) {
         return jpaCategoryRepository.findByParentCategoryId(parentCategoryId).stream()
                 .map(mapper::toDomain)

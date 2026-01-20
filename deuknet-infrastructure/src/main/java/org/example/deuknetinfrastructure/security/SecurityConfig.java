@@ -43,7 +43,6 @@ public class SecurityConfig {
                 })
             )
             .authorizeHttpRequests(auth -> auth
-                // ========== 인증 불필요 ==========
                 // Auth API
                 .requestMatchers(HttpMethod.GET, "/api/auth/oauth/google").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/auth/oauth/callback/google").permitAll()
@@ -62,7 +61,6 @@ public class SecurityConfig {
                 // Actuator
                 .requestMatchers("/actuator/health", "/api/health", "/").permitAll()
 
-                // ========== 인증 필요 ==========
                 // Post API - CUD (Create, Update, Delete)
                 .requestMatchers(HttpMethod.POST, "/api/posts").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/posts/*").authenticated()
@@ -81,12 +79,12 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/posts/*/reactions").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/posts/*/reactions/*").authenticated()
 
-                // Category API
-                .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/categories/*").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/categories").hasAuthority(Role.ADMIN.name())
-                .requestMatchers(HttpMethod.PUT, "/api/categories/*").hasAuthority(Role.ADMIN.name())
-                .requestMatchers(HttpMethod.DELETE, "/api/categories/*").hasAuthority(Role.ADMIN.name())
+                // Category API (더 구체적인 패턴을 먼저 배치)
+                .requestMatchers(HttpMethod.PUT, "/api/categories/*/owner/*").hasAuthority(Role.ADMIN.name())
+                .requestMatchers(HttpMethod.POST, "/api/categories").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/categories/*").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/categories/*").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
 
                 // User API (더 구체적인 패턴을 먼저 배치)
                 .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
