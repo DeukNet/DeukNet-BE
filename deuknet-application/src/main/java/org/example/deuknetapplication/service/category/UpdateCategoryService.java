@@ -78,19 +78,33 @@ public class UpdateCategoryService implements UpdateCategoryUseCase {
      * - ownerId가 설정됨: ADMIN 또는 해당 Owner만 수정 가능
      */
     private void validateUpdatePermission(Category category, User user) {
+        log.debug("[UPDATE_PERMISSION_CHECK] categoryId={}, categoryOwnerId={}, userId={}, userRole={}, isAdmin={}",
+                category.getId(),
+                category.getOwnerId(),
+                user.getId(),
+                user.getRole(),
+                user.isAdmin());
+
         // ADMIN은 모든 카테고리 수정 가능
         if (user.isAdmin()) {
+            log.debug("[UPDATE_PERMISSION_CHECK] User is ADMIN - permission granted");
             return;
         }
 
         // ownerId가 null이면 ADMIN만 수정 가능
         if (!category.hasOwner()) {
+            log.warn("[UPDATE_PERMISSION_CHECK] Category has no owner - only ADMIN can update. categoryId={}, userId={}",
+                    category.getId(), user.getId());
             throw new CategoryUpdateNotAllowedException();
         }
 
         // ownerId가 설정된 경우, 해당 Owner만 수정 가능
         if (!category.isOwnedBy(user.getId())) {
+            log.warn("[UPDATE_PERMISSION_CHECK] User is not the owner. categoryId={}, categoryOwnerId={}, userId={}",
+                    category.getId(), category.getOwnerId(), user.getId());
             throw new CategoryUpdateNotAllowedException();
         }
+
+        log.debug("[UPDATE_PERMISSION_CHECK] Permission granted - user is the owner");
     }
 }
