@@ -52,9 +52,10 @@ public class PostSearchRequest {
 
     /**
      * 익명 게시물 포함 여부
-     * - true: 익명 게시물 포함 (본인 글 조회 시)
-     * - false: 실명 게시물만 조회 (다른 유저 글 조회 시)
+     * - true: 익명 게시물 포함 요청 (권한 체크 후 적용)
+     * - false: 실명 게시물만 조회
+     * 기본값 true: 권한이 있으면 익명 포함, 없으면 자동 필터링
      */
     @Builder.Default
-    private boolean includeAnonymous = false;
+    private boolean includeAnonymous = true;
 }

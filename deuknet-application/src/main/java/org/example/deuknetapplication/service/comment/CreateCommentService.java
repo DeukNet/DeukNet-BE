@@ -14,6 +14,8 @@ import org.example.deuknetapplication.projection.post.PostDetailProjection;
 import org.example.deuknetapplication.service.post.PostProjectionFactory;
 import org.example.deuknetdomain.common.vo.Content;
 import org.example.deuknetdomain.domain.comment.Comment;
+import org.example.deuknetdomain.domain.permission.exception.AnonymousAccessDeniedException;
+import org.example.deuknetdomain.domain.post.AuthorType;
 import org.example.deuknetdomain.domain.post.Post;
 import org.example.deuknetdomain.domain.reaction.ReactionType;
 import org.example.deuknetdomain.domain.user.User;
@@ -68,10 +70,13 @@ public class CreateCommentService implements CreateCommentUseCase {
         // 1. 현재 사용자 조회
         User author = getCurrentUser();
 
-        // 2. Comment Aggregate 생성 및 저장
+        // 2. 익명 댓글 권한 검증
+        validateAnonymousAccess(author, request.getAuthorType());
+
+        // 3. Comment Aggregate 생성 및 저장
         Comment comment = createCommentAggregate(request, author.getId());
 
-        // 3. 이벤트 발행 (Outbox Pattern)
+        // 4. 이벤트 발행 (Outbox Pattern)
         publishCommentCreatedEvent(comment, author);
 
         log.info("[COMMENT_CREATED] commentId={}, postId={}, authorId={}, username={}, isReply={}",
@@ -82,6 +87,18 @@ public class CreateCommentService implements CreateCommentUseCase {
                 comment.isReply());
 
         return comment.getId();
+    }
+
+    /**
+     * 익명 댓글 권한 검증
+     * 익명 작성 시도 시 권한이 없으면 예외 발생
+     */
+    private void validateAnonymousAccess(User user, AuthorType authorType) {
+        if (AuthorType.ANONYMOUS.equals(authorType) && !user.isCanAccessAnonymous()) {
+            log.warn("[ANONYMOUS_ACCESS_DENIED] userId={}, username={}",
+                    user.getId(), user.getUsername());
+            throw new AnonymousAccessDeniedException();
+        }
     }
 
     /**

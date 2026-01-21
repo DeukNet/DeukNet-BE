@@ -377,11 +377,13 @@ public class PostSearchAdapter implements PostSearchPort {
 
     /**
      * 익명 게시물 필터 추가
+     * includeAnonymous=false일 때 ANONYMOUS 게시물 제외 (REAL 또는 authorType 없는 것은 포함)
      */
     private void addAnonymousFilter(BoolQuery.Builder builder, boolean includeAnonymous) {
         if (!includeAnonymous) {
-            builder.filter(Query.of(q -> q
-                    .term(t -> t.field("authorType").value("REAL"))
+            // ANONYMOUS가 아닌 모든 게시물 포함 (REAL 또는 authorType 필드 없는 기존 데이터)
+            builder.mustNot(Query.of(q -> q
+                    .term(t -> t.field("authorType").value("ANONYMOUS"))
             ));
         }
     }
