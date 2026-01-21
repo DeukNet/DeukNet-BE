@@ -1,5 +1,5 @@
 # DeukNet-BE 
-
+주소: https://deuknet.dsmhs.kr/
 
 ## 개요
 DeukNet-BE는 대덕소프트웨어마이스터고 학생들을 위한 능딸 커뮤니티 서비스로,
