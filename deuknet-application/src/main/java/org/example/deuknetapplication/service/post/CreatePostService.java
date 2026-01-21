@@ -11,6 +11,8 @@ import org.example.deuknetapplication.port.out.security.CurrentUserPort;
 import org.example.deuknetapplication.projection.post.PostDetailProjection;
 import org.example.deuknetdomain.common.vo.Content;
 import org.example.deuknetdomain.common.vo.Title;
+import org.example.deuknetdomain.domain.permission.exception.AnonymousAccessDeniedException;
+import org.example.deuknetdomain.domain.post.AuthorType;
 import org.example.deuknetdomain.domain.post.Post;
 import org.example.deuknetdomain.domain.user.User;
 import org.slf4j.Logger;
@@ -59,6 +61,9 @@ public class CreatePostService implements CreatePostUseCase {
     public UUID createPost(CreatePostApplicationRequest request) {
         User author = getCurrentUser();
 
+        // 익명 작성 권한 검증
+        validateAnonymousAccess(author, request.getAuthorType());
+
         Post post = createAndSavePost(request, author.getId());
 
         publishPostCreated(post, author);
@@ -71,6 +76,18 @@ public class CreatePostService implements CreatePostUseCase {
                 request.getCategoryId());
 
         return post.getId();
+    }
+
+    /**
+     * 익명 작성 권한 검증
+     * 익명 작성 시도 시 권한이 없으면 예외 발생
+     */
+    private void validateAnonymousAccess(User user, AuthorType authorType) {
+        if (AuthorType.ANONYMOUS.equals(authorType) && !user.isCanAccessAnonymous()) {
+            log.warn("[ANONYMOUS_ACCESS_DENIED] userId={}, username={}",
+                    user.getId(), user.getUsername());
+            throw new AnonymousAccessDeniedException();
+        }
     }
 
     private void publishPostCreated(Post post, User author) {
