@@ -36,11 +36,14 @@ public class UserEntity {
     @Column(nullable = false, length = 20)
     private UserRole role;
 
+    @Column(name = "can_access_anonymous", nullable = false)
+    private boolean canAccessAnonymous;
+
     public UserEntity() {
     }
 
     public UserEntity(UUID id, UUID authCredentialId, String username,
-                      String displayName, String bio, String avatarUrl, UserRole role) {
+                      String displayName, String bio, String avatarUrl, UserRole role, boolean canAccessAnonymous) {
         this.id = id;
         this.authCredentialId = authCredentialId;
         this.username = username;
@@ -48,5 +51,6 @@ public class UserEntity {
         this.bio = bio;
         this.avatarUrl = avatarUrl;
         this.role = role != null ? role : UserRole.USER;
+        this.canAccessAnonymous = canAccessAnonymous;
     }
 }

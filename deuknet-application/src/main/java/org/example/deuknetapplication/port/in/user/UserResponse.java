@@ -20,6 +20,7 @@ public class UserResponse {
     private String bio;
     private String avatarUrl;
     private UserRole role;
+    private boolean canAccessAnonymous;
 
     /**
      * Domain 객체로부터 Response 생성
@@ -31,7 +32,8 @@ public class UserResponse {
                 user.getDisplayName(),
                 user.getBio(),
                 user.getAvatarUrl(),
-                user.getRole()
+                user.getRole(),
+                user.isCanAccessAnonymous()
         );
     }
 }
