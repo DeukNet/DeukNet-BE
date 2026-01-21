@@ -80,7 +80,8 @@ public abstract class AbstractTest {
                 "Test User",
                 "Test bio",
                 "https://example.com/avatar.jpg",
-                org.example.deuknetdomain.domain.user.UserRole.ADMIN
+                org.example.deuknetdomain.domain.user.UserRole.ADMIN,
+                true  // canAccessAnonymous
         );
         userRepository.save(testUser);
     }
