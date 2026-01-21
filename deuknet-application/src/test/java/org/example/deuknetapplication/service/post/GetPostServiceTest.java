@@ -88,7 +88,8 @@ class GetPostServiceTest {
                 "Test User",
                 "Test bio",
                 "https://example.com/avatar.jpg",
-                org.example.deuknetdomain.domain.user.UserRole.USER
+                org.example.deuknetdomain.domain.user.UserRole.USER,
+                false
         );
         lenient().when(userRepository.findById(otherAuthorId)).thenReturn(Optional.of(mockUser));
     }

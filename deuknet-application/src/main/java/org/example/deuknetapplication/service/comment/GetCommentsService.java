@@ -45,9 +45,27 @@ public class GetCommentsService implements GetCommentsUseCase {
     public List<CommentResponse> getCommentsByPostId(UUID postId) {
         List<Comment> comments = commentRepository.findByPostId(postId);
 
+        // 익명 조회 권한이 없으면 익명 댓글 필터링
+        boolean canAccessAnonymous = hasAnonymousAccessPermission();
+
         return comments.stream()
+                .filter(comment -> canAccessAnonymous || !AuthorType.ANONYMOUS.equals(comment.getAuthorType()))
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 현재 사용자의 익명 조회 권한 확인
+     */
+    private boolean hasAnonymousAccessPermission() {
+        try {
+            UUID currentUserId = currentUserPort.getCurrentUserId();
+            User user = userRepository.findById(currentUserId).orElse(null);
+            return user != null && user.isCanAccessAnonymous();
+        } catch (Exception e) {
+            // 비인증 사용자는 익명 조회 불가
+            return false;
+        }
     }
 
     private CommentResponse toResponse(Comment comment) {

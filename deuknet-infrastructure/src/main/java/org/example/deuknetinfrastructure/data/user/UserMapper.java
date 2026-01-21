@@ -16,7 +16,8 @@ public class UserMapper {
                 entity.getDisplayName(),
                 entity.getBio(),
                 entity.getAvatarUrl(),
-                entity.getRole()
+                entity.getRole(),
+                entity.isCanAccessAnonymous()
         );
     }
 
@@ -30,7 +31,8 @@ public class UserMapper {
                 domain.getDisplayName(),
                 domain.getBio(),
                 domain.getAvatarUrl(),
-                domain.getRole()
+                domain.getRole(),
+                domain.isCanAccessAnonymous()
         );
     }
 }

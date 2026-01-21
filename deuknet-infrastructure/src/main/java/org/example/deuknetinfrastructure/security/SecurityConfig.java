@@ -95,6 +95,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/files/upload").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/files/**").permitAll()
 
+                // Permission API
+                .requestMatchers(HttpMethod.POST, "/api/permissions/anonymous").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/permissions/anonymous").authenticated()
+
                 // 기타 모든 요청 거부
                 .anyRequest().denyAll()
             )
