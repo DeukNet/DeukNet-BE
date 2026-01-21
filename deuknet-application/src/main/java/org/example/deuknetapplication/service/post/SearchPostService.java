@@ -8,6 +8,8 @@ import org.example.deuknetapplication.port.in.post.SortType;
 import org.example.deuknetapplication.port.out.external.search.PostSearchPort;
 import org.example.deuknetapplication.port.out.repository.UserRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
+import org.example.deuknetdomain.domain.post.AuthorType;
+import org.example.deuknetdomain.domain.user.User;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -33,15 +35,18 @@ public class SearchPostService implements SearchPostUseCase {
 
     @Override
     public PageResponse<PostSearchResponse> search(PostSearchRequest request) {
+        // 익명 조회 권한 확인
+        boolean includeAnonymous = resolveIncludeAnonymous(request.isIncludeAnonymous());
+
         // sortType에 따라 적절한 검색 메서드 호출
-            PageResponse<PostSearchResponse> response = switch (request.getSortType()) {
+        PageResponse<PostSearchResponse> response = switch (request.getSortType()) {
             case RECENT -> postSearchPort.searchByRecent(
                     request.getKeyword(),
                     request.getAuthorId(),
                     request.getCategoryId(),
                     request.getPage(),
                     request.getSize(),
-                    request.isIncludeAnonymous()
+                    includeAnonymous
             );
             case RELEVANCE -> postSearchPort.searchByRelevance(
                     request.getKeyword(),
@@ -49,7 +54,7 @@ public class SearchPostService implements SearchPostUseCase {
                     request.getCategoryId(),
                     request.getPage(),
                     request.getSize(),
-                    request.isIncludeAnonymous()
+                    includeAnonymous
             );
             case POPULAR -> postSearchPort.searchByPopular(
                     request.getKeyword(),
@@ -57,12 +62,39 @@ public class SearchPostService implements SearchPostUseCase {
                     request.getCategoryId(),
                     request.getPage(),
                     request.getSize(),
-                    request.isIncludeAnonymous()
+                    includeAnonymous
             );
         };
 
         response.getContent().forEach(this::enrichPostResponse);
         return response;
+    }
+
+    /**
+     * 익명 게시물 조회 권한 확인
+     * 요청된 includeAnonymous가 true이더라도 권한이 없으면 false 반환 (필터링)
+     */
+    private boolean resolveIncludeAnonymous(boolean requestedIncludeAnonymous) {
+        if (!requestedIncludeAnonymous) {
+            return false;
+        }
+
+        // 사용자가 익명 조회 권한이 있는지 확인
+        return hasAnonymousAccessPermission();
+    }
+
+    /**
+     * 현재 사용자의 익명 조회 권한 확인
+     */
+    private boolean hasAnonymousAccessPermission() {
+        try {
+            UUID currentUserId = currentUserPort.getCurrentUserId();
+            User user = userRepository.findById(currentUserId).orElse(null);
+            return user != null && user.isCanAccessAnonymous();
+        } catch (Exception e) {
+            // 비인증 사용자는 익명 조회 불가
+            return false;
+        }
     }
 
     /**
@@ -116,8 +148,16 @@ public class SearchPostService implements SearchPostUseCase {
 
     @Override
     public List<PostSearchResponse> findTrendingPosts(int size) {
-        List<PostSearchResponse> results = postSearchPort.findTrendingPosts(size);
-        results.forEach(this::enrichPostResponse);
-        return results;
+        // 더 많이 조회해서 필터링 후에도 충분한 결과 보장
+        List<PostSearchResponse> results = postSearchPort.findTrendingPosts(size * 2);
+
+        // 익명 조회 권한이 없으면 익명 게시물 필터링
+        boolean canAccessAnonymous = hasAnonymousAccessPermission();
+
+        return results.stream()
+                .filter(post -> canAccessAnonymous || !AuthorType.ANONYMOUS.equals(post.getAuthorType()))
+                .limit(size)
+                .peek(this::enrichPostResponse)
+                .toList();
     }
 }

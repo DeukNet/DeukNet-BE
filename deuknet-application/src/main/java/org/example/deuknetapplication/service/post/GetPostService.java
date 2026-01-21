@@ -8,8 +8,11 @@ import org.example.deuknetapplication.port.out.repository.ReactionRepository;
 import org.example.deuknetapplication.port.out.repository.UserRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
 import org.example.deuknetapplication.projection.post.PostDetailProjection;
+import org.example.deuknetdomain.domain.permission.exception.AnonymousAccessDeniedException;
+import org.example.deuknetdomain.domain.post.AuthorType;
 import org.example.deuknetdomain.domain.post.exception.PostNotFoundException;
 import org.example.deuknetdomain.domain.reaction.ReactionType;
+import org.example.deuknetdomain.domain.user.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -59,6 +62,9 @@ public class GetPostService implements GetPostUseCase {
                 ? fetchFromPostgreSQL(postId)
                 : fetchFromElasticsearchOrPostgreSQL(postId);
 
+        // 익명 게시물 조회 권한 검증
+        validateAnonymousAccessForView(response);
+
         // 현재 사용자 정보 enrichment (isAuthor, reaction 등) - 익명 마스킹 전에 수행
         enrichWithUserReaction(response, postId);
 
@@ -66,6 +72,34 @@ public class GetPostService implements GetPostUseCase {
         enrichWithUserInfo(response);
 
         return response;
+    }
+
+    /**
+     * 익명 게시물 조회 시 권한 검증
+     * 익명 게시물을 조회하려면 canAccessAnonymous 권한이 필요
+     */
+    private void validateAnonymousAccessForView(PostSearchResponse response) {
+        if (!AuthorType.ANONYMOUS.equals(response.getAuthorType())) {
+            return; // 실명 게시물은 권한 체크 불필요
+        }
+
+        try {
+            UUID currentUserId = currentUserPort.getCurrentUserId();
+            User user = userRepository.findById(currentUserId).orElse(null);
+
+            if (user == null || !user.isCanAccessAnonymous()) {
+                log.warn("[ANONYMOUS_ACCESS_DENIED] userId={}, postId={}, attempted to view anonymous post without permission",
+                        currentUserId, response.getId());
+                throw new AnonymousAccessDeniedException();
+            }
+        } catch (AnonymousAccessDeniedException e) {
+            throw e;
+        } catch (Exception e) {
+            // 비인증 사용자가 익명 게시물 조회 시도
+            log.warn("[ANONYMOUS_ACCESS_DENIED] Unauthenticated user attempted to view anonymous post: postId={}",
+                    response.getId());
+            throw new AnonymousAccessDeniedException();
+        }
     }
 
     /**
