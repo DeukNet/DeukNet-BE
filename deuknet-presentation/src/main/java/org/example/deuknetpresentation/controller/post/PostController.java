@@ -137,7 +137,8 @@ public class PostController implements PostApi {
                 .sortType(sortTypeEnum)
                 .page(page)
                 .size(size)
-                .includeAnonymous(authorId == null)  // authorId 지정 시에만 익명 제외
+                // includeAnonymous는 기본값(true) 사용
+                // Service Layer에서 CurrentUserPort로 권한 확인하여 자동 필터링
                 .build();
 
         PageResponse<PostSearchResponse> results = searchPostUseCase.search(request);
