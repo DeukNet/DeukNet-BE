@@ -61,7 +61,7 @@ public class PostRepositoryAdapter implements PostRepository {
 
     @Override
     public Optional<PostDetailProjection> findDetailById(UUID id) {
-        // 최적화된 단일 쿼리: Post + 모든 count를 CASE WHEN으로 한 번에 조회
+        // 최적화된 단일 쿼리: Post + Category JOIN + 모든 count를 CASE WHEN으로 한 번에 조회
         Tuple result = queryFactory
                 .select(
                         postEntity.id,
@@ -74,6 +74,7 @@ public class PostRepositoryAdapter implements PostRepository {
                         postEntity.createdAt,
                         postEntity.updatedAt,
                         postEntity.categoryId,
+                        categoryEntity.name,
                         JPAExpressions.select(commentEntity.count())
                                 .from(commentEntity)
                                 .where(commentEntity.postId.eq(id)),
@@ -97,6 +98,7 @@ public class PostRepositoryAdapter implements PostRepository {
                                 )
                 )
                 .from(postEntity)
+                .leftJoin(categoryEntity).on(postEntity.categoryId.eq(categoryEntity.id))
                 .where(postEntity.id.eq(id))
                 .fetchOne();
 
@@ -104,10 +106,10 @@ public class PostRepositoryAdapter implements PostRepository {
             return Optional.empty();
         }
 
-        Long commentCount = result.get(10, Long.class);
-        Long likeCount = result.get(11, Long.class);
-        Long dislikeCount = result.get(12, Long.class);
-        Long viewCount = result.get(13, Long.class);
+        Long commentCount = result.get(11, Long.class);
+        Long likeCount = result.get(12, Long.class);
+        Long dislikeCount = result.get(13, Long.class);
+        Long viewCount = result.get(14, Long.class);
 
         PostDetailProjection projection = PostDetailProjection.builder()
                 .id(result.get(0, UUID.class))
@@ -122,6 +124,7 @@ public class PostRepositoryAdapter implements PostRepository {
                 .createdAt(result.get(7, java.time.LocalDateTime.class))
                 .updatedAt(result.get(8, java.time.LocalDateTime.class))
                 .categoryId(result.get(9, UUID.class))
+                .categoryName(result.get(10, String.class))
                 .commentCount(commentCount != null ? commentCount : 0L)
                 .likeCount(likeCount != null ? likeCount : 0L)
                 .dislikeCount(dislikeCount != null ? dislikeCount : 0L)

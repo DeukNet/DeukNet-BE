@@ -117,7 +117,7 @@ public interface PostApi {
 
     @Operation(
             summary = "게시글 검색 (통합)",
-            description = "게시글을 검색합니다. sortType으로 최신순/인기순을 선택할 수 있습니다. 항상 PUBLISHED 상태만 조회됩니다."
+            description = "게시글을 검색합니다. sortType으로 최신순/인기순을 선택할 수 있습니다. 항상 PUBLISHED 상태만 조회됩니다. 익명 게시물은 canAccessAnonymous 권한이 있는 사용자에게만 자동으로 포함됩니다."
     )
     @ApiResponses({
             @ApiResponse(

@@ -54,10 +54,11 @@ public class PostSearchResponse implements AuthorInfoEnrichable {
         this.content = projection.getContent();
         this.authorType = AuthorType.valueOf(projection.getAuthorType());
         this.authorId = projection.getAuthorId();
-        // authorUsername, authorDisplayName, categoryName은 별도 조회
+        // authorUsername, authorDisplayName은 별도 조회
         this.status = projection.getStatus();
         this.thumbnailImageUrl = projection.getThumbnailImageUrl();
         this.categoryId = projection.getCategoryId();
+        this.categoryName = projection.getCategoryName();
         this.viewCount = projection.getViewCount();
         this.commentCount = projection.getCommentCount();
         this.likeCount = projection.getLikeCount();
@@ -76,10 +77,11 @@ public class PostSearchResponse implements AuthorInfoEnrichable {
         response.content = projection.getContent();
         response.authorType = AuthorType.valueOf(projection.getAuthorType());
         response.authorId = projection.getAuthorId();
-        // authorUsername, authorDisplayName, categoryName은 별도 조회
+        // authorUsername, authorDisplayName은 별도 조회
         response.status = projection.getStatus();
         response.thumbnailImageUrl = projection.getThumbnailImageUrl();
         response.categoryId = projection.getCategoryId();
+        response.categoryName = projection.getCategoryName();
         response.viewCount = projection.getViewCount();
         response.commentCount = projection.getCommentCount();
         response.likeCount = projection.getLikeCount();
