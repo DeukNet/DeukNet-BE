@@ -137,7 +137,7 @@ public class PostController implements PostApi {
                 .sortType(sortTypeEnum)
                 .page(page)
                 .size(size)
-                .includeAnonymous(true)  // 명시적으로 true 설정 (Service에서 권한 확인하여 필터링)
+                .includeAnonymous(true)  // Service에서 권한 및 authorId 기반으로 판단
                 .build();
 
         PageResponse<PostSearchResponse> results = searchPostUseCase.search(request);

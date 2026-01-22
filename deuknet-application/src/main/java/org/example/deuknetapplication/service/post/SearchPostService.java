@@ -39,8 +39,8 @@ public class SearchPostService implements SearchPostUseCase {
 
     @Override
     public PageResponse<PostSearchResponse> search(PostSearchRequest request) {
-        // 익명 조회 권한 확인
-        boolean includeAnonymous = resolveIncludeAnonymous(request.isIncludeAnonymous());
+        // 익명 조회 권한 확인 (비인증 사용자, 본인/다른 사람 게시물 구분)
+        boolean includeAnonymous = resolveIncludeAnonymous(request.isIncludeAnonymous(), request.getAuthorId());
 
         // sortType에 따라 적절한 검색 메서드 호출
         PageResponse<PostSearchResponse> response = switch (request.getSortType()) {
@@ -76,20 +76,40 @@ public class SearchPostService implements SearchPostUseCase {
 
     /**
      * 익명 게시물 조회 권한 확인
-     * 요청된 includeAnonymous가 true이더라도 권한이 없으면 false 반환 (필터링)
+     * - 비인증 사용자: 항상 익명 제외
+     * - 인증 사용자 + 본인 게시물 조회: 권한 있으면 익명 포함
+     * - 인증 사용자 + 다른 사람 게시물 조회: 익명 제외
+     * - 전체 조회: 권한 있으면 익명 포함
      */
-    private boolean resolveIncludeAnonymous(boolean requestedIncludeAnonymous) {
-        log.debug("[ANONYMOUS_ACCESS] requestedIncludeAnonymous={}", requestedIncludeAnonymous);
+    private boolean resolveIncludeAnonymous(boolean requestedIncludeAnonymous, UUID authorId) {
+        log.debug("[ANONYMOUS_ACCESS] requestedIncludeAnonymous={}, authorId={}", requestedIncludeAnonymous, authorId);
 
         if (!requestedIncludeAnonymous) {
             log.debug("[ANONYMOUS_ACCESS] Request explicitly excludes anonymous posts");
             return false;
         }
 
-        // 사용자가 익명 조회 권한이 있는지 확인
-        boolean hasPermission = hasAnonymousAccessPermission();
-        log.debug("[ANONYMOUS_ACCESS] Final decision: includeAnonymous={}", hasPermission);
-        return hasPermission;
+        try {
+            UUID currentUserId = currentUserPort.getCurrentUserId();
+            log.debug("[ANONYMOUS_ACCESS] Authenticated user: currentUserId={}", currentUserId);
+
+            // 다른 사용자의 게시물 조회 시 익명 제외
+            if (authorId != null && !authorId.equals(currentUserId)) {
+                log.debug("[ANONYMOUS_ACCESS] Viewing other user's posts: authorId={}, currentUserId={} -> exclude anonymous", authorId, currentUserId);
+                return false;
+            }
+
+            // 전체 조회 또는 본인 게시물 조회 시 권한 확인
+            User user = userRepository.findById(currentUserId).orElse(null);
+            boolean hasPermission = user != null && user.isCanAccessAnonymous();
+            log.debug("[ANONYMOUS_ACCESS] userId={}, canAccessAnonymous={}", currentUserId, hasPermission);
+            return hasPermission;
+
+        } catch (Exception e) {
+            // 비인증 사용자는 익명 조회 불가
+            log.debug("[ANONYMOUS_ACCESS] Unauthenticated user -> exclude anonymous");
+            return false;
+        }
     }
 
     /**
