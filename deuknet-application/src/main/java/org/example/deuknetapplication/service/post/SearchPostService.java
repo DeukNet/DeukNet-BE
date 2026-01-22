@@ -10,6 +10,8 @@ import org.example.deuknetapplication.port.out.repository.UserRepository;
 import org.example.deuknetapplication.port.out.security.CurrentUserPort;
 import org.example.deuknetdomain.domain.post.AuthorType;
 import org.example.deuknetdomain.domain.user.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,6 +24,8 @@ import java.util.UUID;
  */
 @Service
 public class SearchPostService implements SearchPostUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(SearchPostService.class);
 
     private final PostSearchPort postSearchPort;
     private final UserRepository userRepository;
@@ -75,12 +79,17 @@ public class SearchPostService implements SearchPostUseCase {
      * 요청된 includeAnonymous가 true이더라도 권한이 없으면 false 반환 (필터링)
      */
     private boolean resolveIncludeAnonymous(boolean requestedIncludeAnonymous) {
+        log.debug("[ANONYMOUS_ACCESS] requestedIncludeAnonymous={}", requestedIncludeAnonymous);
+
         if (!requestedIncludeAnonymous) {
+            log.debug("[ANONYMOUS_ACCESS] Request explicitly excludes anonymous posts");
             return false;
         }
 
         // 사용자가 익명 조회 권한이 있는지 확인
-        return hasAnonymousAccessPermission();
+        boolean hasPermission = hasAnonymousAccessPermission();
+        log.debug("[ANONYMOUS_ACCESS] Final decision: includeAnonymous={}", hasPermission);
+        return hasPermission;
     }
 
     /**
@@ -89,10 +98,21 @@ public class SearchPostService implements SearchPostUseCase {
     private boolean hasAnonymousAccessPermission() {
         try {
             UUID currentUserId = currentUserPort.getCurrentUserId();
+            log.debug("[ANONYMOUS_ACCESS] Checking permission for userId={}", currentUserId);
+
             User user = userRepository.findById(currentUserId).orElse(null);
-            return user != null && user.isCanAccessAnonymous();
+
+            if (user == null) {
+                log.warn("[ANONYMOUS_ACCESS] User not found: userId={}", currentUserId);
+                return false;
+            }
+
+            boolean canAccess = user.isCanAccessAnonymous();
+            log.debug("[ANONYMOUS_ACCESS] userId={}, canAccessAnonymous={}", currentUserId, canAccess);
+            return canAccess;
         } catch (Exception e) {
             // 비인증 사용자는 익명 조회 불가
+            log.debug("[ANONYMOUS_ACCESS] Unauthenticated user or error: {}", e.getMessage());
             return false;
         }
     }
