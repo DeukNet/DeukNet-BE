@@ -2,7 +2,6 @@ package org.example.deuknetapplication.service.post;
 
 import org.example.deuknetapplication.port.in.post.GetPostUseCase;
 import org.example.deuknetapplication.port.in.post.PostSearchResponse;
-import org.example.deuknetapplication.port.out.external.search.PostSearchPort;
 import org.example.deuknetapplication.port.out.repository.PostRepository;
 import org.example.deuknetapplication.port.out.repository.ReactionRepository;
 import org.example.deuknetapplication.port.out.repository.UserRepository;
@@ -23,11 +22,7 @@ import java.util.UUID;
 
 /**
  * 게시글 단일 조회 유스케이스 구현
- * SRP: Elasticsearch 우선 조회 전략 + PostgreSQL 폴백 담당
- *
- * 조회 전략:
- * - forceCommandModel=false: Elasticsearch 우선 조회 → PostgreSQL 폴백 (일반 조회)
- * - forceCommandModel=true: PostgreSQL 직접 조회 (생성/수정 직후)
+ * SRP: PostgreSQL 직접 조회 (Category JOIN 포함)
  */
 @Service
 @Transactional(readOnly = true)
@@ -35,20 +30,17 @@ public class GetPostService implements GetPostUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(GetPostService.class);
 
-    private final PostSearchPort postSearchPort;
     private final PostRepository postRepository;
     private final ReactionRepository reactionRepository;
     private final CurrentUserPort currentUserPort;
     private final UserRepository userRepository;
 
     public GetPostService(
-            PostSearchPort postSearchPort,
             PostRepository postRepository,
             ReactionRepository reactionRepository,
             CurrentUserPort currentUserPort,
             UserRepository userRepository
     ) {
-        this.postSearchPort = postSearchPort;
         this.postRepository = postRepository;
         this.reactionRepository = reactionRepository;
         this.currentUserPort = currentUserPort;
@@ -58,9 +50,8 @@ public class GetPostService implements GetPostUseCase {
     @Override
     public PostSearchResponse getPostById(UUID postId, boolean forceCommandModel) {
 
-        PostSearchResponse response = forceCommandModel
-                ? fetchFromPostgreSQL(postId)
-                : fetchFromElasticsearchOrPostgreSQL(postId);
+        // 단일 조회는 항상 PostgreSQL에서 조회 (categoryName JOIN 포함)
+        PostSearchResponse response = fetchFromPostgreSQL(postId);
 
         // 익명 게시물 조회 권한 검증
         validateAnonymousAccessForView(response);
@@ -103,27 +94,7 @@ public class GetPostService implements GetPostUseCase {
     }
 
     /**
-     * Elasticsearch 우선 조회 + PostgreSQL 폴백 전략
-     * 일반 조회 시 사용 (성능 최적화)
-     *
-     * @param postId 조회할 게시글 ID
-     * @return 게시글 상세 정보
-     */
-    private PostSearchResponse fetchFromElasticsearchOrPostgreSQL(UUID postId) {
-        return postSearchPort.findById(postId)
-                .map(response -> {
-                    log.debug("Post found in Elasticsearch: postId={}", postId);
-                    return response;
-                })
-                .orElseGet(() -> {
-                    log.debug("Post not found in Elasticsearch, fetching from PostgreSQL: postId={}", postId);
-                    return fetchFromPostgreSQL(postId);
-                });
-    }
-
-    /**
-     * PostgreSQL에서 게시글 상세 정보를 QueryDSL로 직접 조회
-     * 생성/수정 직후 또는 CDC 동기화 지연 시 사용
+     * PostgreSQL에서 게시글 상세 정보를 QueryDSL로 직접 조회 (Category JOIN 포함)
      *
      * @param postId 조회할 게시글 ID
      * @return 게시글 상세 정보

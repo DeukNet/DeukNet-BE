@@ -39,8 +39,9 @@ public class PostDetailProjection extends Projection {
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
-    // 연관 데이터 (ID만 저장, 이름은 별도 조회)
+    // 연관 데이터
     private final UUID categoryId;
+    private final String categoryName;
     private final Long commentCount;
     private final Long likeCount;
     private final Long dislikeCount;
@@ -59,6 +60,7 @@ public class PostDetailProjection extends Projection {
             @JsonProperty("createdAt") LocalDateTime createdAt,
             @JsonProperty("updatedAt") LocalDateTime updatedAt,
             @JsonProperty("categoryId") UUID categoryId,
+            @JsonProperty("categoryName") String categoryName,
             @JsonProperty("commentCount") Long commentCount,
             @JsonProperty("likeCount") Long likeCount,
             @JsonProperty("dislikeCount") Long dislikeCount) {
@@ -73,6 +75,7 @@ public class PostDetailProjection extends Projection {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.categoryId = categoryId;
+        this.categoryName = categoryName;
         this.commentCount = commentCount;
         this.likeCount = likeCount;
         this.dislikeCount = dislikeCount;
