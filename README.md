@@ -19,7 +19,7 @@ DeukNet-BE는 다양한 검색 지원 기능을 중심으로 발전하고 있습
 많은 사용자 요청이 동시에 발생하더라도
 일관되고 빠른 응답을 유지할 수 있도록 최적화되어 있습니다.
 
-## 아키텍쳐
+## 아키텍처
 
 
 <img width="691" height="428" alt="image" src="https://github.com/user-attachments/assets/c6a885b5-11ae-4ebf-8bf9-6b3da25361d5" />
